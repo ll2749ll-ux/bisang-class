@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<!-- saved from url=(0054)file:///C:/Users/user/Downloads/bisang_firebase_1.html -->
+<html lang="ko"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>비상반 관리 시스템</title>
+<link rel="manifest" href="file:///C:/Users/user/Downloads/bisang_firebase_1.html#">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f5;color:#111}
+.screen{display:none}.screen.active{display:block}
+.page{padding:1.5rem;max-width:720px;margin:0 auto}
+.card{background:#fff;border:1px solid #e5e5e5;border-radius:12px;padding:1.25rem;margin-bottom:1rem}
+.badge{display:inline-block;font-size:11px;font-weight:500;padding:2px 8px;border-radius:99px}
+.bg{background:#dbeafe;color:#1e40af}.gg{background:#dcfce7;color:#15803d}.rr{background:#fee2e2;color:#b91c1c}.aa{background:#fef3c7;color:#92400e}.gr{background:#f3f4f6;color:#374151}.pp{background:#ede9fe;color:#6d28d9}
+.tab-bar{display:flex;gap:4px;margin-bottom:1.25rem;border-bottom:1px solid #e5e5e5;flex-wrap:wrap}
+.tab{padding:8px 14px;font-size:13px;font-weight:500;color:#6b7280;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
+.tab.on{color:#1d4ed8;border-bottom-color:#1d4ed8}
+.tc{display:none}.tc.on{display:block}
+.sg{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1rem}
+.sc{background:#f9fafb;border-radius:8px;padding:.75rem 1rem}
+.sl{font-size:11px;color:#6b7280;margin-bottom:4px}
+.sv{font-size:22px;font-weight:600}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;font-size:13px;font-weight:500;border:1px solid #d1d5db;border-radius:8px;background:#fff;color:#111;cursor:pointer}
+.btn:hover{background:#f9fafb}
+.bp{background:#1d4ed8;color:#fff;border-color:#1d4ed8}.bp:hover{background:#1e40af}
+.bd{background:#fee2e2;color:#b91c1c;border-color:#fca5a5}
+.bs{padding:4px 10px;font-size:12px}
+input,select,textarea{width:100%;padding:8px 10px;font-size:14px;border:1px solid #d1d5db;border-radius:8px;background:#fff;color:#111;margin-bottom:10px;font-family:inherit}
+input:focus,select:focus,textarea:focus{outline:none;border-color:#1d4ed8}
+label{font-size:13px;color:#6b7280;display:block;margin-bottom:4px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:8px 10px;color:#6b7280;font-weight:500;font-size:12px;border-bottom:1px solid #e5e5e5}
+td{padding:8px 10px;border-bottom:1px solid #f3f4f6;color:#111}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#f9fafb}
+.row{display:flex;gap:10px;align-items:center}
+.rb{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem}
+.st{font-size:15px;font-weight:600;margin-bottom:.75rem}
+.mo{position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;z-index:100}
+.md{background:#fff;border-radius:12px;padding:1.5rem;width:340px;border:1px solid #e5e5e5}
+.md h3{font-size:15px;font-weight:600;margin-bottom:1rem}
+.hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem}
+.hdr h2{font-size:16px;font-weight:600}
+.ltb{flex:1;padding:2rem 1rem;display:flex;flex-direction:column;align-items:center;gap:12px;border:1px solid #e5e5e5;border-radius:12px;background:#fff;cursor:pointer;transition:border-color .15s,background .15s}
+.ltb:hover{border-color:#1d4ed8;background:#eff6ff}
+.lic{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px}
+.em{text-align:center;padding:1.5rem;color:#6b7280;font-size:13px}
+.bk{display:inline-flex;align-items:center;gap:4px;font-size:13px;color:#6b7280;cursor:pointer;margin-bottom:1rem;background:none;border:none;padding:0}
+.bk:hover{color:#111}
+.notif-dot{position:relative;display:inline-flex;align-items:center}
+.notif-dot .dot{position:absolute;top:-4px;right:-6px;width:16px;height:16px;background:#dc2626;border-radius:50%;font-size:10px;font-weight:700;color:#fff;display:flex;align-items:center;justify-content:center;line-height:1}
+.notif-item{padding:12px 14px;border-bottom:1px solid #f3f4f6;display:flex;gap:12px;align-items:flex-start;cursor:default}
+.notif-item:last-child{border-bottom:none}
+.notif-item.unread{background:#eff6ff}
+.notif-icon{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.notif-icon.dm{background:#fee2e2}.notif-icon.doc-ok{background:#dcfce7}.notif-icon.doc-no{background:#fef3c7}.notif-icon.att{background:#dbeafe}
+.notif-body{flex:1;min-width:0}
+.notif-title{font-size:13px;font-weight:600;margin-bottom:2px}
+.notif-desc{font-size:12px;color:#6b7280;line-height:1.5}
+.notif-time{font-size:11px;color:#9ca3af;margin-top:3px}
+.notif-unread-mark{width:7px;height:7px;border-radius:50%;background:#1d4ed8;flex-shrink:0;margin-top:5px}
+.file-drop{border:1.5px dashed #d1d5db;border-radius:8px;padding:1.25rem;text-align:center;cursor:pointer;margin-bottom:10px;transition:border-color .15s,background .15s}
+.file-drop:hover,.file-drop.over{border-color:#1d4ed8;background:#eff6ff}
+.file-drop input[type=file]{display:none}
+.file-preview{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+.file-thumb{position:relative;width:72px;height:72px;border-radius:8px;overflow:hidden;border:1px solid #e5e5e5;background:#f9fafb;flex-shrink:0}
+.file-thumb img{width:100%;height:100%;object-fit:cover;cursor:pointer}
+.file-thumb .file-icon{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:22px;gap:2px}
+.file-thumb .file-name{font-size:9px;color:#6b7280;text-align:center;padding:0 2px;word-break:break-all}
+.file-thumb .del-btn{position:absolute;top:2px;right:2px;width:16px;height:16px;border-radius:50%;background:rgba(0,0,0,.5);color:#fff;border:none;cursor:pointer;font-size:10px;display:flex;align-items:center;justify-content:center;line-height:1}
+.img-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:200;cursor:pointer}
+.img-modal-bg img{max-width:90vw;max-height:90vh;border-radius:8px;object-fit:contain}
+.tt-wrap{overflow-x:auto;margin-bottom:1rem}
+.tt-table{border-collapse:collapse;font-size:12px;min-width:560px;width:100%}
+.tt-table th{background:#f9fafb;padding:8px 6px;text-align:center;border:1px solid #e5e5e5;color:#6b7280;font-weight:600;white-space:nowrap}
+.tt-table td{padding:5px 4px;border:1px solid #e5e5e5;text-align:center;vertical-align:middle}
+.tt-table .period-lbl{background:#f9fafb;font-size:11px;color:#6b7280;white-space:nowrap;font-weight:500}
+.tt-cell{width:100%;min-height:32px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;cursor:default;flex-direction:column}
+.tt-present{background:#dcfce7;color:#15803d}.tt-absent{background:#fee2e2;color:#b91c1c}.tt-regular{background:#fef3c7;color:#92400e}.tt-unknown{background:#f3f4f6;color:#9ca3af}
+.tt-today th.today-col{background:#dbeafe;color:#1e40af}
+.day-pill{display:inline-flex;gap:6px;flex-wrap:wrap;margin-bottom:.75rem}
+.day-btn{padding:5px 12px;border-radius:99px;border:1px solid #e5e5e5;background:#fff;font-size:13px;cursor:pointer;font-weight:500;color:#6b7280}
+.day-btn.on{background:#1d4ed8;color:#fff;border-color:#1d4ed8}
+.period-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap}
+.period-tag{background:#ede9fe;color:#6d28d9;border-radius:6px;padding:3px 8px;font-size:12px;font-weight:500}
+.push-banner{position:fixed;bottom:1rem;left:50%;transform:translateX(-50%);background:#1d4ed8;color:#fff;padding:10px 20px;border-radius:12px;font-size:13px;font-weight:500;z-index:300;box-shadow:0 4px 16px rgba(0,0,0,.2);display:flex;gap:10px;align-items:center}
+.saving{position:fixed;top:10px;right:10px;background:#1d4ed8;color:#fff;font-size:12px;padding:4px 12px;border-radius:99px;z-index:200;display:none;}
+</style>
+</head>
+<body>
+<div class="saving" id="saving-indicator">저장 중...</div>
+
+<!-- 로그인 화면 -->
+<div id="sc-login" class="screen active">
+<div class="page" style="display:flex;align-items:center;justify-content:center;min-height:100vh;">
+<div style="width:100%;max-width:380px;">
+  <div style="text-align:center;margin-bottom:2rem;">
+    <div style="font-size:13px;color:#6b7280;margin-bottom:4px;">청도고등학교</div>
+    <div style="font-size:22px;font-weight:700;">비상반 관리 시스템</div>
+  </div>
+  <div id="lp-choose" style="display: block;">
+    <div style="display:flex;gap:12px;margin-bottom:1rem;">
+      <button class="ltb" onclick="loginChoose(&#39;admin&#39;)" style="border-color:#bfdbfe;">
+        <div class="lic" style="background:#dbeafe;font-size:24px;">🏫</div>
+        <div style="font-size:15px;font-weight:700;color:#1e40af;">관리자</div>
+        <div style="font-size:12px;color:#6b7280;">선생님 전용</div>
+      </button>
+      <button class="ltb" onclick="loginChoose(&#39;student&#39;)" style="border-color:#ddd9fe;">
+        <div class="lic" style="background:#ede9fe;font-size:24px;">📚</div>
+        <div style="font-size:15px;font-weight:700;color:#6d28d9;">학생</div>
+        <div style="font-size:12px;color:#6b7280;">비상반 학생</div>
+      </button>
+    </div>
+  </div>
+  <div id="lp-admin" style="display:none;">
+    <button class="bk" onclick="loginChoose(null)">← 돌아가기</button>
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:1.25rem;">
+        <div class="lic" style="background:#dbeafe;width:40px;height:40px;font-size:18px;">🏫</div>
+        <div><div style="font-size:15px;font-weight:700;">관리자 로그인</div><div style="font-size:12px;color:#6b7280;">선생님 전용</div></div>
+      </div>
+      <label>비밀번호</label>
+      <input type="password" id="a-pw" placeholder="관리자 비밀번호" onkeydown="if(event.key===&#39;Enter&#39;)adminLogin()">
+      <button class="btn bp" style="width:100%;justify-content:center;" onclick="adminLogin()">로그인</button>
+      <div id="a-err" style="color:#b91c1c;font-size:12px;margin-top:8px;display:none;">비밀번호를 확인하세요.</div>
+    </div>
+    <div style="font-size:11px;color:#6b7280;text-align:center;">관리자만 접근 가능합니다.</div>
+  </div>
+  <div id="lp-student" style="display:none;">
+    <button class="bk" onclick="loginChoose(null)">← 돌아가기</button>
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:1.25rem;">
+        <div class="lic" style="background:#ede9fe;width:40px;height:40px;font-size:18px;">📚</div>
+        <div><div style="font-size:15px;font-weight:700;">학생 로그인</div><div style="font-size:12px;color:#6b7280;">비상반 학생</div></div>
+      </div>
+      <label>학번</label><input type="text" id="s-num" placeholder="학번 입력 (예: 30101)" onkeydown="if(event.key===&#39;Enter&#39;)document.getElementById(&#39;s-name&#39;).focus()">
+      <label>이름</label><input type="text" id="s-name" placeholder="이름 입력" onkeydown="if(event.key===&#39;Enter&#39;)stuLogin()">
+      <button class="btn bp" style="width:100%;justify-content:center;margin-top:4px;" onclick="stuLogin()">로그인</button>
+      <div id="s-err" style="color:#b91c1c;font-size:12px;margin-top:8px;display:none;"></div>
+    </div>
+    <div style="font-size:11px;color:#6b7280;text-align:center;">선생님이 등록한 학번과 이름이 일치해야 로그인됩니다.</div>
+  </div>
+</div></div></div>
+
+<!-- 관리자 화면 -->
+<div id="sc-admin" class="screen">
+<div class="page">
+  <div class="hdr">
+    <div><div style="font-size:12px;color:#6b7280;">청도고 비상반</div><h2>관리자 대시보드</h2></div>
+    <div class="row" style="gap:8px;"><span class="badge bg">선생님</span><button class="btn bs" onclick="logout()">로그아웃</button></div>
+  </div>
+  <div class="tab-bar">
+    <button class="tab on" onclick="aTab(&#39;att&#39;,this)">출결 관리</button>
+    <button class="tab" onclick="aTab(&#39;doc&#39;,this)">서류 체크</button>
+    <button class="tab" onclick="aTab(&#39;dm&#39;,this)">벌점 관리</button>
+    <button class="tab" onclick="aTab(&#39;tt&#39;,this)">타임테이블</button>
+    <button class="tab" onclick="aTab(&#39;nt&#39;,this)">공지사항</button>
+    <button class="tab" onclick="aTab(&#39;stu&#39;,this)">학생 관리</button>
+  </div>
+  <div id="ta-att" class="tc on">
+    <div class="rb"><div class="st">출결 현황</div>
+      <div class="row" style="gap:6px;"><input type="date" id="att-dt" style="width:140px;margin:0;"><button class="btn bs" onclick="renderAtt()">조회</button></div>
+    </div>
+    <div class="sg">
+      <div class="sc"><div class="sl">출석</div><div class="sv" id="c-p" style="color:#15803d;">0</div></div>
+      <div class="sc"><div class="sl">지각</div><div class="sv" id="c-l" style="color:#92400e;">0</div></div>
+      <div class="sc"><div class="sl">조퇴</div><div class="sv" id="c-e" style="color:#92400e;">0</div></div>
+      <div class="sc"><div class="sl">결석</div><div class="sv" id="c-a" style="color:#b91c1c;">0</div></div>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden;"><table><thead><tr><th>학번</th><th>이름</th><th>상태</th><th>시간</th><th>변경</th></tr></thead><tbody id="att-tb"></tbody></table></div>
+    <div class="rb" style="margin-top:1rem;">
+      <div class="st" style="margin-bottom:0;">📋 사전 결석·지각 신청</div>
+      <span class="badge aa" id="pa-pending-cnt">대기 0건</span>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden;">
+      <table><thead><tr><th>학번</th><th>이름</th><th>날짜</th><th>구분</th><th>사유</th><th>세부내용</th><th>예상벌점</th><th>상태</th><th>처리</th></tr></thead>
+      <tbody id="pa-admin-tb"></tbody></table>
+    </div>
+  </div>
+  <div id="ta-doc" class="tc">
+    <div class="rb"><div class="st">서류 현황</div><span class="badge aa" id="doc-pnd">대기 0건</span></div>
+    <div class="card" style="padding:0;overflow:hidden;"><table><thead><tr><th>학번</th><th>이름</th><th>구분</th><th>제출일</th><th>첨부</th><th>상태</th><th>처리</th></tr></thead><tbody id="doc-tb"></tbody></table></div>
+  </div>
+  <div id="ta-dm" class="tc">
+    <div class="rb"><div class="st">벌점 현황</div><button class="btn bs bp" onclick="openDm()">+ 벌점 부여</button></div>
+    <div class="card" style="padding:0;overflow:hidden;"><table><thead><tr><th>학번</th><th>이름</th><th>누적</th><th>상태</th><th>상세</th></tr></thead><tbody id="dm-tb"></tbody></table></div>
+    <div class="st" style="margin-top:1rem;">벌점 항목</div>
+    <div class="card" style="padding:0;overflow:hidden;"><table><thead><tr><th>항목</th><th>점수</th><th>삭제</th></tr></thead><tbody id="rule-tb"></tbody></table></div>
+    <div class="row" style="gap:8px;margin-top:10px;">
+      <input type="text" id="rule-nm" placeholder="항목명" style="margin:0;flex:1;">
+      <input type="number" id="rule-pt" placeholder="점수" style="margin:0;width:80px;">
+      <button class="btn bs bp" onclick="addRule()">추가</button>
+    </div>
+  </div>
+  <div id="ta-tt" class="tc">
+    <div class="rb"><div class="st">자습 타임테이블</div></div>
+    <div class="card">
+      <div style="font-size:13px;font-weight:600;margin-bottom:10px;">교시 설정</div>
+      <div id="period-list"></div>
+      <div class="row" style="gap:8px;margin-top:6px;">
+        <input type="text" id="p-name" placeholder="교시명" style="margin:0;flex:1;">
+        <input type="text" id="p-time" placeholder="시간 (예: 09:00~10:00)" style="margin:0;flex:1;">
+        <button class="btn bs bp" onclick="addPeriod()">추가</button>
+      </div>
+    </div>
+    <div class="rb" style="margin-top:.5rem;">
+      <div class="st" style="margin-bottom:0;">주간 출결 현황</div>
+      <div class="row" style="gap:6px;"><input type="date" id="tt-week" style="width:140px;margin:0;"><button class="btn bs" onclick="renderAdminTT()">조회</button></div>
+    </div>
+    <div class="row" style="gap:8px;margin-bottom:.75rem;flex-wrap:wrap;">
+      <button class="btn bs bp" id="tt-mode-all" onclick="setTTMode(&#39;all&#39;)">📋 전체 학생 뷰</button>
+      <button class="btn bs" id="tt-mode-one" onclick="setTTMode(&#39;one&#39;)">👤 개인 뷰</button>
+      <select id="tt-stu-sel" style="width:140px;margin:0;display:none;" onchange="renderAdminTT()"></select>
+    </div>
+    <div id="tt-grade-filter" class="row" style="gap:6px;margin-bottom:.75rem;flex-wrap:wrap;">
+      <button class="btn bs bp" id="gf-all" onclick="setGradeFilter(&#39;all&#39;)">전체</button>
+      <button class="btn bs" id="gf-1" onclick="setGradeFilter(&#39;1&#39;)">1학년</button>
+      <button class="btn bs" id="gf-2" onclick="setGradeFilter(&#39;2&#39;)">2학년</button>
+      <button class="btn bs" id="gf-3" onclick="setGradeFilter(&#39;3&#39;)">3학년</button>
+    </div>
+    <div class="tt-wrap"><table class="tt-table tt-today" id="admin-tt-table"></table></div>
+    <div class="st" style="margin-top:.5rem;">정기 결석 등록</div>
+    <div class="card">
+      <div class="row" style="gap:8px;flex-wrap:wrap;align-items:flex-end;">
+        <div style="flex:1;min-width:120px;"><label>학생</label><select id="reg-stu" style="margin:0;"></select></div>
+        <div style="flex:1;min-width:100px;"><label>요일</label><select id="reg-day" style="margin:0;">
+          <option value="0">월</option><option value="1">화</option><option value="2">수</option><option value="3">목</option><option value="4">금</option><option value="5">토</option><option value="6">일</option>
+        </select></div>
+        <div style="flex:1;min-width:100px;"><label>범위</label><select id="reg-type" style="margin:0;" onchange="toggleRegScope()">
+          <option value="period">특정 교시</option><option value="day">요일 전체</option>
+        </select></div>
+        <div style="flex:1;min-width:100px;" id="reg-period-wrap"><label>교시</label><select id="reg-period" style="margin:0;"></select></div>
+        <div style="flex:1;min-width:120px;"><label>사유</label><input type="text" id="reg-reason" placeholder="예: 학원" style="margin:0;"></div>
+        <button class="btn bs bp" onclick="addRegAbs()" style="flex-shrink:0;">등록</button>
+      </div>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden;">
+      <table><thead><tr><th>학생</th><th>요일</th><th>범위</th><th>사유</th><th>삭제</th></tr></thead><tbody id="reg-abs-tb"></tbody></table>
+    </div>
+  </div>
+  <div id="ta-nt" class="tc">
+    <div class="rb"><div class="st">공지사항</div><button class="btn bs bp" onclick="openNt()">+ 공지 작성</button></div>
+    <div id="nt-admin"></div>
+  </div>
+  <div id="ta-stu" class="tc">
+    <div class="rb"><div class="st">학생 명단 관리</div><span class="badge bg" id="stu-cnt">0명 등록됨</span></div>
+    <div class="card">
+      <div style="font-size:13px;font-weight:600;margin-bottom:10px;">학생 추가</div>
+      <div class="row" style="gap:8px;align-items:flex-end;flex-wrap:wrap;">
+        <div style="flex:0 0 80px;"><label>학년</label><select id="ns-grade" style="margin:0;"><option value="1">1학년</option><option value="2">2학년</option><option value="3">3학년</option></select></div>
+        <div style="flex:1;min-width:100px;"><label>학번</label><input type="text" id="ns-num" placeholder="30101" style="margin:0;"></div>
+        <div style="flex:1;min-width:100px;"><label>이름</label><input type="text" id="ns-name" placeholder="홍길동" style="margin:0;" onkeydown="if(event.key===&#39;Enter&#39;)addStu()"></div>
+        <button class="btn bp" onclick="addStu()" style="flex-shrink:0;">추가</button>
+      </div>
+      <div id="ns-err" style="color:#b91c1c;font-size:12px;margin-top:8px;display:none;"></div>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden;"><table><thead><tr><th>학년</th><th>학번</th><th>이름</th><th>등록일</th><th>삭제</th></tr></thead><tbody id="stu-tb"></tbody></table></div>
+
+    <!-- 관리자 비밀번호 변경 -->
+    <div class="st" style="margin-top:1rem;">🔐 관리자 비밀번호 변경</div>
+    <div class="card">
+      <label>현재 비밀번호</label>
+      <input type="password" id="pw-cur" placeholder="현재 비밀번호 입력">
+      <label>새 비밀번호</label>
+      <input type="password" id="pw-new" placeholder="새 비밀번호 입력">
+      <label>새 비밀번호 확인</label>
+      <input type="password" id="pw-new2" placeholder="새 비밀번호 재입력" onkeydown="if(event.key===&#39;Enter&#39;)changeAdminPw()">
+      <button class="btn bp" onclick="changeAdminPw()">비밀번호 변경</button>
+      <div id="pw-err" style="color:#b91c1c;font-size:12px;margin-top:8px;display:none;"></div>
+      <div id="pw-ok" style="color:#15803d;font-size:12px;margin-top:8px;display:none;">✅ 비밀번호가 변경되었습니다.</div>
+    </div>
+  </div>
+</div></div>
+
+<!-- 학생 화면 -->
+<div id="sc-stu" class="screen">
+<div class="page">
+  <div class="hdr">
+    <div><div style="font-size:12px;color:#6b7280;">청도고 비상반</div><h2 id="stu-hdr">학생 포털</h2></div>
+    <div class="row" style="gap:8px;"><span class="badge pp">학생</span><button class="btn bs" onclick="logout()">로그아웃</button></div>
+  </div>
+  <div class="tab-bar">
+    <button class="tab on" onclick="sTab(&#39;sa&#39;,this)">내 출결</button>
+    <button class="tab" onclick="sTab(&#39;stt&#39;,this)">타임테이블</button>
+    <button class="tab" onclick="sTab(&#39;spa&#39;,this)">사전 신청</button>
+    <button class="tab" onclick="sTab(&#39;sd&#39;,this)">내 벌점</button>
+    <button class="tab" onclick="sTab(&#39;sf&#39;,this)">서류 제출</button>
+    <button class="tab" onclick="sTab(&#39;sn&#39;,this)">공지사항</button>
+    <button class="tab notif-dot" id="tab-notif" onclick="sTab(&#39;snf&#39;,this)">🔔 알림<span class="dot" id="notif-badge" style="display:none;">0</span></button>
+  </div>
+  <div id="ts-sa" class="tc on">
+    <div class="st">내 출결 현황</div>
+    <div class="sg">
+      <div class="sc"><div class="sl">출석</div><div class="sv" id="sp" style="color:#15803d;">0</div></div>
+      <div class="sc"><div class="sl">지각</div><div class="sv" id="sl2" style="color:#92400e;">0</div></div>
+      <div class="sc"><div class="sl">조퇴</div><div class="sv" id="se" style="color:#92400e;">0</div></div>
+      <div class="sc"><div class="sl">결석</div><div class="sv" id="sa2" style="color:#b91c1c;">0</div></div>
+    </div>
+    <div class="st" style="margin-top:.5rem;">출결 기록</div>
+    <div class="card" style="padding:0;overflow:hidden;"><table><thead><tr><th>날짜</th><th>상태</th><th>사유</th></tr></thead><tbody id="sa-log"></tbody></table></div>
+  </div>
+  <div id="ts-stt" class="tc">
+    <div class="rb">
+      <div class="st" style="margin-bottom:0;">내 자습 타임테이블</div>
+      <div class="row" style="gap:6px;"><input type="date" id="stt-week" style="width:140px;margin:0;"><button class="btn bs" onclick="renderStuTT()">조회</button></div>
+    </div>
+    <div class="tt-wrap"><table class="tt-table tt-today" id="stu-tt-table"></table></div>
+  </div>
+  <div id="ts-spa" class="tc">
+    <div class="st">사전 결석·지각 신청</div>
+    <div style="font-size:13px;color:#6b7280;margin-bottom:1rem;">미리 신청하면 선생님께 자동 전달됩니다.</div>
+    <div class="card">
+      <div class="row" style="gap:8px;flex-wrap:wrap;align-items:flex-end;">
+        <div style="flex:1;min-width:120px;"><label>날짜</label><input type="date" id="pa-date" style="margin:0;"></div>
+        <div style="flex:1;min-width:100px;"><label>구분</label><select id="pa-type" style="margin:0;"><option value="결석">결석</option><option value="지각">지각</option><option value="조퇴">조퇴</option></select></div>
+        <div style="flex:1;min-width:120px;"><label>사유</label>
+          <select id="pa-reason" style="margin:0;" onchange="togglePaEtc()">
+            <option value="병결">병결 (병원·치료)</option>
+            <option value="학원보강">학원 보강</option>
+            <option value="가족행사">가족 행사</option>
+            <option value="경조사">경조사</option>
+            <option value="학교행사">학교 행사 참여</option>
+            <option value="기타">기타</option>
+          </select>
+        </div>
+      </div>
+      <div id="pa-etc-wrap" style="display:none;margin-top:8px;">
+        <label>직접 입력</label><input type="text" id="pa-etc" placeholder="사유를 입력하세요" style="margin:0;">
+      </div>
+      <div style="margin-top:8px;"><label>세부 내용 (선택)</label><input type="text" id="pa-detail" placeholder="예: 정형외과 방문" style="margin:0;"></div>
+      <button class="btn bp" style="margin-top:12px;" onclick="subPreAbs()">신청하기</button>
+      <div id="pa-msg" style="font-size:12px;color:#15803d;margin-top:8px;display:none;">사전 신청이 완료되었습니다.</div>
+    </div>
+    <div class="st" style="margin-top:.5rem;">내 사전 신청 현황</div>
+    <div class="card" style="padding:0;overflow:hidden;"><table><thead><tr><th>날짜</th><th>구분</th><th>사유</th><th>상태</th><th>취소</th></tr></thead><tbody id="pa-log"></tbody></table></div>
+  </div>
+  <div id="ts-sd" class="tc">
+    <div class="st">내 벌점 현황</div>
+    <div class="card">
+      <div class="row" style="gap:16px;align-items:center;">
+        <div class="sc" style="flex:0 0 auto;text-align:center;min-width:80px;"><div class="sl">누적 벌점</div><div class="sv" id="sd-tot" style="color:#b91c1c;">0점</div></div>
+        <div id="sd-st" style="font-size:13px;color:#6b7280;"></div>
+      </div>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden;"><table><thead><tr><th>날짜</th><th>항목</th><th>점수</th></tr></thead><tbody id="sd-log"></tbody></table></div>
+  </div>
+  <div id="ts-sf" class="tc">
+    <div class="st">서류 제출 신청</div>
+    <div class="card">
+      <label>서류 종류</label><select id="sf-type" style="margin-bottom:10px;"><option>병결확인서</option><option>학원보강확인서</option><option>기타</option></select>
+      <label>날짜</label><input type="date" id="sf-dt" style="margin-bottom:10px;">
+      <label>비고</label><input type="text" id="sf-note" placeholder="추가 내용">
+      <label>첨부파일 <span style="color:#9ca3af;font-weight:400;">(사진·PDF, 최대 5개)</span></label>
+      <div class="file-drop" id="sf-drop" onclick="gs(&#39;sf-file&#39;).click()" ondragover="fileDragOver(event)" ondragleave="fileDragLeave(event)" ondrop="fileDrop(event)">
+        <input type="file" id="sf-file" multiple="" accept="image/*,application/pdf" onchange="fileChange(event)">
+        <div style="font-size:22px;margin-bottom:6px;">📎</div>
+        <div style="font-size:13px;color:#6b7280;">클릭하거나 파일을 드래그하세요</div>
+      </div>
+      <div class="file-preview" id="sf-preview"></div>
+      <button class="btn bp" onclick="subDoc()">제출 신청</button>
+      <div id="sf-msg" style="font-size:12px;color:#15803d;margin-top:8px;display:none;">신청 접수되었습니다.</div>
+    </div>
+    <div class="st" style="margin-top:.5rem;">제출 현황</div>
+    <div class="card" style="padding:0;overflow:hidden;"><table><thead><tr><th>서류</th><th>날짜</th><th>첨부</th><th>상태</th><th>비고</th></tr></thead><tbody id="sf-log"></tbody></table></div>
+  </div>
+  <div id="ts-sn" class="tc">
+    <div class="st">공지사항</div><div id="nt-stu"></div>
+  </div>
+  <div id="ts-snf" class="tc">
+    <div class="rb"><div class="st" style="margin-bottom:0;">알림함</div><button class="btn bs" onclick="markAllRead()">모두 읽음</button></div>
+    <div class="card" style="padding:0;overflow:hidden;" id="notif-list"><div class="em">알림이 없습니다.</div></div>
+  </div>
+</div></div>
+
+<!-- 모달들 -->
+<div id="mo-dm" style="display:none;" class="mo"><div class="md">
+  <h3>벌점 부여</h3>
+  <label>학생</label><select id="dm-s" style="margin-bottom:10px;"></select>
+  <label>항목</label><select id="dm-r" style="margin-bottom:10px;"></select>
+  <label>날짜</label><input type="date" id="dm-dt" style="margin-bottom:14px;">
+  <div class="row" style="gap:8px;justify-content:flex-end;"><button class="btn" onclick="cm(&#39;mo-dm&#39;)">취소</button><button class="btn bp" onclick="grantDm()">부여</button></div>
+</div></div>
+<div id="mo-nt" style="display:none;" class="mo"><div class="md">
+  <h3>공지 작성</h3>
+  <label>제목</label><input type="text" id="nt-ti" placeholder="공지 제목">
+  <label>내용</label><textarea id="nt-bo" rows="4" placeholder="공지 내용"></textarea>
+  <div class="row" style="gap:8px;justify-content:flex-end;margin-top:4px;"><button class="btn" onclick="cm(&#39;mo-nt&#39;)">취소</button><button class="btn bp" onclick="saveNt()">게시</button></div>
+</div></div>
+<div id="mo-dd" style="display:none;" class="mo"><div class="md">
+  <h3 id="dd-hd">벌점 상세</h3><div id="dd-body"></div>
+  <div class="row" style="justify-content:flex-end;margin-top:1rem;"><button class="btn" onclick="cm(&#39;mo-dd&#39;)">닫기</button></div>
+</div></div>
+<div id="mo-etc-pts" style="display:none;" class="mo"><div class="md">
+  <h3>기타 사유 벌점 입력</h3>
+  <div style="font-size:13px;color:#6b7280;margin-bottom:1rem;">기타 사유의 경우 벌점을 직접 입력하세요. (0~2점)</div>
+  <label>벌점</label>
+  <select id="etc-pts-val" style="margin-bottom:14px;"><option value="0">0점 (인정)</option><option value="1" selected="">1점</option><option value="2">2점</option></select>
+  <div class="row" style="gap:8px;justify-content:flex-end;"><button class="btn" onclick="cm(&#39;mo-etc-pts&#39;)">취소</button><button class="btn bp" onclick="confirmEtcPts()">확인 처리</button></div>
+</div></div>
+
+<!-- Firebase SDK -->
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getFirestore, doc, getDoc, setDoc, onSnapshot, collection, query, orderBy } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { getMessaging, getToken, onMessage } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBmpytMiyKzMEpOTD3ru8i8HetHPZtRBvs",
+  authDomain: "bisang-class.firebaseapp.com",
+  projectId: "bisang-class",
+  storageBucket: "bisang-class.firebasestorage.app",
+  messagingSenderId: "602966990273",
+  appId: "1:602966990273:web:f243d9c196502eb3016340"
+};
+const VAPID = "BH7MvrVkwIFYhyPWLeG0ERZULW1yRnzKlJm8yelSnahbfPL--KyhF7cZq1O9RDRcMRuBEuMnuoH6ZgfPWttd4C8";
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+let messaging = null;
+
+// ── Firestore 저장/불러오기 ──
+const DB_DOC = 'bisang-class/data';
+let saveTimer = null;
+
+window.saveData = async function() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async () => {
+    try {
+      gs('saving-indicator').style.display = 'block';
+      const save = {
+        students: S.students, att: S.att, docs: S.docs.map(d=>({...d, files: d.files ? d.files.map(f=>({...f, data: f.data ? f.data.substring(0, 50000) : ''})) : []})),
+        dems: S.dems, rules: S.rules, notices: S.notices, notifs: S.notifs,
+        periods: S.periods, regAbs: S.regAbs, preAbs: S.preAbs,
+        _adminPw: ADMIN_PW
+      };
+      await setDoc(doc(db, 'bisang-class', 'data'), save);
+      gs('saving-indicator').style.display = 'none';
+    } catch(e) { console.error('저장 오류:', e); gs('saving-indicator').style.display = 'none'; }
+  }, 800);
+};
+
+window.loadData = async function() {
+  try {
+    const snap = await getDoc(doc(db, 'bisang-class', 'data'));
+    if (snap.exists()) {
+      const d = snap.data();
+      if(d.students) S.students = d.students;
+      if(d.att) S.att = d.att;
+      if(d.docs) S.docs = d.docs;
+      if(d.dems) S.dems = d.dems;
+      if(d.rules) S.rules = d.rules;
+      if(d.notices) S.notices = d.notices;
+      if(d.notifs) S.notifs = d.notifs;
+      if(d.periods) S.periods = d.periods;
+      if(d.regAbs) S.regAbs = d.regAbs;
+      if(d.preAbs) S.preAbs = d.preAbs;
+      if(d._adminPw) ADMIN_PW = d._adminPw;
+    }
+  } catch(e) { console.error('불러오기 오류:', e); }
+};
+
+// ── 실시간 데이터 동기화 ──
+window.startRealtimeSync = function() {
+  onSnapshot(doc(db, 'bisang-class', 'data'), (snap) => {
+    if (!snap.exists()) return;
+    const d = snap.data();
+    if(d.students) S.students = d.students;
+    if(d.att) S.att = d.att;
+    if(d.docs) S.docs = d.docs;
+    if(d.dems) S.dems = d.dems;
+    if(d.rules) S.rules = d.rules;
+    if(d.notices) S.notices = d.notices;
+    if(d.notifs) S.notifs = d.notifs;
+    if(d.periods) S.periods = d.periods;
+    if(d.regAbs) S.regAbs = d.regAbs;
+    if(d.preAbs) S.preAbs = d.preAbs;
+    // 현재 화면 갱신
+    if(S.role === 'admin') renderAdmin();
+    if(S.role === 'student') { renderStu(); updateBadge(); }
+  });
+};
+
+// ── FCM 푸시 알림 ──
+window.initPush = async function() {
+  try {
+    messaging = getMessaging(app);
+    const permission = await Notification.requestPermission();
+    if (permission !== 'granted') return;
+
+    // Service Worker 등록
+    const swReg = await navigator.serviceWorker.register('firebase-messaging-sw.js').catch(async () => {
+      // SW 파일이 없으면 인라인으로 생성
+      const swContent = `
+importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js');
+firebase.initializeApp({
+  apiKey:"AIzaSyBmpytMiyKzMEpOTD3ru8i8HetHPZtRBvs",
+  authDomain:"bisang-class.firebaseapp.com",
+  projectId:"bisang-class",
+  storageBucket:"bisang-class.firebasestorage.app",
+  messagingSenderId:"602966990273",
+  appId:"1:602966990273:web:f243d9c196502eb3016340"
+});
+const m=firebase.messaging();
+m.onBackgroundMessage(p=>{
+  self.registration.showNotification(p.notification.title,{body:p.notification.body,icon:'/icon.png'});
+});`;
+      const blob = new Blob([swContent], {type:'application/javascript'});
+      const url = URL.createObjectURL(blob);
+      return navigator.serviceWorker.register(url);
+    });
+
+    const token = await getToken(messaging, { vapidKey: VAPID, serviceWorkerRegistration: swReg });
+    if (token) {
+      // 토큰 저장 (학생이면 studentId와 함께)
+      const tokenKey = S.cur ? `token_${S.cur.id}` : 'token_admin';
+      localStorage.setItem(tokenKey, token);
+      // Firestore에 토큰 저장
+      const tokensRef = doc(db, 'bisang-class', 'tokens');
+      const existing = await getDoc(tokensRef).then(s => s.exists() ? s.data() : {}).catch(() => ({}));
+      existing[tokenKey] = token;
+      await setDoc(tokensRef, existing);
+      showPushBanner('📱 알림이 허용되었습니다!');
+    }
+
+    // 앱 포그라운드 알림 수신
+    onMessage(messaging, (payload) => {
+      const { title, body } = payload.notification || {};
+      showPushBanner(`${title}: ${body}`);
+    });
+  } catch(e) {
+    console.log('푸시 설정 실패 (파일 서버 환경에서는 동작하지 않습니다):', e.message);
+  }
+};
+
+// ── 푸시 발송 (Firestore를 통해 Cloud Functions 트리거) ──
+window.sendPushViaFirestore = async function(targetSid, title, body) {
+  try {
+    const msgId = 'msg_' + Date.now();
+    await setDoc(doc(db, 'push_queue', msgId), {
+      targetSid, title, body, createdAt: new Date().toISOString()
+    });
+  } catch(e) { console.log('푸시 큐 저장 실패:', e); }
+};
+
+// ── 앱 초기화 ──
+window.addEventListener('DOMContentLoaded', async () => {
+  await loadData();
+  // 로그인 화면 초기화
+  loginChoose(null);
+  gs('att-dt').value = TD;
+  gs('sf-dt').value = TD;
+});
+
+</script>
+
+<script>
+const TD = new Date().toISOString().slice(0,10);
+let ADMIN_PW = 'solcom1007!!';
+let S = {
+  role:null, cur:null,
+  students:[], att:{}, docs:[], dems:[],
+  rules:[{n:'지각',p:1},{n:'무단결석',p:2},{n:'복장 불량',p:1},{n:'휴대폰 규정 위반',p:2},{n:'수업 방해',p:2}],
+  notices:[{t:'비상반 운영 안내',b:'출결 및 서류 관련 문의는 담임 선생님께 하세요.',d:'2025-03-02'}],
+  notifs:{},
+  periods:[{name:'1교시',time:'09:00~10:00'},{name:'2교시',time:'10:10~11:10'},{name:'3교시',time:'11:20~12:20'},{name:'점심',time:'12:20~13:20'},{name:'4교시',time:'13:20~14:20'},{name:'5교시',time:'14:30~15:30'}],
+  regAbs:[], preAbs:[]
+};
+
+function gs(id){return document.getElementById(id)}
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));gs(id).classList.add('active')}
+function ab(s,cls){return`<span class="badge ${cls}">${s}</span>`}
+function attB(s){const m={출석:'gg',지각:'aa',조퇴:'aa',결석:'rr','결석(서류제출)':'bg'};return ab(s||'미입력',m[s]||'gr')}
+function attCell(s,id,dt,fromDoc){
+  if(fromDoc)return`<span style="font-size:11px;color:#6b7280;">🔒 서류승인</span>`;
+  return`<select style="width:100px;padding:3px 6px;font-size:12px;margin:0;" onchange="chAtt('${id}','${dt}',this.value)">${['출석','지각','조퇴','결석','결석(서류제출)'].map(x=>`<option${s===x?' selected':''}>${x}</option>`).join('')}</select>`;
+}
+function cm(id){gs(id).style.display='none'}
+function showPushBanner(msg){
+  let b=document.getElementById('push-banner');
+  if(!b){b=document.createElement('div');b.id='push-banner';b.className='push-banner';document.body.appendChild(b);}
+  b.textContent=msg;b.style.display='flex';
+  clearTimeout(window._bannerT);window._bannerT=setTimeout(()=>b.style.display='none',4000);
+}
+
+// ── 알림 ──
+function pushNotif(sid,type,title,desc){
+  if(!S.notifs[sid])S.notifs[sid]=[];
+  S.notifs[sid].unshift({type,title,desc,time:new Date().toLocaleString('ko-KR',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}),read:false});
+  if(S.cur&&S.cur.id===sid)updateBadge();
+  // 푸시 발송
+  if(window.sendPushViaFirestore) sendPushViaFirestore(sid,title,desc);
+  saveData();
+}
+function updateBadge(){
+  const sid=S.cur&&S.cur.id;if(!sid)return;
+  const cnt=(S.notifs[sid]||[]).filter(n=>!n.read).length;
+  const badge=gs('notif-badge');
+  if(cnt>0){badge.textContent=cnt>9?'9+':cnt;badge.style.display='flex';}
+  else badge.style.display='none';
+}
+function renderNotif(){
+  const sid=S.cur.id,list=S.notifs[sid]||[];
+  const el=gs('notif-list');
+  if(!list.length){el.innerHTML='<div class="em">알림이 없습니다.</div>';return;}
+  const iconMap={dm:'🚨',doc_ok:'✅',doc_no:'❌',att:'📋'};
+  const clsMap={dm:'dm',doc_ok:'doc-ok',doc_no:'doc-no',att:'att'};
+  el.innerHTML=list.map((n,i)=>`
+    <div class="notif-item${n.read?'':' unread'}" onclick="readNotif(${i})">
+      <div class="notif-icon ${clsMap[n.type]||'att'}">${iconMap[n.type]||'📢'}</div>
+      <div class="notif-body"><div class="notif-title">${n.title}</div><div class="notif-desc">${n.desc}</div><div class="notif-time">${n.time}</div></div>
+      ${n.read?'':'<div class="notif-unread-mark"></div>'}
+    </div>`).join('');
+}
+function readNotif(i){const sid=S.cur.id;if(S.notifs[sid]&&S.notifs[sid][i])S.notifs[sid][i].read=true;updateBadge();renderNotif();}
+function markAllRead(){const sid=S.cur.id;(S.notifs[sid]||[]).forEach(n=>n.read=true);updateBadge();renderNotif();}
+
+// ── 로그인 ──
+function loginChoose(type){
+  gs('lp-choose').style.display=type===null?'block':'none';
+  gs('lp-admin').style.display=type==='admin'?'block':'none';
+  gs('lp-student').style.display=type==='student'?'block':'none';
+  if(gs('a-err'))gs('a-err').style.display='none';
+  if(gs('s-err'))gs('s-err').style.display='none';
+}
+function adminLogin(){
+  if(gs('a-pw').value===ADMIN_PW){
+    S.role='admin';gs('a-pw').value='';show('sc-admin');renderAdmin();
+    if(window.startRealtimeSync)startRealtimeSync();
+    if(window.initPush)initPush();
+  } else gs('a-err').style.display='block';
+}
+function stuLogin(){
+  const num=gs('s-num').value.trim(),name=gs('s-name').value.trim(),e=gs('s-err');
+  if(!num){e.textContent='학번을 입력하세요.';e.style.display='block';return}
+  if(!name){e.textContent='이름을 입력하세요.';e.style.display='block';return}
+  if(!S.students.length){e.textContent='등록된 학생이 없습니다. 선생님께 문의하세요.';e.style.display='block';return}
+  const f=S.students.find(s=>s.num===num&&s.name===name);
+  if(f){
+    S.role='student';S.cur=f;if(!S.att[f.id])S.att[f.id]=[];
+    gs('stu-hdr').textContent=f.name+' 학생';show('sc-stu');renderStu();updateBadge();
+    if(window.startRealtimeSync)startRealtimeSync();
+    if(window.initPush)initPush();
+  } else {e.textContent='학번과 이름이 일치하지 않습니다.';e.style.display='block';}
+}
+function logout(){
+  S.role=null;S.cur=null;
+  if(gs('s-num'))gs('s-num').value='';
+  if(gs('s-name'))gs('s-name').value='';
+  loginChoose(null);show('sc-login');
+}
+
+// ── 탭 전환 ──
+function aTab(n,el){document.querySelectorAll('#sc-admin .tab').forEach(t=>t.classList.remove('on'));document.querySelectorAll('#sc-admin .tc').forEach(t=>t.classList.remove('on'));el.classList.add('on');gs('ta-'+n).classList.add('on');({att:renderAtt,doc:renderDoc,dm:renderDm,tt:renderAdminTTTab,nt:renderNtAdmin,stu:renderStuList})[n]&&({att:renderAtt,doc:renderDoc,dm:renderDm,tt:renderAdminTTTab,nt:renderNtAdmin,stu:renderStuList})[n]()}
+function sTab(n,el){document.querySelectorAll('#sc-stu .tab').forEach(t=>t.classList.remove('on'));document.querySelectorAll('#sc-stu .tc').forEach(t=>t.classList.remove('on'));el.classList.add('on');gs('ts-'+n).classList.add('on');({sa:renderStuAtt,stt:renderStuTTTab,spa:renderStuPreAbs,sd:renderStuDm,sf:renderStuDoc,sn:renderNtStu,snf:()=>{markAllRead();renderNotif();}})[n]&&({sa:renderStuAtt,stt:renderStuTTTab,spa:renderStuPreAbs,sd:renderStuDm,sf:renderStuDoc,sn:renderNtStu,snf:()=>{markAllRead();renderNotif();}})[n]()}
+
+// ── 관리자 렌더링 ──
+function renderAdmin(){gs('att-dt').value=gs('att-dt').value||TD;gs('tt-week').value=gs('tt-week').value||TD;renderAtt();renderDoc();renderDm();renderNtAdmin();renderStuList();renderPreAbsAdmin();}
+
+function renderAtt(){
+  const dt=gs('att-dt').value||TD;let p=0,l=0,e=0,a=0;const tb=gs('att-tb');
+  if(!S.students.length){tb.innerHTML='<tr><td colspan="5" class="em">학생 관리 탭에서 학생을 추가하세요.</td></tr>';['c-p','c-l','c-e','c-a'].forEach(i=>gs(i).textContent=0);return}
+  tb.innerHTML='';
+  S.students.forEach(s=>{const recs=S.att[s.id]||[];const rec=recs.find(r=>r.date===dt);const st=rec?rec.status:'출석';const fd=rec&&rec.fromDoc;if(st==='출석')p++;else if(st==='지각')l++;else if(st==='조퇴')e++;else a++;tb.innerHTML+=`<tr><td style="font-size:12px;color:#6b7280;">${s.num}</td><td>${s.name}</td><td>${attB(st)}</td><td style="font-size:12px;color:#6b7280;">${rec&&rec.time?rec.time:'-'}</td><td>${attCell(st,s.id,dt,fd)}</td></tr>`});
+  gs('c-p').textContent=p;gs('c-l').textContent=l;gs('c-e').textContent=e;gs('c-a').textContent=a;
+}
+
+// ── 벌점 헬퍼 ──
+function getPeriodCount(){return S.periods.length;}
+function getFamilyCount(sid,year){return S.preAbs.filter(p=>p.sid===sid&&p.reason==='가족행사'&&p.status==='확인'&&p.date.startsWith(year)).length;}
+function removeDemerit(sid,date,tag){S.dems=S.dems.filter(d=>!(d.sid===sid&&d.date===date&&d.tag===tag));}
+function addDemerit(sid,date,name,pts,tag){
+  if(pts<=0)return;
+  removeDemerit(sid,date,tag);
+  S.dems.push({sid,n:name,p:pts,date,tag,auto:true});
+  pushNotif(sid,'dm','벌점이 부과되었습니다',`${date} · ${name} · ${pts}점 부과`);
+}
+
+function chAtt(id,dt,st){
+  if(!S.att[id])S.att[id]=[];
+  const r=S.att[id];const i=r.findIndex(x=>x.date===dt);
+  const e={date:dt,status:st,time:new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'})};
+  if(i>=0)r[i]=e;else r.push(e);
+  const cnt=getPeriodCount();
+  if(st==='지각'){addDemerit(id,dt,'지각',1,'지각');}
+  else if(st==='결석'){const approved=S.preAbs.find(p=>p.sid===id&&p.date===dt&&p.status==='확인');if(!approved)addDemerit(id,dt,'무단결석',2*cnt,'무단결석');}
+  else if(st==='출석'){removeDemerit(id,dt,'지각');removeDemerit(id,dt,'무단결석');}
+  saveData();
+}
+
+function renderDoc(){
+  const p=S.docs.filter(d=>d.status==='대기').length;gs('doc-pnd').textContent='대기 '+p+'건';
+  const tb=gs('doc-tb');
+  if(!S.docs.length){tb.innerHTML='<tr><td colspan="7" class="em">제출된 서류가 없습니다.</td></tr>';return}
+  tb.innerHTML='';
+  S.docs.forEach((d,i)=>{
+    const sc=d.status==='승인'?'gg':d.status==='반려'?'rr':'aa';
+    const st=S.students.find(s=>s.id===d.sid);
+    const files=d.files||[];
+    const thumbs=files.length?files.map(f=>f.type&&f.type.startsWith('image/')?`<img src="${f.data}" onclick="viewImg('${f.data}')" style="width:36px;height:36px;object-fit:cover;border-radius:4px;cursor:pointer;" title="${f.name}">`:`<span style="font-size:20px;cursor:pointer;" title="${f.name}">📄</span>`).join(''):'<span style="color:#9ca3af;font-size:12px;">없음</span>';
+    tb.innerHTML+=`<tr><td style="font-size:12px;color:#6b7280;">${st?st.num:'-'}</td><td>${st?st.name:'-'}</td><td>${d.type}</td><td style="font-size:12px;">${d.date}</td><td><div style="display:flex;gap:4px;">${thumbs}</div></td><td>${ab(d.status,sc)}</td><td>${d.status==='대기'?`<button class="btn bs" onclick="appDoc(${i},'승인')">승인</button><button class="btn bs bd" style="margin-left:4px;" onclick="appDoc(${i},'반려')">반려</button>`:'-'}</td></tr>`;
+  });
+}
+
+function appDoc(i,st){
+  const doc=S.docs[i];doc.status=st;
+  if(st==='승인'){
+    const id=doc.sid,dt=doc.date;
+    if(!S.att[id])S.att[id]=[];
+    const recs=S.att[id];const ei=recs.findIndex(r=>r.date===dt);
+    const entry={date:dt,status:'결석(서류제출)',reason:doc.type+' 승인',time:new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'}),fromDoc:true};
+    if(ei>=0)recs[ei]=entry;else recs.push(entry);
+    const cnt=getPeriodCount();let pts=0,name='';
+    if(doc.type==='병결확인서'){pts=1*cnt;name='병결(인정)';}
+    else if(doc.type==='학원보강확인서'){pts=1*cnt;name='학원보강(인정)';}
+    else{pts=1*cnt;name='서류제출('+doc.type+')';}
+    removeDemerit(id,dt,'무단결석');addDemerit(id,dt,name,pts,'서류인정');
+    pushNotif(id,'doc_ok','서류가 승인되었습니다',`${doc.type} (${dt}) · 벌점 ${pts}점 부과`);
+  } else {
+    pushNotif(doc.sid,'doc_no','서류가 반려되었습니다',`${doc.type} (${doc.date}) · 선생님께 문의하세요.`);
+  }
+  renderDoc();saveData();
+}
+
+function renderDm(){const tb=gs('dm-tb');if(!S.students.length){tb.innerHTML='<tr><td colspan="5" class="em">등록된 학생이 없습니다.</td></tr>';renderRules();return}tb.innerHTML='';S.students.forEach(s=>{const logs=S.dems.filter(d=>d.sid===s.id);const tot=logs.reduce((a,d)=>a+d.p,0);const st=tot>=10?ab('주의','rr'):tot>=5?ab('경고','aa'):ab('정상','gg');tb.innerHTML+=`<tr><td style="font-size:12px;color:#6b7280;">${s.num}</td><td>${s.name}</td><td style="font-weight:600;">${tot}점</td><td>${st}</td><td><button class="btn bs" onclick="showDd('${s.id}')">상세</button></td></tr>`});renderRules()}
+function renderRules(){const tb=gs('rule-tb');tb.innerHTML='';S.rules.forEach((r,i)=>{tb.innerHTML+=`<tr><td>${r.n}</td><td>${r.p}점</td><td><button class="btn bs bd" onclick="delRule(${i})">삭제</button></td></tr>`})}
+function addRule(){const n=gs('rule-nm').value.trim(),p=parseInt(gs('rule-pt').value);if(!n||isNaN(p))return;S.rules.push({n,p});gs('rule-nm').value='';gs('rule-pt').value='';renderRules();saveData();}
+function delRule(i){S.rules.splice(i,1);renderRules();saveData();}
+function openDm(){if(!S.students.length){alert('등록된 학생이 없습니다.');return}gs('dm-s').innerHTML=S.students.map(s=>`<option value="${s.id}">${s.num} ${s.name}</option>`).join('');gs('dm-r').innerHTML=S.rules.map((r,i)=>`<option value="${i}">${r.n} (${r.p}점)</option>`).join('');gs('dm-dt').value=TD;gs('mo-dm').style.display='flex'}
+function grantDm(){
+  const sid=gs('dm-s').value,ri=parseInt(gs('dm-r').value),dt=gs('dm-dt').value,r=S.rules[ri];
+  S.dems.push({sid,n:r.n,p:r.p,date:dt});
+  pushNotif(sid,'dm','벌점이 부과되었습니다',`${dt} · ${r.n} · ${r.p}점 부과`);
+  cm('mo-dm');renderDm();saveData();
+}
+function showDd(id){const s=S.students.find(x=>x.id===id),logs=S.dems.filter(d=>d.sid===id);gs('dd-hd').textContent=(s?s.name:'')+' 벌점 상세';const tot=logs.reduce((a,d)=>a+d.p,0);let h=`<div style="margin-bottom:10px;font-size:14px;font-weight:600;">누적: ${tot}점</div>`;if(!logs.length)h+='<div style="color:#6b7280;font-size:13px;">벌점 기록 없음</div>';else{h+='<table><thead><tr><th>날짜</th><th>항목</th><th>점수</th></tr></thead><tbody>';logs.forEach(l=>{h+=`<tr><td style="font-size:12px;">${l.date}</td><td>${l.n}</td><td>${l.p}점</td></tr>`});h+='</tbody></table>'}gs('dd-body').innerHTML=h;gs('mo-dd').style.display='flex'}
+function renderNtAdmin(){const el=gs('nt-admin');el.innerHTML='';if(!S.notices.length){el.innerHTML='<div class="em">공지사항이 없습니다.</div>';return}S.notices.forEach((n,i)=>{el.innerHTML+=`<div class="card"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;"><div><div style="font-weight:600;font-size:14px;">${n.t}</div><div style="font-size:12px;color:#6b7280;">${n.d}</div></div><button class="btn bs bd" onclick="delNt(${i})">삭제</button></div><hr style="border:none;border-top:1px solid #f3f4f6;margin:0 0 8px;"><div style="font-size:13px;color:#6b7280;">${n.b}</div></div>`})}
+function openNt(){gs('nt-ti').value='';gs('nt-bo').value='';gs('mo-nt').style.display='flex'}
+function saveNt(){const t=gs('nt-ti').value.trim(),b=gs('nt-bo').value.trim();if(!t)return;S.notices.unshift({t,b,d:TD});cm('mo-nt');renderNtAdmin();saveData();}
+function delNt(i){S.notices.splice(i,1);renderNtAdmin();saveData();}
+function renderStuList(){
+  gs('stu-cnt').textContent=S.students.length+'명 등록됨';
+  const tb=gs('stu-tb');
+  if(!S.students.length){tb.innerHTML='<tr><td colspan="5" class="em">등록된 학생이 없습니다.</td></tr>';return}
+  tb.innerHTML='';
+  S.students.forEach((s,i)=>{
+    const gb=s.grade?`<span class="badge ${s.grade==='1'?'gg':s.grade==='2'?'bg':'pp'}">${s.grade}학년</span>`:`<span class="badge gr">-</span>`;
+    tb.innerHTML+=`<tr><td>${gb}</td><td style="font-weight:600;">${s.num}</td><td>${s.name}</td><td style="font-size:12px;color:#6b7280;">${s.reg}</td><td><button class="btn bs bd" onclick="delStu(${i})">삭제</button></td></tr>`;
+  });
+}
+function addStu(){
+  const grade=gs('ns-grade').value,num=gs('ns-num').value.trim(),name=gs('ns-name').value.trim(),e=gs('ns-err');
+  if(!num){e.textContent='학번을 입력하세요.';e.style.display='block';return}
+  if(!name){e.textContent='이름을 입력하세요.';e.style.display='block';return}
+  if(S.students.find(s=>s.num===num)){e.textContent='이미 등록된 학번입니다.';e.style.display='block';return}
+  e.style.display='none';
+  const id='s_'+Date.now();S.students.push({id,grade,num,name,reg:TD});S.att[id]=[];
+  gs('ns-num').value='';gs('ns-name').value='';renderStuList();saveData();
+}
+function changeAdminPw(){
+  const cur=gs('pw-cur').value,nw=gs('pw-new').value,nw2=gs('pw-new2').value;
+  const err=gs('pw-err'),ok=gs('pw-ok');
+  err.style.display='none';ok.style.display='none';
+  if(cur!==ADMIN_PW){err.textContent='현재 비밀번호가 맞지 않습니다.';err.style.display='block';return;}
+  if(nw.length<4){err.textContent='새 비밀번호는 4자 이상이어야 합니다.';err.style.display='block';return;}
+  if(nw!==nw2){err.textContent='새 비밀번호가 일치하지 않습니다.';err.style.display='block';return;}
+  ADMIN_PW=nw;
+  gs('pw-cur').value='';gs('pw-new').value='';gs('pw-new2').value='';
+  ok.style.display='block';
+  // Firestore에 비밀번호 저장
+  S._adminPw=ADMIN_PW;
+  saveData();
+}
+function delStu(i){const s=S.students[i];if(!confirm(s.name+' 학생을 삭제하시겠습니까?'))return;const id=s.id;S.students.splice(i,1);delete S.att[id];S.docs=S.docs.filter(d=>d.sid!==id);S.dems=S.dems.filter(d=>d.sid!==id);renderStuList();saveData();}
+
+// ── 학생 렌더링 ──
+function renderStu(){if(gs('stt-week'))gs('stt-week').value=TD;if(gs('pa-date'))gs('pa-date').value=TD;renderStuAtt();renderStuDm();renderStuDoc();renderNtStu();}
+function renderStuAtt(){const id=S.cur.id,recs=S.att[id]||[];let p=0,l=0,e=0,a=0;recs.forEach(r=>{if(r.status==='지각')l++;else if(r.status==='조퇴')e++;else if(r.status==='결석'||r.status==='결석(서류제출)')a++;else p++});gs('sp').textContent=p;gs('sl2').textContent=l;gs('se').textContent=e;gs('sa2').textContent=a;const tb=gs('sa-log');tb.innerHTML='';if(!recs.length){tb.innerHTML='<tr><td colspan="3" class="em">출결 기록 없음</td></tr>';return}recs.slice().reverse().forEach(r=>{tb.innerHTML+=`<tr><td style="font-size:12px;">${r.date}</td><td>${attB(r.status)}</td><td style="font-size:12px;color:#6b7280;">${r.reason||'-'}</td></tr>`})}
+function renderStuDm(){const id=S.cur.id,logs=S.dems.filter(d=>d.sid===id),tot=logs.reduce((a,d)=>a+d.p,0);gs('sd-tot').textContent=tot+'점';const el=gs('sd-st');if(tot>=10)el.innerHTML=ab('주의 대상','rr')+' 상담이 필요합니다.';else if(tot>=5)el.innerHTML=ab('경고','aa')+' 주의하세요.';else el.innerHTML=ab('정상','gg')+' 모범적으로 생활하고 있어요.';const tb=gs('sd-log');tb.innerHTML='';if(!logs.length){tb.innerHTML='<tr><td colspan="3" class="em">벌점 기록 없음</td></tr>';return}logs.slice().reverse().forEach(l=>{tb.innerHTML+=`<tr><td style="font-size:12px;">${l.date}</td><td>${l.n}</td><td>${l.p}점</td></tr>`})}
+function renderStuDoc(){const id=S.cur.id,my=S.docs.filter(d=>d.sid===id);const tb=gs('sf-log');tb.innerHTML='';if(!my.length){tb.innerHTML='<tr><td colspan="5" class="em">제출 내역 없음</td></tr>';return}my.slice().reverse().forEach(d=>{const sc=d.status==='승인'?'gg':d.status==='반려'?'rr':'aa';const note=d.status==='승인'?'<span style="font-size:11px;color:#1e40af;">✓ 출결 자동반영</span>':'-';const fcnt=(d.files||[]).length;const fLabel=fcnt?`<span style="font-size:12px;color:#1d4ed8;cursor:pointer;" onclick="showDocFiles(${S.docs.indexOf(d)})">📎 ${fcnt}개</span>`:'<span style="font-size:12px;color:#9ca3af;">없음</span>';tb.innerHTML+=`<tr><td>${d.type}</td><td style="font-size:12px;">${d.date}</td><td>${fLabel}</td><td>${ab(d.status,sc)}</td><td>${note}</td></tr>`})}
+function subDoc(){
+  const id=S.cur.id,type=gs('sf-type').value,date=gs('sf-dt').value||TD,note=gs('sf-note').value;
+  S.docs.push({sid:id,type,date,note,status:'대기',files:[...pendingFiles]});
+  pendingFiles=[];renderPreview();gs('sf-note').value='';
+  gs('sf-msg').style.display='block';setTimeout(()=>gs('sf-msg').style.display='none',3000);
+  renderStuDoc();saveData();
+}
+function renderNtStu(){const el=gs('nt-stu');el.innerHTML='';if(!S.notices.length){el.innerHTML='<div class="em">공지사항이 없습니다.</div>';return}S.notices.forEach(n=>{el.innerHTML+=`<div class="card"><div style="font-weight:600;font-size:14px;margin-bottom:4px;">${n.t}</div><div style="font-size:12px;color:#6b7280;margin-bottom:8px;">${n.d}</div><div style="font-size:13px;color:#6b7280;">${n.b}</div></div>`})}
+
+// ── 사전 신청 ──
+function togglePaEtc(){gs('pa-etc-wrap').style.display=gs('pa-reason').value==='기타'?'block':'none';}
+function subPreAbs(){
+  const sid=S.cur.id,date=gs('pa-date').value,type=gs('pa-type').value;
+  const reasonSel=gs('pa-reason').value;
+  const reason=reasonSel==='기타'?(gs('pa-etc').value.trim()||'기타'):reasonSel;
+  const detail=gs('pa-detail').value.trim();
+  if(!date){alert('날짜를 선택하세요.');return;}
+  S.preAbs.push({sid,date,type,reason,detail,status:'대기',submittedAt:new Date().toLocaleString('ko-KR',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'})});
+  gs('pa-date').value='';gs('pa-detail').value='';
+  gs('pa-msg').style.display='block';setTimeout(()=>gs('pa-msg').style.display='none',3000);
+  renderStuPreAbs();saveData();
+}
+function renderStuPreAbs(){
+  const id=S.cur.id,my=S.preAbs.filter(p=>p.sid===id);
+  const tb=gs('pa-log');tb.innerHTML='';
+  if(!my.length){tb.innerHTML='<tr><td colspan="5" class="em">사전 신청 내역이 없습니다.</td></tr>';return;}
+  my.slice().reverse().forEach(p=>{
+    const realIdx=S.preAbs.indexOf(p);
+    const sc=p.status==='확인'?'gg':p.status==='반려'?'rr':'aa';
+    tb.innerHTML+=`<tr>
+      <td style="font-size:12px;">${p.date}</td>
+      <td>${ab(p.type,p.type==='결석'?'rr':p.type==='지각'?'aa':'gr')}</td>
+      <td>${p.reason}${p.detail?`<br><span style="font-size:11px;color:#9ca3af;">${p.detail}</span>`:''}</td>
+      <td>${ab(p.status,sc)}</td>
+      <td>${p.status==='대기'?`<button class="btn bs bd" onclick="cancelPreAbs(${realIdx})">취소</button>`:'-'}</td>
+    </tr>`;
+  });
+}
+function cancelPreAbs(i){if(!confirm('사전 신청을 취소하시겠습니까?'))return;S.preAbs.splice(i,1);renderStuPreAbs();saveData();}
+function renderPreAbsAdmin(){
+  const tb=gs('pa-admin-tb');if(!tb)return;
+  const pending=S.preAbs.filter(p=>p.status==='대기').length;
+  const cntEl=gs('pa-pending-cnt');if(cntEl)cntEl.textContent='대기 '+pending+'건';
+  if(!S.preAbs.length){tb.innerHTML='<tr><td colspan="9" class="em">사전 신청 내역이 없습니다.</td></tr>';return;}
+  const cnt=getPeriodCount();tb.innerHTML='';
+  S.preAbs.slice().sort((a,b)=>a.date.localeCompare(b.date)).forEach(p=>{
+    const i=S.preAbs.indexOf(p);
+    const stu=S.students.find(s=>s.id===p.sid);
+    const sc=p.status==='확인'?'gg':p.status==='반려'?'rr':'aa';
+    const typeC=p.type==='결석'?'rr':p.type==='지각'?'aa':'gr';
+    let preview='';
+    if(p.type==='지각')preview='1점(고정)';
+    else if(p.reason==='병결'||p.reason==='학원보강')preview=`${cnt}점(${cnt}교시×1)`;
+    else if(p.reason==='가족행사'){const year=p.date.slice(0,4);const fc=getFamilyCount(p.sid,year);preview=fc<2?`0점(연${fc+1}회,인정)`:`${cnt}점(연${fc+1}회,초과)`;}
+    else if(p.reason==='경조사'||p.reason==='학교행사')preview='0점(인정)';
+    else preview='0~2점(직접입력)';
+    tb.innerHTML+=`<tr>
+      <td style="font-size:12px;color:#6b7280;">${stu?stu.num:'-'}</td><td>${stu?stu.name:'-'}</td>
+      <td style="font-size:12px;">${p.date}</td><td>${ab(p.type,typeC)}</td>
+      <td>${p.reason}</td><td style="font-size:12px;color:#6b7280;">${p.detail||'-'}</td>
+      <td style="font-size:12px;color:#92400e;font-weight:500;">${preview}</td>
+      <td>${ab(p.status,sc)}</td>
+      <td>${p.status==='대기'?`<button class="btn bs" onclick="procPreAbs(${i},'확인')">확인</button><button class="btn bs bd" style="margin-left:4px;" onclick="procPreAbs(${i},'반려')">반려</button>`:'-'}</td>
+    </tr>`;
+  });
+}
+function procPreAbs(i,status){
+  const p=S.preAbs[i];
+  if(status==='확인'&&p.reason==='기타'){openEtcPtsModal(i);return;}
+  _applyPreAbs(i,status,null);
+}
+function openEtcPtsModal(i){window._etcPtsIdx=i;gs('mo-etc-pts').style.display='flex';gs('etc-pts-val').value='1';}
+function confirmEtcPts(){const pts=parseInt(gs('etc-pts-val').value);if(isNaN(pts)||pts<0||pts>2){alert('0~2점 사이로 입력하세요.');return;}cm('mo-etc-pts');_applyPreAbs(window._etcPtsIdx,'확인',pts);}
+function _applyPreAbs(i,status,etcPts){
+  S.preAbs[i].status=status;const p=S.preAbs[i];
+  if(status==='확인'){
+    if(!S.att[p.sid])S.att[p.sid]=[];
+    const recs=S.att[p.sid];const ei=recs.findIndex(r=>r.date===p.date);
+    const entry={date:p.date,status:p.type,reason:p.reason+(p.detail?' ('+p.detail+')':''),time:'사전신청'};
+    if(ei>=0)recs[ei]=entry;else recs.push(entry);
+    const cnt=getPeriodCount(),year=p.date.slice(0,4);
+    let pts=0,dmName='';
+    removeDemerit(p.sid,p.date,'무단결석');
+    if(p.type==='지각'){dmName='지각(사전인정)';pts=1;}
+    else if(p.reason==='병결'){dmName='병결(인정)';pts=1*cnt;}
+    else if(p.reason==='학원보강'){dmName='학원보강(인정)';pts=1*cnt;}
+    else if(p.reason==='가족행사'){const prevCnt=getFamilyCount(p.sid,year);if(prevCnt<2){dmName='가족행사(인정,연'+(prevCnt+1)+'회)';pts=0;}else{dmName='가족행사(연'+(prevCnt+1)+'회,초과)';pts=1*cnt;}}
+    else if(p.reason==='경조사'||p.reason==='학교행사'){dmName=p.reason+'(인정)';pts=0;}
+    else{dmName='기타('+p.reason+')';pts=etcPts!==null?etcPts:1;}
+    if(pts>0)addDemerit(p.sid,p.date,dmName,pts,'사전인정');
+    const ptsTxt=pts===0?'벌점 없음 (인정)':'벌점 '+pts+'점 부과';
+    pushNotif(p.sid,'att','사전 신청이 확인되었습니다',`${p.date} · ${p.type} (${p.reason}) · ${ptsTxt}`);
+  } else {
+    pushNotif(p.sid,'doc_no','사전 신청이 반려되었습니다',`${p.date} · ${p.reason} · 선생님께 문의하세요.`);
+  }
+  renderPreAbsAdmin();saveData();
+}
+
+// ── 타임테이블 ──
+const DAYS=['월','화','수','목','금','토','일'];
+function getMondayOf(dateStr){const d=new Date(dateStr||TD);const day=d.getDay();const diff=day===0?-6:1-day;d.setDate(d.getDate()+diff);return d;}
+function getWeekDates(m){return Array.from({length:7},(_,i)=>{const d=new Date(m);d.setDate(d.getDate()+i);return d.toISOString().slice(0,10);});}
+function isRegAbs(sid,dateStr,periodName){const d=new Date(dateStr);const dayIdx=d.getDay()===0?6:d.getDay()-1;return S.regAbs.some(r=>r.sid===sid&&r.day==dayIdx&&(r.type==='day'||r.period===periodName));}
+function getCellStatus(sid,dateStr,periodName){
+  if(isRegAbs(sid,dateStr,periodName))return 'regular';
+  const recs=S.att[sid]||[];const rec=recs.find(r=>r.date===dateStr);
+  if(!rec||rec.status==='출석')return 'present';
+  if(rec.status==='결석'||rec.status==='결석(서류제출)')return 'absent';
+  if(rec.status==='지각')return 'late';if(rec.status==='조퇴')return 'early';
+  return 'present';
+}
+function cellLabel(st){return{present:'출석',absent:'결석',regular:'정기결석',late:'지각',early:'조퇴'}[st]||'미입력'}
+function cellCls(st){return{present:'tt-present',absent:'tt-absent',regular:'tt-regular',late:'tt-absent',early:'tt-absent'}[st]||'tt-unknown'}
+function addPeriod(){const name=gs('p-name').value.trim(),time=gs('p-time').value.trim();if(!name)return;S.periods.push({name,time});gs('p-name').value='';gs('p-time').value='';renderPeriodList();updateRegPeriodSel();saveData();}
+function delPeriod(i){S.periods.splice(i,1);renderPeriodList();updateRegPeriodSel();saveData();}
+function renderPeriodList(){const el=gs('period-list');if(!S.periods.length){el.innerHTML='<div style="font-size:12px;color:#9ca3af;margin-bottom:8px;">등록된 교시 없음</div>';return;}el.innerHTML=S.periods.map((p,i)=>`<div class="period-row"><span class="period-tag">${p.name}</span><span style="font-size:12px;color:#6b7280;">${p.time||''}</span><button class="btn bs bd" onclick="delPeriod(${i})">삭제</button></div>`).join('');}
+function toggleRegScope(){gs('reg-period-wrap').style.display=gs('reg-type').value==='period'?'block':'none';}
+function updateRegPeriodSel(){const sel=gs('reg-period');if(!sel)return;sel.innerHTML=S.periods.map(p=>`<option value="${p.name}">${p.name}</option>`).join('');}
+function updateRegStuSel(){const sel=gs('reg-stu');if(!sel)return;sel.innerHTML=S.students.map(s=>`<option value="${s.id}">${s.num} ${s.name}</option>`).join('');}
+function addRegAbs(){const sid=gs('reg-stu').value,day=parseInt(gs('reg-day').value),type=gs('reg-type').value,period=type==='period'?gs('reg-period').value:'',reason=gs('reg-reason').value.trim()||'정기결석';if(!sid){alert('학생을 선택하세요.');return;}const dup=S.regAbs.some(r=>r.sid===sid&&r.day===day&&r.type===type&&(type==='day'||r.period===period));if(dup){alert('이미 등록된 항목입니다.');return;}S.regAbs.push({sid,day,type,period,reason});renderRegAbsList();saveData();}
+function delRegAbs(i){S.regAbs.splice(i,1);renderRegAbsList();saveData();}
+function renderRegAbsList(){const tb=gs('reg-abs-tb');if(!S.regAbs.length){tb.innerHTML='<tr><td colspan="5" class="em">등록된 정기 결석이 없습니다.</td></tr>';return;}tb.innerHTML=S.regAbs.map((r,i)=>{const stu=S.students.find(s=>s.id===r.sid);const scope=r.type==='day'?'요일 전체':`${r.period}`;return`<tr><td>${stu?stu.name:'-'}</td><td>${DAYS[r.day]}요일</td><td>${scope}</td><td style="color:#6b7280;">${r.reason}</td><td><button class="btn bs bd" onclick="delRegAbs(${i})">삭제</button></td></tr>`}).join('');}
+function renderAdminTTTab(){renderPeriodList();updateRegStuSel();updateRegPeriodSel();renderRegAbsList();const inp=gs('tt-week');if(!inp.value)inp.value=TD;const sel=gs('tt-stu-sel');sel.innerHTML=S.students.map(s=>`<option value="${s.id}">${s.num} ${s.name}</option>`).join('');if(!window.adminTTMode)window.adminTTMode='all';if(!window.adminGradeFilter)window.adminGradeFilter='all';['all','1','2','3'].forEach(x=>{const el=gs('gf-'+x);if(el)el.className='btn bs'+(window.adminGradeFilter===x?' bp':'');});setTTMode(window.adminTTMode,true);renderAdminTT();}
+function setTTMode(mode,skipRender){window.adminTTMode=mode;gs('tt-mode-all').className='btn bs'+(mode==='all'?' bp':'');gs('tt-mode-one').className='btn bs'+(mode==='one'?' bp':'');gs('tt-stu-sel').style.display=mode==='one'?'block':'none';gs('tt-grade-filter').style.display=mode==='all'?'flex':'none';if(!skipRender)renderAdminTT();}
+window.adminGradeFilter='all';
+function setGradeFilter(g){window.adminGradeFilter=g;['all','1','2','3'].forEach(x=>{gs('gf-'+x).className='btn bs'+(g===x?' bp':'');});renderAdminTTAll();}
+function renderAdminTT(){if(window.adminTTMode==='one')renderAdminTTOne();else renderAdminTTAll();}
+function renderAdminTTAll(){
+  const monday=getMondayOf(gs('tt-week').value),dates=getWeekDates(monday),tbl=gs('admin-tt-table');
+  const gf=window.adminGradeFilter||'all';const filtered=gf==='all'?S.students:S.students.filter(s=>s.grade===gf);
+  if(!S.periods.length||!S.students.length){tbl.innerHTML='<tr><td style="padding:20px;color:#6b7280;">교시 또는 학생을 먼저 등록하세요.</td></tr>';renderDayPills(dates);return;}
+  if(!filtered.length){tbl.innerHTML=`<tr><td style="padding:20px;color:#6b7280;">${gf}학년 학생이 없습니다.</td></tr>`;renderDayPills(dates);return;}
+  const selDay=typeof window.adminTTSelDay!=='undefined'?window.adminTTSelDay:0,date=dates[selDay];
+  let h=`<thead><tr><th class="period-lbl">교시</th>`;
+  if(gf==='all'){['1','2','3'].forEach(g=>{const cnt=filtered.filter(s=>s.grade===g).length;if(cnt>0)h+=`<th colspan="${cnt}" style="background:${g==='1'?'#dcfce7':g==='2'?'#dbeafe':'#ede9fe'};color:${g==='1'?'#15803d':g==='2'?'#1e40af':'#6d28d9'};text-align:center;">${g}학년</th>`;});}
+  h+=`</tr><tr><th class="period-lbl"></th>`;
+  const sorted=[...filtered].sort((a,b)=>(a.grade||'0').localeCompare(b.grade||'0')||a.num.localeCompare(b.num));
+  sorted.forEach(s=>{h+=`<th style="font-size:11px;">${s.name}<br><span style="font-size:9px;color:#9ca3af;">${s.num}</span></th>`;});
+  h+=`</tr></thead><tbody>`;
+  S.periods.forEach(p=>{h+=`<tr><td class="period-lbl"><div style="font-weight:600;">${p.name}</div><div style="font-size:10px;color:#9ca3af;">${p.time||''}</div></td>`;sorted.forEach(s=>{const st=getCellStatus(s.id,date,p.name);h+=`<td><div class="tt-cell ${cellCls(st)}" style="font-size:10px;">${cellLabel(st)}</div></td>`;});h+=`</tr>`;});
+  h+=`</tbody>`;tbl.innerHTML=h;renderDayPills(dates);
+}
+function renderAdminTTOne(){
+  const monday=getMondayOf(gs('tt-week').value),dates=getWeekDates(monday),tbl=gs('admin-tt-table'),sel=gs('tt-stu-sel');
+  if(!S.students.length){tbl.innerHTML='<tr><td style="padding:20px;color:#6b7280;">등록된 학생이 없습니다.</td></tr>';renderDayPillsHide();return;}
+  const sid=sel.value,stu=S.students.find(s=>s.id===sid);
+  if(!stu||!S.periods.length){tbl.innerHTML='<tr><td style="padding:20px;color:#6b7280;">교시를 먼저 등록하세요.</td></tr>';renderDayPillsHide();return;}
+  const todayIdx=dates.indexOf(TD);
+  let h=`<thead><tr><th class="period-lbl">교시</th>`;
+  DAYS.forEach((d,i)=>{const isToday=i===todayIdx;h+=`<th class="${isToday?'today-col':''}">${d}<br><span style="font-size:10px;font-weight:400;">${dates[i].slice(5)}</span></th>`;});
+  h+=`</tr></thead><tbody>`;
+  S.periods.forEach(p=>{h+=`<tr><td class="period-lbl"><div style="font-weight:600;">${p.name}</div><div style="font-size:10px;color:#9ca3af;">${p.time||''}</div></td>`;dates.forEach((date,di)=>{const isToday=di===todayIdx;const st=getCellStatus(sid,date,p.name);const regR=S.regAbs.find(r=>r.sid===sid&&r.day===di&&(r.type==='day'||r.period===p.name));h+=`<td style="${isToday?'background:#f0f7ff;':''}"><div class="tt-cell ${cellCls(st)}">${cellLabel(st)}${regR?`<br><span style="font-size:9px;opacity:.8;">${regR.reason}</span>`:''}</div></td>`;});h+=`</tr>`;});
+  h+=`<tr style="background:#f9fafb;"><td class="period-lbl" style="font-weight:600;">요약</td>`;
+  dates.forEach((date,di)=>{const rec=(S.att[sid]||[]).find(r=>r.date===date);const allReg=S.periods.every(p=>isRegAbs(sid,date,p.name));let badge='';if(allReg)badge=ab('정기결석','aa');else if(!rec||rec.status==='출석')badge=ab('출석','gg');else badge=ab(rec.status,'rr');h+=`<td style="text-align:center;">${badge}</td>`;});
+  h+=`</tr></tbody>`;tbl.innerHTML=h;renderDayPillsHide();
+}
+function renderDayPills(dates){const wrap=gs('admin-tt-table').parentElement;wrap.querySelectorAll('.day-pill-wrap').forEach(e=>e.remove());const selDay=typeof window.adminTTSelDay!=='undefined'?window.adminTTSelDay:0;const div=document.createElement('div');div.className='day-pill-wrap';let html=`<div class="day-pill">`;DAYS.forEach((d,i)=>{const isToday=dates[i]===TD;html+=`<button class="day-btn${i===selDay?' on':''}" onclick="window.adminTTSelDay=${i};renderAdminTTAll()">${d}${isToday?' 📍':''}<br><span style="font-size:10px;font-weight:400;">${dates[i].slice(5)}</span></button>`;});html+=`</div><div style="font-size:13px;font-weight:600;color:#1d4ed8;margin-bottom:.5rem;">${DAYS[selDay]}요일 · ${dates[selDay]}</div>`;div.innerHTML=html;wrap.insertBefore(div,gs('admin-tt-table'));}
+function renderDayPillsHide(){const wrap=gs('admin-tt-table').parentElement;wrap.querySelectorAll('.day-pill-wrap').forEach(e=>e.remove());}
+function renderStuTTTab(){const inp=gs('stt-week');if(!inp.value)inp.value=TD;renderStuTT();}
+function renderStuTT(){
+  const monday=getMondayOf(gs('stt-week').value),dates=getWeekDates(monday),sid=S.cur.id,tbl=gs('stu-tt-table');
+  if(!S.periods.length){tbl.innerHTML='<tr><td style="padding:20px;color:#6b7280;">선생님이 아직 교시를 설정하지 않았습니다.</td></tr>';return;}
+  const todayIdx=dates.indexOf(TD);
+  let h=`<thead><tr><th class="period-lbl">교시</th>`;
+  DAYS.forEach((d,i)=>{const isToday=i===todayIdx;h+=`<th class="${isToday?'today-col':''}">${d}<br><span style="font-size:10px;font-weight:400;">${dates[i].slice(5)}</span></th>`;});
+  h+=`</tr></thead><tbody>`;
+  S.periods.forEach(p=>{h+=`<tr><td class="period-lbl"><div style="font-weight:600;">${p.name}</div><div style="font-size:10px;color:#9ca3af;">${p.time||''}</div></td>`;dates.forEach((date,di)=>{const isToday=di===todayIdx;const st=getCellStatus(sid,date,p.name);const regR=S.regAbs.find(r=>r.sid===sid&&r.day===di&&(r.type==='day'||r.period===p.name));h+=`<td style="${isToday?'background:#f0f7ff;':''}"><div class="tt-cell ${cellCls(st)}">${cellLabel(st)}${regR?`<br><span style="font-size:9px;opacity:.8;">${regR.reason}</span>`:''}</div></td>`;});h+=`</tr>`;});
+  h+=`</tbody>`;tbl.innerHTML=h;
+}
+
+// ── 첨부파일 ──
+let pendingFiles=[];
+function fileChange(e){addFiles(Array.from(e.target.files));e.target.value='';}
+function fileDragOver(e){e.preventDefault();gs('sf-drop').classList.add('over')}
+function fileDragLeave(){gs('sf-drop').classList.remove('over')}
+function fileDrop(e){e.preventDefault();gs('sf-drop').classList.remove('over');addFiles(Array.from(e.dataTransfer.files))}
+function addFiles(files){const allowed=files.filter(f=>f.type.startsWith('image/')||f.type==='application/pdf');const remaining=5-pendingFiles.length;allowed.slice(0,remaining).forEach(f=>{const reader=new FileReader();reader.onload=ev=>{pendingFiles.push({name:f.name,type:f.type,data:ev.target.result});renderPreview();};reader.readAsDataURL(f);});if(allowed.length>remaining)alert(`최대 5개까지 첨부 가능합니다.`);}
+function renderPreview(){const el=gs('sf-preview');el.innerHTML=pendingFiles.map((f,i)=>{const isImg=f.type.startsWith('image/');const inner=isImg?`<img src="${f.data}" onclick="viewImg('${f.data}')" title="${f.name}">`:`<div class="file-icon">📄<span class="file-name">${f.name}</span></div>`;return`<div class="file-thumb">${inner}<button class="del-btn" onclick="removeFile(${i})">✕</button></div>`;}).join('');}
+function removeFile(i){pendingFiles.splice(i,1);renderPreview()}
+function viewImg(src){const bg=document.createElement('div');bg.className='img-modal-bg';bg.innerHTML=`<img src="${src}">`;bg.onclick=()=>bg.remove();document.body.appendChild(bg);}
+function showDocFiles(i){const doc=S.docs[i];const files=doc.files||[];if(!files.length)return;const bg=document.createElement('div');bg.className='img-modal-bg';bg.style.flexDirection='column';bg.style.gap='12px';bg.style.padding='20px';const inner=files.map(f=>f.type&&f.type.startsWith('image/')?`<img src="${f.data}" style="max-width:80vw;max-height:60vh;border-radius:8px;object-fit:contain;">`:`<div style="background:#fff;border-radius:8px;padding:16px 24px;font-size:14px;color:#111;">📄 ${f.name}<br><a href="${f.data}" download="${f.name}" style="color:#1d4ed8;font-size:12px;">다운로드</a></div>`).join('');bg.innerHTML=`<div style="font-size:13px;color:#fff;margin-bottom:4px;">탭/클릭하여 닫기</div>${inner}`;bg.onclick=()=>bg.remove();document.body.appendChild(bg);}
+</script>
+
+
+</body></html>
