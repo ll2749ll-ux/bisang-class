@@ -1,10 +1,10 @@
-<index html>
-<!-- saved from url=(0054)file:///C:/Users/user/Downloads/bisang_firebase_1.html -->
+<!DOCTYPE html>
+<!-- saved from url=(0054)file:///C:/Users/user/Downloads/bisang_firebase_2.html -->
 <html lang="ko"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>비상반 관리 시스템</title>
-<link rel="manifest" href="file:///C:/Users/user/Downloads/bisang_firebase_1.html#">
+<link rel="manifest" href="file:///C:/Users/user/Downloads/bisang_firebase_2.html#">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f5;color:#111}
@@ -196,13 +196,27 @@ tr:hover td{background:#f9fafb}
   <div id="ta-tt" class="tc">
     <div class="rb"><div class="st">자습 타임테이블</div></div>
     <div class="card">
-      <div style="font-size:13px;font-weight:600;margin-bottom:10px;">교시 설정</div>
+      <div style="font-size:13px;font-weight:600;margin-bottom:10px;">요일별 교시 설정</div>
+      <div style="font-size:12px;color:#6b7280;margin-bottom:12px;">요일마다 다른 교시를 설정할 수 있습니다.</div>
+      <!-- 요일 선택 탭 -->
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;" id="day-period-tabs">
+        <button class="day-btn on" onclick="selectDayPeriod(0,this)">월</button>
+        <button class="day-btn" onclick="selectDayPeriod(1,this)">화</button>
+        <button class="day-btn" onclick="selectDayPeriod(2,this)">수</button>
+        <button class="day-btn" onclick="selectDayPeriod(3,this)">목</button>
+        <button class="day-btn" onclick="selectDayPeriod(4,this)">금</button>
+        <button class="day-btn" onclick="selectDayPeriod(5,this)">토</button>
+        <button class="day-btn" onclick="selectDayPeriod(6,this)">일</button>
+        <button class="btn bs" onclick="copyPeriodFromDay()" style="margin-left:8px;">📋 다른 요일에서 복사</button>
+      </div>
+      <div id="day-period-title" style="font-size:13px;font-weight:600;color:#1d4ed8;margin-bottom:8px;">월요일 교시</div>
       <div id="period-list"></div>
       <div class="row" style="gap:8px;margin-top:6px;">
-        <input type="text" id="p-name" placeholder="교시명" style="margin:0;flex:1;">
+        <input type="text" id="p-name" placeholder="교시명 (예: 1교시)" style="margin:0;flex:1;">
         <input type="text" id="p-time" placeholder="시간 (예: 09:00~10:00)" style="margin:0;flex:1;">
         <button class="btn bs bp" onclick="addPeriod()">추가</button>
       </div>
+      <div style="font-size:12px;color:#9ca3af;margin-top:8px;">💡 자습 없는 날은 교시를 비워두면 됩니다.</div>
     </div>
     <div class="rb" style="margin-top:.5rem;">
       <div class="st" style="margin-bottom:0;">주간 출결 현황</div>
@@ -432,6 +446,7 @@ window.saveData = async function() {
         students: S.students, att: S.att, docs: S.docs.map(d=>({...d, files: d.files ? d.files.map(f=>({...f, data: f.data ? f.data.substring(0, 50000) : ''})) : []})),
         dems: S.dems, rules: S.rules, notices: S.notices, notifs: S.notifs,
         periods: S.periods, regAbs: S.regAbs, preAbs: S.preAbs,
+        dayPeriods: S.dayPeriods,
         _adminPw: ADMIN_PW
       };
       await setDoc(doc(db, 'bisang-class', 'data'), save);
@@ -456,6 +471,7 @@ window.loadData = async function() {
       if(d.regAbs) S.regAbs = d.regAbs;
       if(d.preAbs) S.preAbs = d.preAbs;
       if(d._adminPw) ADMIN_PW = d._adminPw;
+      if(d.dayPeriods) S.dayPeriods = d.dayPeriods;
     }
   } catch(e) { console.error('불러오기 오류:', e); }
 };
@@ -565,6 +581,7 @@ let S = {
   notices:[{t:'비상반 운영 안내',b:'출결 및 서류 관련 문의는 담임 선생님께 하세요.',d:'2025-03-02'}],
   notifs:{},
   periods:[{name:'1교시',time:'09:00~10:00'},{name:'2교시',time:'10:10~11:10'},{name:'3교시',time:'11:20~12:20'},{name:'점심',time:'12:20~13:20'},{name:'4교시',time:'13:20~14:20'},{name:'5교시',time:'14:30~15:30'}],
+  dayPeriods:{0:[],1:[],2:[],3:[],4:[],5:[],6:[]},
   regAbs:[], preAbs:[]
 };
 
@@ -892,16 +909,74 @@ function getCellStatus(sid,dateStr,periodName){
 }
 function cellLabel(st){return{present:'출석',absent:'결석',regular:'정기결석',late:'지각',early:'조퇴'}[st]||'미입력'}
 function cellCls(st){return{present:'tt-present',absent:'tt-absent',regular:'tt-regular',late:'tt-absent',early:'tt-absent'}[st]||'tt-unknown'}
-function addPeriod(){const name=gs('p-name').value.trim(),time=gs('p-time').value.trim();if(!name)return;S.periods.push({name,time});gs('p-name').value='';gs('p-time').value='';renderPeriodList();updateRegPeriodSel();saveData();}
-function delPeriod(i){S.periods.splice(i,1);renderPeriodList();updateRegPeriodSel();saveData();}
-function renderPeriodList(){const el=gs('period-list');if(!S.periods.length){el.innerHTML='<div style="font-size:12px;color:#9ca3af;margin-bottom:8px;">등록된 교시 없음</div>';return;}el.innerHTML=S.periods.map((p,i)=>`<div class="period-row"><span class="period-tag">${p.name}</span><span style="font-size:12px;color:#6b7280;">${p.time||''}</span><button class="btn bs bd" onclick="delPeriod(${i})">삭제</button></div>`).join('');}
+// ── 요일별 교시 관리 ──
+let _selDay = 0; // 현재 선택된 요일 (0=월)
+function getPeriodsForDay(dayIdx){ return S.dayPeriods[dayIdx]||[]; }
+function getPeriodsForDate(dateStr){
+  const d=new Date(dateStr);const dayIdx=d.getDay()===0?6:d.getDay()-1;
+  return getPeriodsForDay(dayIdx);
+}
+function getPeriodCount(dateStr){
+  if(dateStr) return getPeriodsForDate(dateStr).length;
+  return getPeriodsForDay(_selDay).length||S.periods.length||1;
+}
+function selectDayPeriod(dayIdx, el){
+  _selDay=dayIdx;
+  document.querySelectorAll('#day-period-tabs .day-btn').forEach(b=>b.classList.remove('on'));
+  if(el)el.classList.add('on');
+  const dayNames=['월요일','화요일','수요일','목요일','금요일','토요일','일요일'];
+  gs('day-period-title').textContent=dayNames[dayIdx]+' 교시';
+  renderPeriodList();
+}
+function addPeriod(){
+  const name=gs('p-name').value.trim(),time=gs('p-time').value.trim();
+  if(!name)return;
+  if(!S.dayPeriods[_selDay])S.dayPeriods[_selDay]=[];
+  S.dayPeriods[_selDay].push({name,time});
+  // 하위 호환: S.periods도 월요일 기준으로 동기화
+  if(_selDay===0)S.periods=[...S.dayPeriods[0]];
+  gs('p-name').value='';gs('p-time').value='';
+  renderPeriodList();updateRegPeriodSel();saveData();
+}
+function delPeriod(i){
+  S.dayPeriods[_selDay].splice(i,1);
+  if(_selDay===0)S.periods=[...S.dayPeriods[0]];
+  renderPeriodList();updateRegPeriodSel();saveData();
+}
+function renderPeriodList(){
+  const el=gs('period-list');
+  const periods=getPeriodsForDay(_selDay);
+  if(!periods.length){el.innerHTML='<div style="font-size:12px;color:#9ca3af;margin-bottom:8px;">이 요일에 등록된 교시 없음 (자습 없는 날)</div>';return;}
+  el.innerHTML=periods.map((p,i)=>`<div class="period-row"><span class="period-tag">${p.name}</span><span style="font-size:12px;color:#6b7280;">${p.time||''}</span><button class="btn bs bd" onclick="delPeriod(${i})">삭제</button></div>`).join('');
+}
+function copyPeriodFromDay(){
+  const dayNames=['월','화','수','목','금','토','일'];
+  const opts=dayNames.map((d,i)=>i!==_selDay?`<option value="${i}">${d}요일</option>`:'').join('');
+  const from=prompt(`어느 요일의 교시를 복사할까요?\n${dayNames.map((d,i)=>i!==_selDay?`${i}: ${d}요일`:'').filter(Boolean).join('\n')}\n\n숫자를 입력하세요:`);
+  const fi=parseInt(from);
+  if(isNaN(fi)||fi<0||fi>6||fi===_selDay){alert('올바른 숫자를 입력하세요.');return;}
+  S.dayPeriods[_selDay]=[...( S.dayPeriods[fi]||[])];
+  if(_selDay===0)S.periods=[...S.dayPeriods[0]];
+  renderPeriodList();saveData();
+  alert(dayNames[fi]+'요일 교시를 복사했습니다!');
+}
 function toggleRegScope(){gs('reg-period-wrap').style.display=gs('reg-type').value==='period'?'block':'none';}
 function updateRegPeriodSel(){const sel=gs('reg-period');if(!sel)return;sel.innerHTML=S.periods.map(p=>`<option value="${p.name}">${p.name}</option>`).join('');}
 function updateRegStuSel(){const sel=gs('reg-stu');if(!sel)return;sel.innerHTML=S.students.map(s=>`<option value="${s.id}">${s.num} ${s.name}</option>`).join('');}
 function addRegAbs(){const sid=gs('reg-stu').value,day=parseInt(gs('reg-day').value),type=gs('reg-type').value,period=type==='period'?gs('reg-period').value:'',reason=gs('reg-reason').value.trim()||'정기결석';if(!sid){alert('학생을 선택하세요.');return;}const dup=S.regAbs.some(r=>r.sid===sid&&r.day===day&&r.type===type&&(type==='day'||r.period===period));if(dup){alert('이미 등록된 항목입니다.');return;}S.regAbs.push({sid,day,type,period,reason});renderRegAbsList();saveData();}
 function delRegAbs(i){S.regAbs.splice(i,1);renderRegAbsList();saveData();}
 function renderRegAbsList(){const tb=gs('reg-abs-tb');if(!S.regAbs.length){tb.innerHTML='<tr><td colspan="5" class="em">등록된 정기 결석이 없습니다.</td></tr>';return;}tb.innerHTML=S.regAbs.map((r,i)=>{const stu=S.students.find(s=>s.id===r.sid);const scope=r.type==='day'?'요일 전체':`${r.period}`;return`<tr><td>${stu?stu.name:'-'}</td><td>${DAYS[r.day]}요일</td><td>${scope}</td><td style="color:#6b7280;">${r.reason}</td><td><button class="btn bs bd" onclick="delRegAbs(${i})">삭제</button></td></tr>`}).join('');}
-function renderAdminTTTab(){renderPeriodList();updateRegStuSel();updateRegPeriodSel();renderRegAbsList();const inp=gs('tt-week');if(!inp.value)inp.value=TD;const sel=gs('tt-stu-sel');sel.innerHTML=S.students.map(s=>`<option value="${s.id}">${s.num} ${s.name}</option>`).join('');if(!window.adminTTMode)window.adminTTMode='all';if(!window.adminGradeFilter)window.adminGradeFilter='all';['all','1','2','3'].forEach(x=>{const el=gs('gf-'+x);if(el)el.className='btn bs'+(window.adminGradeFilter===x?' bp':'');});setTTMode(window.adminTTMode,true);renderAdminTT();}
+function renderAdminTTTab(){
+  _selDay=0;
+  document.querySelectorAll('#day-period-tabs .day-btn').forEach((b,i)=>{b.classList.toggle('on',i===0);});
+  gs('day-period-title').textContent='월요일 교시';
+  renderPeriodList();updateRegStuSel();updateRegPeriodSel();renderRegAbsList();
+  const inp=gs('tt-week');if(!inp.value)inp.value=TD;
+  const sel=gs('tt-stu-sel');sel.innerHTML=S.students.map(s=>`<option value="${s.id}">${s.num} ${s.name}</option>`).join('');
+  if(!window.adminTTMode)window.adminTTMode='all';if(!window.adminGradeFilter)window.adminGradeFilter='all';
+  ['all','1','2','3'].forEach(x=>{const el=gs('gf-'+x);if(el)el.className='btn bs'+(window.adminGradeFilter===x?' bp':'');});
+  setTTMode(window.adminTTMode,true);renderAdminTT();
+}
 function setTTMode(mode,skipRender){window.adminTTMode=mode;gs('tt-mode-all').className='btn bs'+(mode==='all'?' bp':'');gs('tt-mode-one').className='btn bs'+(mode==='one'?' bp':'');gs('tt-stu-sel').style.display=mode==='one'?'block':'none';gs('tt-grade-filter').style.display=mode==='all'?'flex':'none';if(!skipRender)renderAdminTT();}
 window.adminGradeFilter='all';
 function setGradeFilter(g){window.adminGradeFilter=g;['all','1','2','3'].forEach(x=>{gs('gf-'+x).className='btn bs'+(g===x?' bp':'');});renderAdminTTAll();}
@@ -909,30 +984,48 @@ function renderAdminTT(){if(window.adminTTMode==='one')renderAdminTTOne();else r
 function renderAdminTTAll(){
   const monday=getMondayOf(gs('tt-week').value),dates=getWeekDates(monday),tbl=gs('admin-tt-table');
   const gf=window.adminGradeFilter||'all';const filtered=gf==='all'?S.students:S.students.filter(s=>s.grade===gf);
-  if(!S.periods.length||!S.students.length){tbl.innerHTML='<tr><td style="padding:20px;color:#6b7280;">교시 또는 학생을 먼저 등록하세요.</td></tr>';renderDayPills(dates);return;}
+  if(!S.students.length){tbl.innerHTML='<tr><td style="padding:20px;color:#6b7280;">학생을 먼저 등록하세요.</td></tr>';renderDayPills(dates);return;}
   if(!filtered.length){tbl.innerHTML=`<tr><td style="padding:20px;color:#6b7280;">${gf}학년 학생이 없습니다.</td></tr>`;renderDayPills(dates);return;}
   const selDay=typeof window.adminTTSelDay!=='undefined'?window.adminTTSelDay:0,date=dates[selDay];
+  const dayIdx=new Date(date).getDay()===0?6:new Date(date).getDay()-1;
+  const periods=getPeriodsForDay(dayIdx);
+  if(!periods.length){tbl.innerHTML=`<tr><td style="padding:20px;color:#6b7280;">${DAYS[selDay]}요일은 자습이 없는 날입니다.</td></tr>`;renderDayPills(dates);return;}
   let h=`<thead><tr><th class="period-lbl">교시</th>`;
   if(gf==='all'){['1','2','3'].forEach(g=>{const cnt=filtered.filter(s=>s.grade===g).length;if(cnt>0)h+=`<th colspan="${cnt}" style="background:${g==='1'?'#dcfce7':g==='2'?'#dbeafe':'#ede9fe'};color:${g==='1'?'#15803d':g==='2'?'#1e40af':'#6d28d9'};text-align:center;">${g}학년</th>`;});}
   h+=`</tr><tr><th class="period-lbl"></th>`;
   const sorted=[...filtered].sort((a,b)=>(a.grade||'0').localeCompare(b.grade||'0')||a.num.localeCompare(b.num));
   sorted.forEach(s=>{h+=`<th style="font-size:11px;">${s.name}<br><span style="font-size:9px;color:#9ca3af;">${s.num}</span></th>`;});
   h+=`</tr></thead><tbody>`;
-  S.periods.forEach(p=>{h+=`<tr><td class="period-lbl"><div style="font-weight:600;">${p.name}</div><div style="font-size:10px;color:#9ca3af;">${p.time||''}</div></td>`;sorted.forEach(s=>{const st=getCellStatus(s.id,date,p.name);h+=`<td><div class="tt-cell ${cellCls(st)}" style="font-size:10px;">${cellLabel(st)}</div></td>`;});h+=`</tr>`;});
+  periods.forEach(p=>{h+=`<tr><td class="period-lbl"><div style="font-weight:600;">${p.name}</div><div style="font-size:10px;color:#9ca3af;">${p.time||''}</div></td>`;sorted.forEach(s=>{const st=getCellStatus(s.id,date,p.name);h+=`<td><div class="tt-cell ${cellCls(st)}" style="font-size:10px;">${cellLabel(st)}</div></td>`;});h+=`</tr>`;});
   h+=`</tbody>`;tbl.innerHTML=h;renderDayPills(dates);
 }
 function renderAdminTTOne(){
   const monday=getMondayOf(gs('tt-week').value),dates=getWeekDates(monday),tbl=gs('admin-tt-table'),sel=gs('tt-stu-sel');
   if(!S.students.length){tbl.innerHTML='<tr><td style="padding:20px;color:#6b7280;">등록된 학생이 없습니다.</td></tr>';renderDayPillsHide();return;}
   const sid=sel.value,stu=S.students.find(s=>s.id===sid);
-  if(!stu||!S.periods.length){tbl.innerHTML='<tr><td style="padding:20px;color:#6b7280;">교시를 먼저 등록하세요.</td></tr>';renderDayPillsHide();return;}
+  if(!stu){tbl.innerHTML='<tr><td style="padding:20px;color:#6b7280;">학생을 선택하세요.</td></tr>';renderDayPillsHide();return;}
   const todayIdx=dates.indexOf(TD);
   let h=`<thead><tr><th class="period-lbl">교시</th>`;
   DAYS.forEach((d,i)=>{const isToday=i===todayIdx;h+=`<th class="${isToday?'today-col':''}">${d}<br><span style="font-size:10px;font-weight:400;">${dates[i].slice(5)}</span></th>`;});
   h+=`</tr></thead><tbody>`;
-  S.periods.forEach(p=>{h+=`<tr><td class="period-lbl"><div style="font-weight:600;">${p.name}</div><div style="font-size:10px;color:#9ca3af;">${p.time||''}</div></td>`;dates.forEach((date,di)=>{const isToday=di===todayIdx;const st=getCellStatus(sid,date,p.name);const regR=S.regAbs.find(r=>r.sid===sid&&r.day===di&&(r.type==='day'||r.period===p.name));h+=`<td style="${isToday?'background:#f0f7ff;':''}"><div class="tt-cell ${cellCls(st)}">${cellLabel(st)}${regR?`<br><span style="font-size:9px;opacity:.8;">${regR.reason}</span>`:''}</div></td>`;});h+=`</tr>`;});
+  // 각 요일별 교시를 모아 유니크한 교시 목록 생성
+  const allPeriodNames=[...new Set(dates.flatMap((date,di)=>getPeriodsForDay(di).map(p=>p.name)))];
+  if(!allPeriodNames.length){tbl.innerHTML='<tr><td style="padding:20px;color:#6b7280;">등록된 교시가 없습니다.</td></tr>';renderDayPillsHide();return;}
+  allPeriodNames.forEach(pName=>{
+    h+=`<tr><td class="period-lbl"><div style="font-weight:600;">${pName}</div></td>`;
+    dates.forEach((date,di)=>{
+      const dayPeriods=getPeriodsForDay(di);
+      const hasPeriod=dayPeriods.some(p=>p.name===pName);
+      const isToday=di===todayIdx;
+      if(!hasPeriod){h+=`<td style="${isToday?'background:#f0f7ff;':''}"><div class="tt-cell tt-unknown" style="font-size:10px;">-</div></td>`;return;}
+      const st=getCellStatus(sid,date,pName);
+      const regR=S.regAbs.find(r=>r.sid===sid&&r.day===di&&(r.type==='day'||r.period===pName));
+      h+=`<td style="${isToday?'background:#f0f7ff;':''}"><div class="tt-cell ${cellCls(st)}">${cellLabel(st)}${regR?`<br><span style="font-size:9px;opacity:.8;">${regR.reason}</span>`:''}</div></td>`;
+    });
+    h+=`</tr>`;
+  });
   h+=`<tr style="background:#f9fafb;"><td class="period-lbl" style="font-weight:600;">요약</td>`;
-  dates.forEach((date,di)=>{const rec=(S.att[sid]||[]).find(r=>r.date===date);const allReg=S.periods.every(p=>isRegAbs(sid,date,p.name));let badge='';if(allReg)badge=ab('정기결석','aa');else if(!rec||rec.status==='출석')badge=ab('출석','gg');else badge=ab(rec.status,'rr');h+=`<td style="text-align:center;">${badge}</td>`;});
+  dates.forEach((date,di)=>{const rec=(S.att[sid]||[]).find(r=>r.date===date);const allReg=getPeriodsForDay(di).every(p=>isRegAbs(sid,date,p.name));let badge='';if(allReg&&getPeriodsForDay(di).length)badge=ab('정기결석','aa');else if(!rec||rec.status==='출석')badge=ab('출석','gg');else badge=ab(rec.status,'rr');h+=`<td style="text-align:center;">${badge}</td>`;});
   h+=`</tr></tbody>`;tbl.innerHTML=h;renderDayPillsHide();
 }
 function renderDayPills(dates){const wrap=gs('admin-tt-table').parentElement;wrap.querySelectorAll('.day-pill-wrap').forEach(e=>e.remove());const selDay=typeof window.adminTTSelDay!=='undefined'?window.adminTTSelDay:0;const div=document.createElement('div');div.className='day-pill-wrap';let html=`<div class="day-pill">`;DAYS.forEach((d,i)=>{const isToday=dates[i]===TD;html+=`<button class="day-btn${i===selDay?' on':''}" onclick="window.adminTTSelDay=${i};renderAdminTTAll()">${d}${isToday?' 📍':''}<br><span style="font-size:10px;font-weight:400;">${dates[i].slice(5)}</span></button>`;});html+=`</div><div style="font-size:13px;font-weight:600;color:#1d4ed8;margin-bottom:.5rem;">${DAYS[selDay]}요일 · ${dates[selDay]}</div>`;div.innerHTML=html;wrap.insertBefore(div,gs('admin-tt-table'));}
@@ -940,12 +1033,25 @@ function renderDayPillsHide(){const wrap=gs('admin-tt-table').parentElement;wrap
 function renderStuTTTab(){const inp=gs('stt-week');if(!inp.value)inp.value=TD;renderStuTT();}
 function renderStuTT(){
   const monday=getMondayOf(gs('stt-week').value),dates=getWeekDates(monday),sid=S.cur.id,tbl=gs('stu-tt-table');
-  if(!S.periods.length){tbl.innerHTML='<tr><td style="padding:20px;color:#6b7280;">선생님이 아직 교시를 설정하지 않았습니다.</td></tr>';return;}
   const todayIdx=dates.indexOf(TD);
+  const allPeriodNames=[...new Set(dates.flatMap((date,di)=>getPeriodsForDay(di).map(p=>p.name)))];
+  if(!allPeriodNames.length){tbl.innerHTML='<tr><td style="padding:20px;color:#6b7280;">선생님이 아직 교시를 설정하지 않았습니다.</td></tr>';return;}
   let h=`<thead><tr><th class="period-lbl">교시</th>`;
-  DAYS.forEach((d,i)=>{const isToday=i===todayIdx;h+=`<th class="${isToday?'today-col':''}">${d}<br><span style="font-size:10px;font-weight:400;">${dates[i].slice(5)}</span></th>`;});
+  DAYS.forEach((d,i)=>{const isToday=i===todayIdx;const cnt=getPeriodsForDay(i).length;h+=`<th class="${isToday?'today-col':''}">${d}${cnt===0?'<br><span style="font-size:9px;color:#9ca3af;">자습없음</span>':''}<br><span style="font-size:10px;font-weight:400;">${dates[i].slice(5)}</span></th>`;});
   h+=`</tr></thead><tbody>`;
-  S.periods.forEach(p=>{h+=`<tr><td class="period-lbl"><div style="font-weight:600;">${p.name}</div><div style="font-size:10px;color:#9ca3af;">${p.time||''}</div></td>`;dates.forEach((date,di)=>{const isToday=di===todayIdx;const st=getCellStatus(sid,date,p.name);const regR=S.regAbs.find(r=>r.sid===sid&&r.day===di&&(r.type==='day'||r.period===p.name));h+=`<td style="${isToday?'background:#f0f7ff;':''}"><div class="tt-cell ${cellCls(st)}">${cellLabel(st)}${regR?`<br><span style="font-size:9px;opacity:.8;">${regR.reason}</span>`:''}</div></td>`;});h+=`</tr>`;});
+  allPeriodNames.forEach(pName=>{
+    h+=`<tr><td class="period-lbl"><div style="font-weight:600;">${pName}</div></td>`;
+    dates.forEach((date,di)=>{
+      const dayPeriods=getPeriodsForDay(di);
+      const hasPeriod=dayPeriods.some(p=>p.name===pName);
+      const isToday=di===todayIdx;
+      if(!hasPeriod){h+=`<td style="${isToday?'background:#f0f7ff;':''}"><div class="tt-cell tt-unknown" style="font-size:10px;">-</div></td>`;return;}
+      const st=getCellStatus(sid,date,pName);
+      const regR=S.regAbs.find(r=>r.sid===sid&&r.day===di&&(r.type==='day'||r.period===pName));
+      h+=`<td style="${isToday?'background:#f0f7ff;':''}"><div class="tt-cell ${cellCls(st)}">${cellLabel(st)}${regR?`<br><span style="font-size:9px;opacity:.8;">${regR.reason}</span>`:''}</div></td>`;
+    });
+    h+=`</tr>`;
+  });
   h+=`</tbody>`;tbl.innerHTML=h;
 }
 
