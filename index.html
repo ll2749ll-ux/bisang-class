@@ -1,10 +1,10 @@
-<index html>
-<!-- saved from url=(0054)file:///C:/Users/user/Downloads/bisang_firebase_4.html -->
+<!DOCTYPE html>
+<!-- saved from url=(0054)file:///C:/Users/user/Downloads/bisang_firebase_5.html -->
 <html lang="ko"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>비상반 관리 시스템</title>
-<link rel="manifest" href="file:///C:/Users/user/Downloads/bisang_firebase_4.html#">
+<link rel="manifest" href="file:///C:/Users/user/Downloads/bisang_firebase_5.html#">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f5;color:#111}
@@ -159,22 +159,44 @@ tr:hover td{background:#f9fafb}
     <button class="tab" onclick="aTab(&#39;stu&#39;,this)">학생 관리</button>
   </div>
   <div id="ta-att" class="tc on">
-    <div class="rb"><div class="st">출결 현황</div>
-      <div class="row" style="gap:6px;"><input type="date" id="att-dt" style="width:140px;margin:0;" onchange="renderAtt()"><button class="btn bs" onclick="renderAtt()">조회</button></div>
+    <div class="rb">
+      <div class="st">출결 체크</div>
+      <div class="row" style="gap:6px;">
+        <input type="date" id="att-dt" style="width:140px;margin:0;" onchange="renderAtt()">
+        <button class="btn bs" onclick="renderAtt()">조회</button>
+      </div>
     </div>
+    <!-- 학년 필터 -->
+    <div class="row" style="gap:6px;margin-bottom:.75rem;flex-wrap:wrap;">
+      <button class="btn bs bp" id="att-gf-all" onclick="setAttGrade(&#39;all&#39;)">전체</button>
+      <button class="btn bs" id="att-gf-1" onclick="setAttGrade(&#39;1&#39;)">1학년</button>
+      <button class="btn bs" id="att-gf-2" onclick="setAttGrade(&#39;2&#39;)">2학년</button>
+      <button class="btn bs" id="att-gf-3" onclick="setAttGrade(&#39;3&#39;)">3학년</button>
+    </div>
+    <!-- 통계 -->
     <div class="sg">
       <div class="sc"><div class="sl">출석</div><div class="sv" id="c-p" style="color:#15803d;">0</div></div>
       <div class="sc"><div class="sl">지각</div><div class="sv" id="c-l" style="color:#92400e;">0</div></div>
       <div class="sc"><div class="sl">조퇴</div><div class="sv" id="c-e" style="color:#92400e;">0</div></div>
       <div class="sc"><div class="sl">결석</div><div class="sv" id="c-a" style="color:#b91c1c;">0</div></div>
     </div>
-    <!-- 교시 탭 -->
-    <div id="att-period-tabs" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:.75rem;"></div>
-    <div class="card" style="padding:0;overflow:hidden;">
-      <table><thead><tr><th>학번</th><th>이름</th><th>상태</th><th>시간</th><th>변경</th></tr></thead>
-      <tbody id="att-tb"></tbody></table>
+    <!-- 출결 표: 행=학생, 열=교시 -->
+    <div style="overflow-x:auto;margin-bottom:.5rem;">
+      <table id="att-grid-table" style="width:100%;border-collapse:collapse;font-size:13px;min-width:300px;">
+        <thead id="att-grid-head"></thead>
+        <tbody id="att-grid-body"></tbody>
+      </table>
     </div>
-    <div class="rb" style="margin-top:1rem;">
+    <div style="font-size:11px;color:#9ca3af;margin-bottom:1rem;">
+      💡 각 셀의 드롭다운으로 출결 상태를 선택하세요 &nbsp;
+      <span style="background:#dcfce7;color:#15803d;border-radius:4px;padding:1px 6px;font-size:11px;">출석</span>
+      <span style="background:#fef3c7;color:#92400e;border-radius:4px;padding:1px 6px;font-size:11px;">지각</span>
+      <span style="background:#fef3c7;color:#92400e;border-radius:4px;padding:1px 6px;font-size:11px;">조퇴</span>
+      <span style="background:#fee2e2;color:#b91c1c;border-radius:4px;padding:1px 6px;font-size:11px;">결석</span>
+      <span style="background:#dbeafe;color:#1e40af;border-radius:4px;padding:1px 6px;font-size:11px;">병결</span>
+    </div>
+    <!-- 사전 신청 -->
+    <div class="rb">
       <div class="st" style="margin-bottom:0;">📋 사전 결석·지각 신청</div>
       <span class="badge aa" id="pa-pending-cnt">대기 0건</span>
     </div>
@@ -428,6 +450,17 @@ tr:hover td{background:#f9fafb}
   <div class="row" style="gap:8px;justify-content:flex-end;"><button class="btn" onclick="cm(&#39;mo-etc-pts&#39;)">취소</button><button class="btn bp" onclick="confirmEtcPts()">확인 처리</button></div>
 </div></div>
 
+<div id="mo-reg-cell" style="display:none;" class="mo"><div class="md">
+  <h3>정기결석 등록</h3>
+  <div id="reg-cell-title" style="font-size:13px;font-weight:600;color:#1d4ed8;margin-bottom:12px;"></div>
+  <label>사유</label>
+  <input type="text" id="reg-cell-reason" placeholder="예: 학원, 치료 등" style="margin-bottom:14px;">
+  <div class="row" style="gap:8px;justify-content:flex-end;">
+    <button class="btn" onclick="cm(&#39;mo-reg-cell&#39;)">취소</button>
+    <button class="btn bp" onclick="confirmRegCell()">등록</button>
+  </div>
+</div></div>
+
 <!-- Firebase SDK -->
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
@@ -603,7 +636,7 @@ let S = {
 function gs(id){return document.getElementById(id)}
 function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));gs(id).classList.add('active')}
 function ab(s,cls){return`<span class="badge ${cls}">${s}</span>`}
-function attB(s){const m={출석:'gg',지각:'aa',조퇴:'aa',결석:'rr','결석(서류제출)':'bg'};return ab(s||'미입력',m[s]||'gr')}
+function attB(s){const m={출석:'gg',지각:'aa',조퇴:'aa',결석:'rr','결석(서류제출)':'bg',정기결석:'aa'};return ab(s||'미입력',m[s]||'gr')}
 function attCell(s,id,dt,fromDoc){
   if(fromDoc)return`<span style="font-size:11px;color:#6b7280;">🔒 서류승인</span>`;
   return`<select style="width:100px;padding:3px 6px;font-size:12px;margin:0;" onchange="chAtt('${id}','${dt}',this.value)">${['출석','지각','조퇴','결석','결석(서류제출)'].map(x=>`<option${s===x?' selected':''}>${x}</option>`).join('')}</select>`;
@@ -621,9 +654,8 @@ function pushNotif(sid,type,title,desc){
   if(!S.notifs[sid])S.notifs[sid]=[];
   S.notifs[sid].unshift({type,title,desc,time:new Date().toLocaleString('ko-KR',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}),read:false});
   if(S.cur&&S.cur.id===sid)updateBadge();
-  // 푸시 발송
   if(window.sendPushViaFirestore) sendPushViaFirestore(sid,title,desc);
-  saveData();
+  // saveData는 호출자가 담당 (중복 저장 방지)
 }
 function updateBadge(){
   const sid=S.cur&&S.cur.id;if(!sid)return;
@@ -688,67 +720,151 @@ function aTab(n,el){document.querySelectorAll('#sc-admin .tab').forEach(t=>t.cla
 function sTab(n,el){document.querySelectorAll('#sc-stu .tab').forEach(t=>t.classList.remove('on'));document.querySelectorAll('#sc-stu .tc').forEach(t=>t.classList.remove('on'));el.classList.add('on');gs('ts-'+n).classList.add('on');({sa:renderStuAtt,stt:renderStuTTTab,spa:renderStuPreAbs,sd:renderStuDm,sf:renderStuDoc,sn:renderNtStu,snf:()=>{markAllRead();renderNotif();}})[n]&&({sa:renderStuAtt,stt:renderStuTTTab,spa:renderStuPreAbs,sd:renderStuDm,sf:renderStuDoc,sn:renderNtStu,snf:()=>{markAllRead();renderNotif();}})[n]()}
 
 // ── 관리자 렌더링 ──
-function renderAdmin(){gs('att-dt').value=gs('att-dt').value||TD;gs('tt-week').value=gs('tt-week').value||TD;renderAtt();renderDoc();renderDm();renderNtAdmin();renderStuList();renderPreAbsAdmin();}
+function renderAdmin(){
+  gs('att-dt').value=gs('att-dt').value||TD;
+  gs('tt-week').value=gs('tt-week').value||TD;
+  _attGrade='all';
+  ['all','1','2','3'].forEach(x=>{const el=gs('att-gf-'+x);if(el)el.className='btn bs'+(x==='all'?' bp':'');});
+  renderAtt();renderDoc();renderDm();renderNtAdmin();renderStuList();renderPreAbsAdmin();
+}
 
-let _attSelPeriod = null; // 현재 선택된 교시명 (null=전체)
+// ── 출결 그리드 (행=학생, 열=교시) ──
+let _attGrade='all';
+function setAttGrade(g){
+  _attGrade=g;
+  ['all','1','2','3'].forEach(x=>{
+    const el=gs('att-gf-'+x);if(el)el.className='btn bs'+(g===x?' bp':'');
+  });
+  renderAtt();
+}
 
 function renderAtt(){
   const dt=gs('att-dt').value||TD;
   const dayIdx=new Date(dt).getDay()===0?6:new Date(dt).getDay()-1;
   const periods=getPeriodsForDay(dayIdx);
+  const DAYS_KR=['월','화','수','목','금','토','일'];
 
-  // 교시 탭 렌더링
-  const tabEl=gs('att-period-tabs');
-  if(periods.length){
-    // 선택된 교시가 현재 요일에 없으면 초기화
-    if(_attSelPeriod && !periods.some(p=>p.name===_attSelPeriod)) _attSelPeriod=null;
-    tabEl.innerHTML=`<button class="day-btn${!_attSelPeriod?' on':''}" onclick="selectAttPeriod(null,'${dt}')">전체</button>`
-      +periods.map(p=>`<button class="day-btn${_attSelPeriod===p.name?' on':''}" onclick="selectAttPeriod('${p.name}','${dt}')">${p.name}</button>`).join('');
-  } else {
-    tabEl.innerHTML='<span style="font-size:12px;color:#9ca3af;">이 날은 등록된 교시가 없습니다.</span>';
-    _attSelPeriod=null;
+  // 학년 필터 적용
+  let students=S.students;
+  if(_attGrade!=='all') students=S.students.filter(s=>s.grade===_attGrade);
+  const sorted=[...students].sort((a,b)=>(a.grade||'0').localeCompare(b.grade||'0')||a.num.localeCompare(b.num));
+
+  const head=gs('att-grid-head');
+  const body=gs('att-grid-body');
+
+  if(!S.students.length){
+    head.innerHTML='';
+    body.innerHTML='<tr><td colspan="3" class="em">학생 관리 탭에서 학생을 추가하세요.</td></tr>';
+    ['c-p','c-l','c-e','c-a'].forEach(i=>gs(i).textContent=0);
+    renderPreAbsAdmin();return;
   }
 
-  _renderAttTable(dt, _attSelPeriod);
+  // 자습 없는 날
+  if(!periods.length){
+    head.innerHTML='';
+    body.innerHTML=`<tr><td colspan="3" class="em">${DAYS_KR[dayIdx]}요일은 자습이 없는 날입니다.</td></tr>`;
+    ['c-p','c-l','c-e','c-a'].forEach(i=>gs(i).textContent=0);
+    renderPreAbsAdmin();return;
+  }
+
+  // 헤더: 학번/이름 + 교시별 열
+  let hh=`<tr style="background:#f9fafb;">
+    <th style="padding:8px;text-align:left;border-bottom:1px solid #e5e5e5;font-size:12px;color:#6b7280;white-space:nowrap;">학번</th>
+    <th style="padding:8px;text-align:left;border-bottom:1px solid #e5e5e5;font-size:12px;color:#6b7280;white-space:nowrap;">이름</th>`;
+  periods.forEach(p=>{
+    hh+=`<th style="padding:8px;text-align:center;border-bottom:1px solid #e5e5e5;font-size:12px;color:#6b7280;white-space:nowrap;">${p.name}<br><span style="font-size:10px;font-weight:400;color:#9ca3af;">${p.time||''}</span></th>`;
+  });
+  hh+=`</tr>`;
+  head.innerHTML=hh;
+
+  // 본문: 학생별 행
+  let p=0,l=0,e=0,a=0;
+  const stColor={출석:'#dcfce7;color:#15803d',지각:'#fef3c7;color:#92400e',조퇴:'#fef3c7;color:#92400e',결석:'#fee2e2;color:#b91c1c','결석(서류제출)':'#dbeafe;color:#1e40af','병결':'#dbeafe;color:#1e40af',정기결석:'#fef3c7;color:#92400e'};
+
+  let rows='';
+  // 학년 구분선
+  let lastGrade='';
+  sorted.forEach(s=>{
+    // 학년 구분 헤더
+    if(_attGrade==='all'&&s.grade&&s.grade!==lastGrade){
+      lastGrade=s.grade;
+      const gColor=s.grade==='1'?'#dcfce7':s.grade==='2'?'#dbeafe':'#ede9fe';
+      const gText=s.grade==='1'?'#15803d':s.grade==='2'?'#1e40af':'#6d28d9';
+      rows+=`<tr><td colspan="${periods.length+2}" style="padding:6px 8px;background:${gColor};color:${gText};font-size:12px;font-weight:600;">${s.grade}학년</td></tr>`;
+    }
+    rows+=`<tr>
+      <td style="padding:6px 8px;font-size:12px;color:#6b7280;border-bottom:1px solid #f3f4f6;white-space:nowrap;">${s.num}</td>
+      <td style="padding:6px 8px;font-weight:500;border-bottom:1px solid #f3f4f6;white-space:nowrap;">${s.name}</td>`;
+
+    periods.forEach(prd=>{
+      const recKey=`${dt}_${prd.name}`;
+      const recs=S.att[s.id]||[];
+      const rec=recs.find(r=>r.date===recKey)||recs.find(r=>r.date===dt);
+      // 정기결석 여부
+      const isReg=isRegAbs(s.id,dt,prd.name);
+      let st=isReg?'정기결석':(rec?rec.status:'출석');
+      const clr=stColor[st]||'#f3f4f6;color:#374151';
+
+      if(prd===periods[0]){
+        if(st==='출석')p++;
+        else if(st==='지각')l++;
+        else if(st==='조퇴')e++;
+        else a++; // 결석, 병결, 정기결석, 결석(서류제출) 모두 결석으로 집계
+      }
+
+      const canClick=!isReg&&!rec?.fromDoc;
+      const stOptions=['출석','지각','조퇴','결석','병결'];
+      const stColor2={출석:'#dcfce7;color:#15803d',지각:'#fef3c7;color:#92400e',조퇴:'#fef3c7;color:#92400e',결석:'#fee2e2;color:#b91c1c',병결:'#dbeafe;color:#1e40af','결석(서류제출)':'#dbeafe;color:#1e40af',정기결석:'#fef3c7;color:#92400e'};
+      const curClr=stColor2[st]||'#f3f4f6;color:#374151';
+      if(!canClick){
+        rows+=`<td style="padding:4px;border-bottom:1px solid #f3f4f6;text-align:center;" onclick="alert('${isReg?'정기결석은 타임테이블 탭에서 수정하세요.':'서류 승인으로 처리된 출결입니다.'}')">
+          <div style="background:${curClr};border-radius:6px;padding:4px 6px;font-size:12px;font-weight:500;min-width:50px;display:inline-block;cursor:default;">${st}</div>
+          ${rec&&rec.time?`<div style="font-size:10px;color:#9ca3af;">${rec.time}</div>`:''}
+        </td>`;
+      } else {
+        const opts=stOptions.map(o=>`<option value="${o}"${st===o?' selected':''}>${o}</option>`).join('');
+        rows+=`<td style="padding:4px;border-bottom:1px solid #f3f4f6;text-align:center;">
+          <select onchange="selectAtt('${s.id}','${dt}','${prd.name}',this)" style="padding:3px 4px;font-size:12px;border-radius:6px;border:1px solid #d1d5db;background:${curClr};font-weight:500;margin:0;width:auto;cursor:pointer;">
+            ${opts}
+          </select>
+          ${rec&&rec.time?`<div style="font-size:10px;color:#9ca3af;">${rec.time}</div>`:''}
+        </td>`;
+      }
+    });
+    rows+=`</tr>`;
+  });
+  body.innerHTML=rows;
+  gs('c-p').textContent=p;gs('c-l').textContent=l;gs('c-e').textContent=e;gs('c-a').textContent=a;
   renderPreAbsAdmin();
 }
 
-function selectAttPeriod(periodName, dt){
-  _attSelPeriod=periodName;
-  // 탭 버튼 활성화
-  document.querySelectorAll('#att-period-tabs .day-btn').forEach(b=>{
-    b.classList.toggle('on', b.textContent===(periodName||'전체'));
-  });
-  _renderAttTable(dt||gs('att-dt').value||TD, periodName);
-}
-
-function _renderAttTable(dt, periodName){
-  let p=0,l=0,e=0,a=0;
-  const tb=gs('att-tb');
-  if(!S.students.length){
-    tb.innerHTML='<tr><td colspan="5" class="em">학생 관리 탭에서 학생을 추가하세요.</td></tr>';
-    ['c-p','c-l','c-e','c-a'].forEach(i=>gs(i).textContent=0);return;
+function selectAtt(sid,dt,periodName,sel){
+  const next=sel.value;
+  const recKey=`${dt}_${periodName}`;
+  if(!S.att[sid])S.att[sid]=[];
+  const recs=S.att[sid];
+  const i=recs.findIndex(r=>r.date===recKey);
+  const entry={date:recKey,status:next,time:new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'})};
+  if(i>=0)recs[i]=entry;else recs.push(entry);
+  // 벌점 처리
+  const baseDate=dt;
+  const cnt=getPeriodsForDate(baseDate).length||1;
+  removeDemerit(sid,baseDate,'지각');
+  removeDemerit(sid,baseDate,'무단결석');
+  removeDemerit(sid,baseDate,'서류인정');
+  removeDemerit(sid,baseDate,'사전인정');
+  if(next==='지각'){
+    addDemerit(sid,baseDate,'지각',1,'지각');
+  } else if(next==='결석'){
+    const approved=S.preAbs.find(p=>p.sid===sid&&p.date===baseDate&&p.status==='확인');
+    if(!approved)addDemerit(sid,baseDate,'무단결석',2*cnt,'무단결석');
+  } else if(next==='병결'){
+    addDemerit(sid,baseDate,'병결(인정)',1*cnt,'서류인정');
   }
-  tb.innerHTML='';
-  S.students.forEach(s=>{
-    // 교시별 출결 키: 교시 선택 시 date+period 복합 키 사용
-    const recKey=periodName?`${dt}_${periodName}`:dt;
-    const recs=S.att[s.id]||[];
-    // 교시별 기록 우선, 없으면 날짜 기록
-    const rec=recs.find(r=>r.date===recKey)||(!periodName?recs.find(r=>r.date===dt):null);
-    const st=rec?rec.status:'출석';
-    const fd=rec&&rec.fromDoc;
-    if(st==='출석')p++;else if(st==='지각')l++;else if(st==='조퇴')e++;else a++;
-    const periodLabel=periodName?`<span style="font-size:10px;color:#6b7280;display:block;">${periodName}</span>`:'';
-    tb.innerHTML+=`<tr>
-      <td style="font-size:12px;color:#6b7280;">${s.num}</td>
-      <td>${s.name}${periodLabel}</td>
-      <td>${attB(st)}</td>
-      <td style="font-size:12px;color:#6b7280;">${rec&&rec.time?rec.time:'-'}</td>
-      <td>${attCell(st,s.id,recKey,fd)}</td>
-    </tr>`;
-  });
-  gs('c-p').textContent=p;gs('c-l').textContent=l;gs('c-e').textContent=e;gs('c-a').textContent=a;
+  // 드롭다운 배경색 동적 업데이트
+  const stColor={출석:'#dcfce7;color:#15803d',지각:'#fef3c7;color:#92400e',조퇴:'#fef3c7;color:#92400e',결석:'#fee2e2;color:#b91c1c',병결:'#dbeafe;color:#1e40af'};
+  sel.style.cssText=`padding:3px 4px;font-size:12px;border-radius:6px;border:1px solid #d1d5db;background:${stColor[next]||'#f3f4f6;color:#374151'};font-weight:500;margin:0;width:auto;cursor:pointer;`;
+  saveData();
 }
 
 // ── 벌점 헬퍼 ──
@@ -759,7 +875,13 @@ function addDemerit(sid,date,name,pts,tag){
   if(pts<=0)return;
   removeDemerit(sid,date,tag);
   S.dems.push({sid,n:name,p:pts,date,tag,auto:true});
-  pushNotif(sid,'dm','벌점이 부과되었습니다',`${date} · ${name} · ${pts}점 부과`);
+  // 알림만 발송, saveData는 호출자가 담당
+  if(S.notifs){
+    if(!S.notifs[sid])S.notifs[sid]=[];
+    S.notifs[sid].unshift({type:'dm',title:'벌점이 부과되었습니다',desc:`${date} · ${name} · ${pts}점 부과`,time:new Date().toLocaleString('ko-KR',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}),read:false});
+    if(S.cur&&S.cur.id===sid)updateBadge();
+    if(window.sendPushViaFirestore)sendPushViaFirestore(sid,'벌점이 부과되었습니다',`${date} · ${name} · ${pts}점 부과`);
+  }
 }
 
 function chAtt(id,dt,st){
@@ -798,7 +920,7 @@ function appDoc(i,st){
     const recs=S.att[id];const ei=recs.findIndex(r=>r.date===dt);
     const entry={date:dt,status:'결석(서류제출)',reason:doc.type+' 승인',time:new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'}),fromDoc:true};
     if(ei>=0)recs[ei]=entry;else recs.push(entry);
-    const cnt=getPeriodCount();let pts=0,name='';
+    const cnt=getPeriodsForDate(dt).length||1;let pts=0,name='';
     if(doc.type==='병결확인서'){pts=1*cnt;name='병결(인정)';}
     else if(doc.type==='학원보강확인서'){pts=1*cnt;name='학원보강(인정)';}
     else{pts=1*cnt;name='서류제출('+doc.type+')';}
@@ -869,7 +991,10 @@ function renderStuAtt(){
   recs.forEach(r=>{
     const baseDate=r.date.includes('_')?r.date.split('_')[0]:r.date;
     if(baseDate!==r.date)return; // 교시별 기록은 집계에서 제외
-    if(r.status==='지각')l++;else if(r.status==='조퇴')e++;else if(r.status==='결석'||r.status==='결석(서류제출)')a++;else p++;
+    if(r.status==='지각')l++;
+    else if(r.status==='조퇴')e++;
+    else if(r.status==='결석'||r.status==='결석(서류제출)'||r.status==='병결')a++;
+    else p++;
   });
   gs('sp').textContent=p;gs('sl2').textContent=l;gs('se').textContent=e;gs('sa2').textContent=a;
 
@@ -878,8 +1003,27 @@ function renderStuAtt(){
 
   const tb=gs('sa-log');tb.innerHTML='';
   const dayRecs=recs.filter(r=>!r.date.includes('_'));
-  if(!dayRecs.length){tb.innerHTML='<tr><td colspan="3" class="em">출결 기록 없음</td></tr>';return}
-  dayRecs.slice().reverse().forEach(r=>{tb.innerHTML+=`<tr><td style="font-size:12px;">${r.date}</td><td>${attB(r.status)}</td><td style="font-size:12px;color:#6b7280;">${r.reason||'-'}</td></tr>`});
+  if(!dayRecs.length&&!(S.regAbs||[]).length){tb.innerHTML='<tr><td colspan="3" class="em">출결 기록 없음</td></tr>';return}
+
+  // 최근 30일 날짜 목록 생성해서 정기결석 포함 표시
+  const recentDates=[];
+  for(let i=0;i<30;i++){const d=new Date();d.setDate(d.getDate()-i);recentDates.push(d.toISOString().slice(0,10));}
+
+  let rows='';
+  recentDates.forEach(dateStr=>{
+    const sid=S.cur.id;
+    const dayIdx=new Date(dateStr).getDay()===0?6:new Date(dateStr).getDay()-1;
+    const periods=getPeriodsForDay(dayIdx);
+    if(!periods.length)return;
+    const rec=dayRecs.find(r=>r.date===dateStr);
+    const allRegAbs=periods.length>0&&periods.every(p=>isRegAbs(sid,dateStr,p.name));
+    if(!rec&&!allRegAbs)return;
+    const st=allRegAbs&&!rec?'정기결석':(rec?rec.status:'출석');
+    const regR=S.regAbs.find(r=>r.sid===sid&&r.day===dayIdx);
+    const reason=allRegAbs&&!rec?(regR?.reason||'정기결석'):(rec?.reason||'-');
+    rows+=`<tr><td style="font-size:12px;">${dateStr}</td><td>${attB(st)}</td><td style="font-size:12px;color:#6b7280;">${reason}</td></tr>`;
+  });
+  tb.innerHTML=rows||'<tr><td colspan="3" class="em">최근 30일 출결 기록 없음</td></tr>';
 }
 
 function renderYesterdayTT(sid){
@@ -996,12 +1140,20 @@ function _applyPreAbs(i,status,etcPts){
   S.preAbs[i].status=status;const p=S.preAbs[i];
   if(status==='확인'){
     if(!S.att[p.sid])S.att[p.sid]=[];
-    const recs=S.att[p.sid];const ei=recs.findIndex(r=>r.date===p.date);
+    const recs=S.att[p.sid];
+    // 날짜 기록 업데이트
+    const ei=recs.findIndex(r=>r.date===p.date);
     const entry={date:p.date,status:p.type,reason:p.reason+(p.detail?' ('+p.detail+')':''),time:'사전신청'};
     if(ei>=0)recs[ei]=entry;else recs.push(entry);
-    const cnt=getPeriodCount(),year=p.date.slice(0,4);
+    // 날짜 기준 교시 수 계산
+    const cnt=getPeriodsForDate(p.date).length||1;
+    const year=p.date.slice(0,4);
     let pts=0,dmName='';
+    // 기존 자동 벌점 모두 제거
     removeDemerit(p.sid,p.date,'무단결석');
+    removeDemerit(p.sid,p.date,'지각');
+    removeDemerit(p.sid,p.date,'서류인정');
+    removeDemerit(p.sid,p.date,'사전인정');
     if(p.type==='지각'){dmName='지각(사전인정)';pts=1;}
     else if(p.reason==='병결'){dmName='병결(인정)';pts=1*cnt;}
     else if(p.reason==='학원보강'){dmName='학원보강(인정)';pts=1*cnt;}
@@ -1124,11 +1276,21 @@ function renderAdminTTAll(){
   if(!periods.length){tbl.innerHTML=`<tr><td style="padding:20px;color:#6b7280;">${DAYS[selDay]}요일은 자습이 없는 날입니다.</td></tr>`;renderDayPills(dates);return;}
   let h=`<thead><tr><th class="period-lbl">교시</th>`;
   if(gf==='all'){['1','2','3'].forEach(g=>{const cnt=filtered.filter(s=>s.grade===g).length;if(cnt>0)h+=`<th colspan="${cnt}" style="background:${g==='1'?'#dcfce7':g==='2'?'#dbeafe':'#ede9fe'};color:${g==='1'?'#15803d':g==='2'?'#1e40af':'#6d28d9'};text-align:center;">${g}학년</th>`;});}
-  h+=`</tr><tr><th class="period-lbl"></th>`;
+  h+=`</tr><tr><th class="period-lbl" style="font-size:10px;color:#9ca3af;">셀 클릭=정기결석 설정</th>`;
   const sorted=[...filtered].sort((a,b)=>(a.grade||'0').localeCompare(b.grade||'0')||a.num.localeCompare(b.num));
   sorted.forEach(s=>{h+=`<th style="font-size:11px;">${s.name}<br><span style="font-size:9px;color:#9ca3af;">${s.num}</span></th>`;});
   h+=`</tr></thead><tbody>`;
-  periods.forEach(p=>{h+=`<tr><td class="period-lbl"><div style="font-weight:600;">${p.name}</div><div style="font-size:10px;color:#9ca3af;">${p.time||''}</div></td>`;sorted.forEach(s=>{const st=getCellStatus(s.id,date,p.name);h+=`<td><div class="tt-cell ${cellCls(st)}" style="font-size:10px;">${cellLabel(st)}</div></td>`;});h+=`</tr>`;});
+  periods.forEach(p=>{
+    h+=`<tr><td class="period-lbl"><div style="font-weight:600;">${p.name}</div><div style="font-size:10px;color:#9ca3af;">${p.time||''}</div></td>`;
+    sorted.forEach(s=>{
+      const st=getCellStatus(s.id,date,p.name);
+      const regR=S.regAbs.find(r=>r.sid===s.id&&r.day===dayIdx&&(r.type==='day'||r.period===p.name));
+      h+=`<td onclick="toggleRegAbsCell('${s.id}',${dayIdx},'${p.name}')" style="cursor:pointer;" title="${regR?'클릭: 정기결석 해제 ('+regR.reason+')':'클릭: 정기결석 등록'}">
+        <div class="tt-cell ${cellCls(st)}" style="font-size:10px;">${cellLabel(st)}${regR?`<br><span style='font-size:9px;opacity:.8;'>${regR.reason}</span>`:''}
+        </div></td>`;
+    });
+    h+=`</tr>`;
+  });
   h+=`</tbody>`;tbl.innerHTML=h;renderDayPills(dates);
 }
 function renderAdminTTOne(){
@@ -1152,7 +1314,7 @@ function renderAdminTTOne(){
       if(!hasPeriod){h+=`<td style="${isToday?'background:#f0f7ff;':''}"><div class="tt-cell tt-unknown" style="font-size:10px;">-</div></td>`;return;}
       const st=getCellStatus(sid,date,pName);
       const regR=S.regAbs.find(r=>r.sid===sid&&r.day===di&&(r.type==='day'||r.period===pName));
-      h+=`<td style="${isToday?'background:#f0f7ff;':''}"><div class="tt-cell ${cellCls(st)}">${cellLabel(st)}${regR?`<br><span style="font-size:9px;opacity:.8;">${regR.reason}</span>`:''}</div></td>`;
+      h+=`<td style="${isToday?'background:#f0f7ff;':''}cursor:pointer;" onclick="toggleRegAbsCell('${sid}',${di},'${pName}')" title="${regR?'클릭: 정기결석 해제':'클릭: 정기결석 등록'}"><div class="tt-cell ${cellCls(st)}">${cellLabel(st)}${regR?`<br><span style='font-size:9px;opacity:.8;'>${regR.reason}</span>`:''}</div></td>`;
     });
     h+=`</tr>`;
   });
@@ -1185,6 +1347,31 @@ function renderStuTT(){
     h+=`</tr>`;
   });
   h+=`</tbody>`;tbl.innerHTML=h;
+}
+
+// ── 타임테이블 셀 클릭 정기결석 토글 ──
+function toggleRegAbsCell(sid,dayIdx,periodName){
+  const existing=S.regAbs.findIndex(r=>r.sid===sid&&r.day===dayIdx&&r.type==='period'&&r.period===periodName);
+  if(existing>=0){
+    const stu=S.students.find(s=>s.id===sid);
+    if(!confirm(`${stu?.name} · ${DAYS[dayIdx]}요일 · ${periodName}\n정기결석을 해제하시겠습니까?`))return;
+    S.regAbs.splice(existing,1);
+    saveData();renderAdminTT();renderRegAbsList();
+  } else {
+    window._regCell={sid,dayIdx,periodName};
+    const stu=S.students.find(s=>s.id===sid);
+    gs('reg-cell-title').textContent=`${stu?.name} · ${DAYS[dayIdx]}요일 · ${periodName}`;
+    gs('reg-cell-reason').value='학원';
+    gs('mo-reg-cell').style.display='flex';
+  }
+}
+function confirmRegCell(){
+  const {sid,dayIdx,periodName}=window._regCell||{};
+  if(!sid)return;
+  const reason=gs('reg-cell-reason').value.trim()||'정기결석';
+  const dup=S.regAbs.some(r=>r.sid===sid&&r.day===dayIdx&&r.type==='period'&&r.period===periodName);
+  if(!dup)S.regAbs.push({sid,day:dayIdx,type:'period',period:periodName,reason});
+  cm('mo-reg-cell');saveData();renderAdminTT();renderRegAbsList();
 }
 
 // ── 첨부파일 ──
