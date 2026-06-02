@@ -1,10 +1,10 @@
-<index html>
-<!-- saved from url=(0054)file:///C:/Users/user/Downloads/bisang_firebase_5.html -->
+<!DOCTYPE html>
+<!-- saved from url=(0054)file:///C:/Users/user/Downloads/bisang_firebase_6.html -->
 <html lang="ko"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>비상반 관리 시스템</title>
-<link rel="manifest" href="file:///C:/Users/user/Downloads/bisang_firebase_5.html#">
+<link rel="manifest" href="file:///C:/Users/user/Downloads/bisang_firebase_6.html#">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f5;color:#111}
@@ -190,10 +190,11 @@ tr:hover td{background:#f9fafb}
     <div style="font-size:11px;color:#9ca3af;margin-bottom:1rem;">
       💡 각 셀의 드롭다운으로 출결 상태를 선택하세요 &nbsp;
       <span style="background:#dcfce7;color:#15803d;border-radius:4px;padding:1px 6px;font-size:11px;">출석</span>
-      <span style="background:#fef3c7;color:#92400e;border-radius:4px;padding:1px 6px;font-size:11px;">지각</span>
+      <span style="background:#fef3c7;color:#92400e;border-radius:4px;padding:1px 6px;font-size:11px;">지각 1점</span>
       <span style="background:#fef3c7;color:#92400e;border-radius:4px;padding:1px 6px;font-size:11px;">조퇴</span>
-      <span style="background:#fee2e2;color:#b91c1c;border-radius:4px;padding:1px 6px;font-size:11px;">결석</span>
-      <span style="background:#dbeafe;color:#1e40af;border-radius:4px;padding:1px 6px;font-size:11px;">병결</span>
+      <span style="background:#fee2e2;color:#b91c1c;border-radius:4px;padding:1px 6px;font-size:11px;">결석 2점</span>
+      <span style="background:#dbeafe;color:#1e40af;border-radius:4px;padding:1px 6px;font-size:11px;">병결 1점</span>
+      <span style="background:#f3f4f6;color:#374151;border-radius:4px;padding:1px 6px;font-size:11px;">인정 0점</span>
     </div>
     <!-- 사전 신청 -->
     <div class="rb">
@@ -210,8 +211,13 @@ tr:hover td{background:#f9fafb}
     <div class="card" style="padding:0;overflow:hidden;"><table><thead><tr><th>학번</th><th>이름</th><th>구분</th><th>제출일</th><th>첨부</th><th>상태</th><th>처리</th></tr></thead><tbody id="doc-tb"></tbody></table></div>
   </div>
   <div id="ta-dm" class="tc">
-    <div class="rb"><div class="st">벌점 현황</div><button class="btn bs bp" onclick="openDm()">+ 벌점 부여</button></div>
-    <div class="card" style="padding:0;overflow:hidden;"><table><thead><tr><th>학번</th><th>이름</th><th>누적</th><th>상태</th><th>상세</th></tr></thead><tbody id="dm-tb"></tbody></table></div>
+    <div class="rb"><div class="st">벌점 현황</div>
+      <div class="row" style="gap:6px;">
+        <button class="btn bs bp" onclick="openDm()">+ 벌점 부여</button>
+        <button class="btn bs bd" onclick="resetAllDemerit()">🔄 전체 리셋</button>
+      </div>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden;"><table><thead><tr><th>학번</th><th>이름</th><th>누적</th><th>상태</th><th>상세/수정</th><th>리셋</th></tr></thead><tbody id="dm-tb"></tbody></table></div>
     <div class="st" style="margin-top:1rem;">벌점 항목</div>
     <div class="card" style="padding:0;overflow:hidden;"><table><thead><tr><th>항목</th><th>점수</th><th>삭제</th></tr></thead><tbody id="rule-tb"></tbody></table></div>
     <div class="row" style="gap:8px;margin-top:10px;">
@@ -438,9 +444,15 @@ tr:hover td{background:#f9fafb}
   <label>내용</label><textarea id="nt-bo" rows="4" placeholder="공지 내용"></textarea>
   <div class="row" style="gap:8px;justify-content:flex-end;margin-top:4px;"><button class="btn" onclick="cm(&#39;mo-nt&#39;)">취소</button><button class="btn bp" onclick="saveNt()">게시</button></div>
 </div></div>
-<div id="mo-dd" style="display:none;" class="mo"><div class="md">
-  <h3 id="dd-hd">벌점 상세</h3><div id="dd-body"></div>
-  <div class="row" style="justify-content:flex-end;margin-top:1rem;"><button class="btn" onclick="cm(&#39;mo-dd&#39;)">닫기</button></div>
+<div id="mo-dd" style="display:none;" class="mo"><div class="md" style="width:520px;max-width:95vw;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+    <h3 id="dd-hd" style="margin-bottom:0;">벌점 상세</h3>
+    <div class="row" style="gap:6px;">
+      <button class="btn bs bd" onclick="resetOneStu()" id="dd-reset-btn">🔄 이 학생 리셋</button>
+      <button class="btn bs" onclick="cm(&#39;mo-dd&#39;)">닫기</button>
+    </div>
+  </div>
+  <div id="dd-body" style="max-height:60vh;overflow-y:auto;"></div>
 </div></div>
 <div id="mo-etc-pts" style="display:none;" class="mo"><div class="md">
   <h3>기타 사유 벌점 입력</h3>
@@ -449,6 +461,22 @@ tr:hover td{background:#f9fafb}
   <select id="etc-pts-val" style="margin-bottom:14px;"><option value="0">0점 (인정)</option><option value="1" selected="">1점</option><option value="2">2점</option></select>
   <div class="row" style="gap:8px;justify-content:flex-end;"><button class="btn" onclick="cm(&#39;mo-etc-pts&#39;)">취소</button><button class="btn bp" onclick="confirmEtcPts()">확인 처리</button></div>
 </div></div>
+
+<!-- 로그인 시 공지/알림 팝업 -->
+<div id="mo-login-popup" style="display:none;" class="mo">
+  <div class="md" style="width:480px;max-width:95vw;max-height:85vh;display:flex;flex-direction:column;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+      <h3 id="popup-title" style="margin-bottom:0;">📢 새 알림</h3>
+      <span id="popup-counter" style="font-size:12px;color:#6b7280;"></span>
+    </div>
+    <div id="popup-body" style="flex:1;overflow-y:auto;margin-bottom:1rem;"></div>
+    <div class="row" style="gap:8px;justify-content:flex-end;">
+      <button class="btn bs" onclick="popupPrev()" id="popup-prev" style="display:none;">← 이전</button>
+      <button class="btn bs" onclick="popupNext()" id="popup-next" style="display:none;">다음 →</button>
+      <button class="btn bp" onclick="closeLoginPopup()">확인</button>
+    </div>
+  </div>
+</div>
 
 <div id="mo-reg-cell" style="display:none;" class="mo"><div class="md">
   <h3>정기결석 등록</h3>
@@ -636,7 +664,7 @@ let S = {
 function gs(id){return document.getElementById(id)}
 function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));gs(id).classList.add('active')}
 function ab(s,cls){return`<span class="badge ${cls}">${s}</span>`}
-function attB(s){const m={출석:'gg',지각:'aa',조퇴:'aa',결석:'rr','결석(서류제출)':'bg',정기결석:'aa'};return ab(s||'미입력',m[s]||'gr')}
+function attB(s){const m={출석:'gg',지각:'aa',조퇴:'aa',결석:'rr','결석(서류제출)':'bg',정기결석:'aa',병결:'bg',인정:'gr'};return ab(s||'미입력',m[s]||'gr')}
 function attCell(s,id,dt,fromDoc){
   if(fromDoc)return`<span style="font-size:11px;color:#6b7280;">🔒 서류승인</span>`;
   return`<select style="width:100px;padding:3px 6px;font-size:12px;margin:0;" onchange="chAtt('${id}','${dt}',this.value)">${['출석','지각','조퇴','결석','결석(서류제출)'].map(x=>`<option${s===x?' selected':''}>${x}</option>`).join('')}</select>`;
@@ -670,15 +698,27 @@ function renderNotif(){
   if(!list.length){el.innerHTML='<div class="em">알림이 없습니다.</div>';return;}
   const iconMap={dm:'🚨',doc_ok:'✅',doc_no:'❌',att:'📋'};
   const clsMap={dm:'dm',doc_ok:'doc-ok',doc_no:'doc-no',att:'att'};
-  el.innerHTML=list.map((n,i)=>`
-    <div class="notif-item${n.read?'':' unread'}" onclick="readNotif(${i})">
+  el.innerHTML=`<div style="font-size:11px;color:#9ca3af;padding:8px 14px;border-bottom:1px solid #f3f4f6;">💡 알림을 클릭하면 삭제됩니다</div>`+
+  list.map((n,i)=>`
+    <div class="notif-item unread" onclick="readNotif(${i})" style="cursor:pointer;" title="클릭하여 삭제">
       <div class="notif-icon ${clsMap[n.type]||'att'}">${iconMap[n.type]||'📢'}</div>
       <div class="notif-body"><div class="notif-title">${n.title}</div><div class="notif-desc">${n.desc}</div><div class="notif-time">${n.time}</div></div>
-      ${n.read?'':'<div class="notif-unread-mark"></div>'}
+      <div style="font-size:18px;color:#d1d5db;flex-shrink:0;">×</div>
     </div>`).join('');
 }
-function readNotif(i){const sid=S.cur.id;if(S.notifs[sid]&&S.notifs[sid][i])S.notifs[sid][i].read=true;updateBadge();renderNotif();}
-function markAllRead(){const sid=S.cur.id;(S.notifs[sid]||[]).forEach(n=>n.read=true);updateBadge();renderNotif();}
+function readNotif(i){
+  const sid=S.cur.id;
+  if(S.notifs[sid]&&S.notifs[sid][i]){
+    S.notifs[sid].splice(i,1); // 읽으면 삭제
+    saveData();
+  }
+  updateBadge();renderNotif();
+}
+function markAllRead(){
+  const sid=S.cur.id;
+  S.notifs[sid]=[];
+  updateBadge();renderNotif();saveData();
+}
 
 // ── 로그인 ──
 function loginChoose(type){
@@ -706,6 +746,8 @@ function stuLogin(){
     gs('stu-hdr').textContent=f.name+' 학생';show('sc-stu');renderStu();updateBadge();
     if(window.startRealtimeSync)startRealtimeSync();
     if(window.initPush)initPush();
+    // 로그인 시 팝업 표시
+    setTimeout(()=>showLoginPopup(f.id), 500);
   } else {e.textContent='학번과 이름이 일치하지 않습니다.';e.style.display='block';}
 }
 function logout(){
@@ -779,7 +821,7 @@ function renderAtt(){
 
   // 본문: 학생별 행
   let p=0,l=0,e=0,a=0;
-  const stColor={출석:'#dcfce7;color:#15803d',지각:'#fef3c7;color:#92400e',조퇴:'#fef3c7;color:#92400e',결석:'#fee2e2;color:#b91c1c','결석(서류제출)':'#dbeafe;color:#1e40af','병결':'#dbeafe;color:#1e40af',정기결석:'#fef3c7;color:#92400e'};
+  const stColor={출석:'#dcfce7;color:#15803d',지각:'#fef3c7;color:#92400e',조퇴:'#fef3c7;color:#92400e',결석:'#fee2e2;color:#b91c1c','결석(서류제출)':'#dbeafe;color:#1e40af','병결':'#dbeafe;color:#1e40af','인정':'#f3f4f6;color:#374151',정기결석:'#fef3c7;color:#92400e'};
 
   let rows='';
   // 학년 구분선
@@ -813,8 +855,8 @@ function renderAtt(){
       }
 
       const canClick=!isReg&&!rec?.fromDoc;
-      const stOptions=['출석','지각','조퇴','결석','병결'];
-      const stColor2={출석:'#dcfce7;color:#15803d',지각:'#fef3c7;color:#92400e',조퇴:'#fef3c7;color:#92400e',결석:'#fee2e2;color:#b91c1c',병결:'#dbeafe;color:#1e40af','결석(서류제출)':'#dbeafe;color:#1e40af',정기결석:'#fef3c7;color:#92400e'};
+      const stOptions=['출석','지각','조퇴','결석','병결','인정'];
+      const stColor2={출석:'#dcfce7;color:#15803d',지각:'#fef3c7;color:#92400e',조퇴:'#fef3c7;color:#92400e',결석:'#fee2e2;color:#b91c1c',병결:'#dbeafe;color:#1e40af',인정:'#f3f4f6;color:#374151','결석(서류제출)':'#dbeafe;color:#1e40af',정기결석:'#fef3c7;color:#92400e'};
       const curClr=stColor2[st]||'#f3f4f6;color:#374151';
       if(!canClick){
         rows+=`<td style="padding:4px;border-bottom:1px solid #f3f4f6;text-align:center;" onclick="alert('${isReg?'정기결석은 타임테이블 탭에서 수정하세요.':'서류 승인으로 처리된 출결입니다.'}')">
@@ -860,9 +902,11 @@ function selectAtt(sid,dt,periodName,sel){
     if(!approved)addDemerit(sid,baseDate,'무단결석',2*cnt,'무단결석');
   } else if(next==='병결'){
     addDemerit(sid,baseDate,'병결(인정)',1*cnt,'서류인정');
+  } else if(next==='인정'){
+    // 인정: 벌점 0점, 기존 자동 벌점 모두 제거
   }
   // 드롭다운 배경색 동적 업데이트
-  const stColor={출석:'#dcfce7;color:#15803d',지각:'#fef3c7;color:#92400e',조퇴:'#fef3c7;color:#92400e',결석:'#fee2e2;color:#b91c1c',병결:'#dbeafe;color:#1e40af'};
+  const stColor={출석:'#dcfce7;color:#15803d',지각:'#fef3c7;color:#92400e',조퇴:'#fef3c7;color:#92400e',결석:'#fee2e2;color:#b91c1c',병결:'#dbeafe;color:#1e40af',인정:'#f3f4f6;color:#374151'};
   sel.style.cssText=`padding:3px 4px;font-size:12px;border-radius:6px;border:1px solid #d1d5db;background:${stColor[next]||'#f3f4f6;color:#374151'};font-weight:500;margin:0;width:auto;cursor:pointer;`;
   saveData();
 }
@@ -932,18 +976,135 @@ function appDoc(i,st){
   renderDoc();saveData();
 }
 
-function renderDm(){const tb=gs('dm-tb');if(!S.students.length){tb.innerHTML='<tr><td colspan="5" class="em">등록된 학생이 없습니다.</td></tr>';renderRules();return}tb.innerHTML='';S.students.forEach(s=>{const logs=S.dems.filter(d=>d.sid===s.id);const tot=logs.reduce((a,d)=>a+d.p,0);const st=tot>=10?ab('주의','rr'):tot>=5?ab('경고','aa'):ab('정상','gg');tb.innerHTML+=`<tr><td style="font-size:12px;color:#6b7280;">${s.num}</td><td>${s.name}</td><td style="font-weight:600;">${tot}점</td><td>${st}</td><td><button class="btn bs" onclick="showDd('${s.id}')">상세</button></td></tr>`});renderRules()}
-function renderRules(){const tb=gs('rule-tb');tb.innerHTML='';S.rules.forEach((r,i)=>{tb.innerHTML+=`<tr><td>${r.n}</td><td>${r.p}점</td><td><button class="btn bs bd" onclick="delRule(${i})">삭제</button></td></tr>`})}
-function addRule(){const n=gs('rule-nm').value.trim(),p=parseInt(gs('rule-pt').value);if(!n||isNaN(p))return;S.rules.push({n,p});gs('rule-nm').value='';gs('rule-pt').value='';renderRules();saveData();}
-function delRule(i){S.rules.splice(i,1);renderRules();saveData();}
-function openDm(){if(!S.students.length){alert('등록된 학생이 없습니다.');return}gs('dm-s').innerHTML=S.students.map(s=>`<option value="${s.id}">${s.num} ${s.name}</option>`).join('');gs('dm-r').innerHTML=S.rules.map((r,i)=>`<option value="${i}">${r.n} (${r.p}점)</option>`).join('');gs('dm-dt').value=TD;gs('mo-dm').style.display='flex'}
-function grantDm(){
-  const sid=gs('dm-s').value,ri=parseInt(gs('dm-r').value),dt=gs('dm-dt').value,r=S.rules[ri];
-  S.dems.push({sid,n:r.n,p:r.p,date:dt});
-  pushNotif(sid,'dm','벌점이 부과되었습니다',`${dt} · ${r.n} · ${r.p}점 부과`);
-  cm('mo-dm');renderDm();saveData();
+function renderDm(){
+  const tb=gs('dm-tb');
+  if(!S.students.length){tb.innerHTML='<tr><td colspan="6" class="em">등록된 학생이 없습니다.</td></tr>';renderRules();return}
+  tb.innerHTML='';
+  S.students.forEach(s=>{
+    const logs=S.dems.filter(d=>d.sid===s.id);
+    const tot=logs.reduce((a,d)=>a+d.p,0);
+    const st=tot>=10?ab('주의','rr'):tot>=5?ab('경고','aa'):ab('정상','gg');
+    tb.innerHTML+=`<tr>
+      <td style="font-size:12px;color:#6b7280;">${s.num}</td>
+      <td>${s.name}</td>
+      <td style="font-weight:600;">${tot}점</td>
+      <td>${st}</td>
+      <td><button class="btn bs" onclick="showDd('${s.id}')">📋 상세/수정</button></td>
+      <td><button class="btn bs bd" onclick="resetStuDm('${s.id}','${s.name}')">리셋</button></td>
+    </tr>`;
+  });
+  renderRules();
 }
-function showDd(id){const s=S.students.find(x=>x.id===id),logs=S.dems.filter(d=>d.sid===id);gs('dd-hd').textContent=(s?s.name:'')+' 벌점 상세';const tot=logs.reduce((a,d)=>a+d.p,0);let h=`<div style="margin-bottom:10px;font-size:14px;font-weight:600;">누적: ${tot}점</div>`;if(!logs.length)h+='<div style="color:#6b7280;font-size:13px;">벌점 기록 없음</div>';else{h+='<table><thead><tr><th>날짜</th><th>항목</th><th>점수</th></tr></thead><tbody>';logs.forEach(l=>{h+=`<tr><td style="font-size:12px;">${l.date}</td><td>${l.n}</td><td>${l.p}점</td></tr>`});h+='</tbody></table>'}gs('dd-body').innerHTML=h;gs('mo-dd').style.display='flex'}
+
+let _ddSid = null;
+function showDd(id){
+  _ddSid=id;
+  const s=S.students.find(x=>x.id===id);
+  gs('dd-hd').textContent=(s?s.name:'')+' 벌점 상세';
+  renderDdBody();
+  gs('mo-dd').style.display='flex';
+}
+function renderDdBody(){
+  const id=_ddSid;
+  const logs=S.dems.filter(d=>d.sid===id);
+  const tot=logs.reduce((a,d)=>a+d.p,0);
+  let h=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+    <span style="font-size:14px;font-weight:600;">누적: <span style="color:#b91c1c;">${tot}점</span></span>
+    <button class="btn bs bp" onclick="addDmInline()">+ 벌점 추가</button>
+  </div>`;
+  // 벌점 추가 인라인 폼
+  h+=`<div id="dd-add-form" style="display:none;background:#f9fafb;border-radius:8px;padding:10px;margin-bottom:10px;">
+    <div class="row" style="gap:6px;flex-wrap:wrap;">
+      <input type="text" id="dd-add-name" placeholder="항목명" style="margin:0;flex:1;min-width:100px;" />
+      <input type="number" id="dd-add-pts" placeholder="점수" style="margin:0;width:70px;" />
+      <input type="date" id="dd-add-date" style="margin:0;width:130px;" />
+      <button class="btn bs bp" onclick="confirmAddDm()">추가</button>
+      <button class="btn bs" onclick="gs('dd-add-form').style.display='none'">취소</button>
+    </div>
+  </div>`;
+  if(!logs.length){
+    h+='<div style="color:#6b7280;font-size:13px;text-align:center;padding:1rem;">벌점 기록 없음</div>';
+  } else {
+    h+=`<table style="width:100%;border-collapse:collapse;font-size:13px;">
+      <thead><tr>
+        <th style="padding:6px 8px;color:#6b7280;font-size:12px;border-bottom:1px solid #e5e5e5;text-align:left;">날짜</th>
+        <th style="padding:6px 8px;color:#6b7280;font-size:12px;border-bottom:1px solid #e5e5e5;text-align:left;">항목</th>
+        <th style="padding:6px 8px;color:#6b7280;font-size:12px;border-bottom:1px solid #e5e5e5;text-align:center;">점수</th>
+        <th style="padding:6px 8px;color:#6b7280;font-size:12px;border-bottom:1px solid #e5e5e5;text-align:center;">수정</th>
+        <th style="padding:6px 8px;color:#6b7280;font-size:12px;border-bottom:1px solid #e5e5e5;text-align:center;">삭제</th>
+      </tr></thead><tbody>`;
+    // 전체 인덱스 매핑 (S.dems 배열 기준)
+    S.dems.forEach((l,gi)=>{
+      if(l.sid!==id)return;
+      h+=`<tr>
+        <td style="padding:6px 8px;font-size:12px;">${l.date}</td>
+        <td style="padding:6px 8px;">${l.n}${l.auto?'<span style="font-size:10px;color:#9ca3af;margin-left:4px;">자동</span>':''}</td>
+        <td style="padding:6px 8px;text-align:center;">
+          <input type="number" value="${l.p}" min="0" max="99" style="width:55px;padding:3px 6px;font-size:12px;margin:0;text-align:center;"
+            onchange="editDmPts(${gi},this.value)" />
+        </td>
+        <td style="padding:6px 8px;text-align:center;">
+          <input type="text" value="${l.n}" style="width:100px;padding:3px 6px;font-size:12px;margin:0;"
+            onchange="editDmName(${gi},this.value)" />
+        </td>
+        <td style="padding:6px 8px;text-align:center;">
+          <button class="btn bs bd" onclick="delDmItem(${gi})">삭제</button>
+        </td>
+      </tr>`;
+    });
+    h+='</tbody></table>';
+  }
+  gs('dd-body').innerHTML=h;
+  gs('dd-add-date').value=TD;
+}
+function addDmInline(){
+  gs('dd-add-form').style.display='block';
+  gs('dd-add-name').focus();
+}
+function confirmAddDm(){
+  const name=gs('dd-add-name').value.trim();
+  const pts=parseInt(gs('dd-add-pts').value);
+  const date=gs('dd-add-date').value||TD;
+  if(!name||isNaN(pts)||pts<0){alert('항목명과 점수를 입력하세요.');return;}
+  S.dems.push({sid:_ddSid,n:name,p:pts,date,auto:false});
+  gs('dd-add-form').style.display='none';
+  gs('dd-add-name').value='';gs('dd-add-pts').value='';
+  renderDdBody();renderDm();saveData();
+}
+function editDmPts(gi,val){
+  const pts=parseInt(val);
+  if(isNaN(pts)||pts<0)return;
+  S.dems[gi].p=pts;
+  renderDm();saveData();
+}
+function editDmName(gi,val){
+  if(!val.trim())return;
+  S.dems[gi].n=val.trim();
+  renderDm();saveData();
+}
+function delDmItem(gi){
+  if(!confirm('이 벌점 항목을 삭제하시겠습니까?'))return;
+  S.dems.splice(gi,1);
+  renderDdBody();renderDm();saveData();
+}
+function resetStuDm(sid,name){
+  if(!confirm(`${name} 학생의 벌점을 전체 리셋하시겠습니까?`))return;
+  S.dems=S.dems.filter(d=>d.sid!==sid);
+  renderDm();saveData();
+}
+function resetOneStu(){
+  if(!_ddSid)return;
+  const s=S.students.find(x=>x.id===_ddSid);
+  if(!confirm(`${s?s.name:''} 학생의 벌점을 전체 리셋하시겠습니까?`))return;
+  S.dems=S.dems.filter(d=>d.sid!==_ddSid);
+  renderDdBody();renderDm();saveData();
+}
+function resetAllDemerit(){
+  if(!confirm('⚠️ 전체 학생의 벌점을 모두 리셋하시겠습니까?\n이 작업은 되돌릴 수 없습니다.'))return;
+  S.dems=[];
+  renderDm();saveData();
+  alert('전체 벌점이 리셋되었습니다.');
+}
 function renderNtAdmin(){const el=gs('nt-admin');el.innerHTML='';if(!S.notices.length){el.innerHTML='<div class="em">공지사항이 없습니다.</div>';return}S.notices.forEach((n,i)=>{el.innerHTML+=`<div class="card"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;"><div><div style="font-weight:600;font-size:14px;">${n.t}</div><div style="font-size:12px;color:#6b7280;">${n.d}</div></div><button class="btn bs bd" onclick="delNt(${i})">삭제</button></div><hr style="border:none;border-top:1px solid #f3f4f6;margin:0 0 8px;"><div style="font-size:13px;color:#6b7280;">${n.b}</div></div>`})}
 function openNt(){gs('nt-ti').value='';gs('nt-bo').value='';gs('mo-nt').style.display='flex'}
 function saveNt(){const t=gs('nt-ti').value.trim(),b=gs('nt-bo').value.trim();if(!t)return;S.notices.unshift({t,b,d:TD});cm('mo-nt');renderNtAdmin();saveData();}
@@ -1169,7 +1330,60 @@ function _applyPreAbs(i,status,etcPts){
   renderPreAbsAdmin();saveData();
 }
 
-// ── 타임테이블 ──
+// ── 로그인 팝업 (공지 + 알림) ──
+let _popupItems=[];
+let _popupIdx=0;
+
+function showLoginPopup(sid){
+  _popupItems=[];
+  // 읽지 않은 알림 수집
+  const notifs=(S.notifs[sid]||[]);
+  notifs.forEach((n,i)=>{
+    _popupItems.push({type:'notif',idx:i,icon:{dm:'🚨',doc_ok:'✅',doc_no:'❌',att:'📋'}[n.type]||'📢',title:n.title,body:n.desc,time:n.time});
+  });
+  // 최신 공지 (최대 3개)
+  S.notices.slice(0,3).forEach(n=>{
+    _popupItems.push({type:'notice',icon:'📌',title:n.t,body:n.b,time:n.d});
+  });
+  if(!_popupItems.length)return;
+  _popupIdx=0;
+  renderPopupItem();
+  gs('mo-login-popup').style.display='flex';
+}
+
+function renderPopupItem(){
+  const item=_popupItems[_popupIdx];
+  const total=_popupItems.length;
+  gs('popup-title').textContent=item.icon+' '+item.title;
+  gs('popup-counter').textContent=`${_popupIdx+1} / ${total}`;
+  // 타입별 배경색
+  const bg=item.type==='notice'?'#f0f9ff':'#fff7ed';
+  const border=item.type==='notice'?'#bae6fd':'#fed7aa';
+  gs('popup-body').innerHTML=`
+    <div style="background:${bg};border:1px solid ${border};border-radius:10px;padding:1.25rem;">
+      <div style="font-size:14px;line-height:1.7;color:#111;">${item.body}</div>
+      ${item.time?`<div style="font-size:12px;color:#9ca3af;margin-top:8px;">${item.time}</div>`:''}
+      ${item.type==='notif'?'<div style="font-size:11px;color:#9ca3af;margin-top:4px;">확인 후 알림이 삭제됩니다.</div>':''}
+    </div>
+    ${item.type==='notice'?'<div style="font-size:11px;color:#9ca3af;margin-top:8px;text-align:center;">📌 공지사항</div>':''}`;
+  // 이전/다음 버튼
+  gs('popup-prev').style.display=_popupIdx>0?'inline-flex':'none';
+  gs('popup-next').style.display=_popupIdx<total-1?'inline-flex':'none';
+}
+
+function popupPrev(){if(_popupIdx>0){_popupIdx--;renderPopupItem();}}
+function popupNext(){if(_popupIdx<_popupItems.length-1){_popupIdx++;renderPopupItem();}}
+
+function closeLoginPopup(){
+  // 팝업에서 확인한 알림 모두 삭제
+  const sid=S.cur.id;
+  const notifIdxs=_popupItems.filter(i=>i.type==='notif').map(i=>i.idx);
+  if(notifIdxs.length>0){
+    S.notifs[sid]=(S.notifs[sid]||[]).filter((_,i)=>!notifIdxs.includes(i));
+    updateBadge();saveData();
+  }
+  gs('mo-login-popup').style.display='none';
+}
 const DAYS=['월','화','수','목','금','토','일'];
 function getMondayOf(dateStr){const d=new Date(dateStr||TD);const day=d.getDay();const diff=day===0?-6:1-day;d.setDate(d.getDate()+diff);return d;}
 function getWeekDates(m){return Array.from({length:7},(_,i)=>{const d=new Date(m);d.setDate(d.getDate()+i);return d.toISOString().slice(0,10);});}
