@@ -1,10 +1,10 @@
-<index html>
-<!-- saved from url=(0054)file:///C:/Users/user/Downloads/bisang_firebase_8.html -->
+<!DOCTYPE html>
+<!-- saved from url=(0054)file:///C:/Users/user/Downloads/bisang_firebase_9.html -->
 <html lang="ko"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>비상반 관리 시스템</title>
-<link rel="manifest" href="file:///C:/Users/user/Downloads/bisang_firebase_8.html#">
+<link rel="manifest" href="file:///C:/Users/user/Downloads/bisang_firebase_9.html#">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f5;color:#111}
@@ -861,8 +861,8 @@ function setAttGrade(g){
 
 function renderAtt(){
   const dt=gs('att-dt').value||TD;
+  const periods=getPeriodsForDate(dt); // datePeriods 우선 반영
   const dayIdx=new Date(dt).getDay()===0?6:new Date(dt).getDay()-1;
-  const periods=getPeriodsForDay(dayIdx);
   const DAYS_KR=['월','화','수','목','금','토','일'];
 
   // 학년 필터 적용
@@ -964,43 +964,65 @@ function renderAtt(){
 function selectAtt(sid,dt,periodName,sel){
   const next=sel.value;
   const recKey=`${dt}_${periodName}`;
+  const baseDate=dt;
   if(!S.att[sid])S.att[sid]=[];
   const recs=S.att[sid];
   const i=recs.findIndex(r=>r.date===recKey);
 
-  // '정기결석' 선택 시 → 해당 교시 기록 삭제 (정기결석 원복)
+  // 정기결석 선택 시 → 해당 교시 기록 삭제
   if(next==='정기결석'){
     if(i>=0)recs.splice(i,1);
-    removeDemerit(sid,dt,'지각');
-    removeDemerit(sid,dt,'무단결석');
-    removeDemerit(sid,dt,'서류인정');
-    removeDemerit(sid,dt,'사전인정');
-    // 드롭다운 색 원복
+    recalcDemerit(sid,baseDate);
     sel.style.cssText='padding:3px 4px;font-size:12px;border-radius:6px;border:1px solid #d1d5db;background:#fef3c7;color:#92400e;font-weight:500;margin:0;width:auto;cursor:pointer;';
     saveData();return;
   }
 
   const entry={date:recKey,status:next,time:new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'})};
   if(i>=0)recs[i]=entry;else recs.push(entry);
-  const baseDate=dt;
-  const cnt=getPeriodsForDate(baseDate).length||1;
+
+  // 해당 날짜 벌점 전체 재계산
+  recalcDemerit(sid,baseDate);
+
+  const stColor={출석:'#dcfce7;color:#15803d',지각:'#fef3c7;color:#92400e',조퇴:'#fef3c7;color:#92400e',결석:'#fee2e2;color:#b91c1c',병결:'#dbeafe;color:#1e40af',인정:'#f3f4f6;color:#374151'};
+  sel.style.cssText=`padding:3px 4px;font-size:12px;border-radius:6px;border:1px solid #d1d5db;background:${stColor[next]||'#f3f4f6;color:#374151'};font-weight:500;margin:0;width:auto;cursor:pointer;`;
+  saveData();
+}
+
+// ── 날짜별 벌점 전체 재계산 ──
+// 교시별 출결을 모두 읽어서 벌점을 정확히 계산
+function recalcDemerit(sid, baseDate){
+  const periods=getPeriodsForDate(baseDate);
+  const recs=S.att[sid]||[];
+  const approved=S.preAbs.find(p=>p.sid===sid&&p.date===baseDate&&p.status==='확인');
+
+  // 기존 자동 벌점 모두 제거
   removeDemerit(sid,baseDate,'지각');
   removeDemerit(sid,baseDate,'무단결석');
   removeDemerit(sid,baseDate,'서류인정');
   removeDemerit(sid,baseDate,'사전인정');
-  if(next==='지각'){
-    addDemerit(sid,baseDate,'지각',1,'지각');
-  } else if(next==='결석'){
-    const approved=S.preAbs.find(p=>p.sid===sid&&p.date===baseDate&&p.status==='확인');
-    if(!approved)addDemerit(sid,baseDate,'무단결석',2*cnt,'무단결석');
-  } else if(next==='병결'){
-    addDemerit(sid,baseDate,'병결(인정)',1*cnt,'서류인정');
-  } else if(next==='인정'){
-    // 인정: 벌점 0점
-  }
-  const stColor={출석:'#dcfce7;color:#15803d',지각:'#fef3c7;color:#92400e',조퇴:'#fef3c7;color:#92400e',결석:'#fee2e2;color:#b91c1c',병결:'#dbeafe;color:#1e40af',인정:'#f3f4f6;color:#374151'};
-  sel.style.cssText=`padding:3px 4px;font-size:12px;border-radius:6px;border:1px solid #d1d5db;background:${stColor[next]||'#f3f4f6;color:#374151'};font-weight:500;margin:0;width:auto;cursor:pointer;`;
-  saveData();
+
+  if(!periods.length) return;
+
+  // 교시별 상태 집계
+  let lateCnt=0, absentCnt=0, byeolCnt=0;
+  let hasLate=false;
+
+  periods.forEach(p=>{
+    const recKey=`${baseDate}_${p.name}`;
+    const rec=recs.find(r=>r.date===recKey) || recs.find(r=>r.date===baseDate);
+    const isReg=isRegAbs(sid,baseDate,p.name);
+    const st=isReg&&!recs.find(r=>r.date===recKey)?'정기결석':(rec?rec.status:'출석');
+
+    if(st==='지각') hasLate=true;
+    else if(st==='결석') absentCnt++;
+    else if(st==='병결') byeolCnt++;
+    // 출석·조퇴·인정·정기결석은 벌점 없음
+  });
+
+  // 벌점 부과
+  if(hasLate) addDemerit(sid,baseDate,'지각',1,'지각');
+  if(absentCnt>0 && !approved) addDemerit(sid,baseDate,'무단결석',2*absentCnt,'무단결석');
+  if(byeolCnt>0) addDemerit(sid,baseDate,'병결(인정)',1*byeolCnt,'서류인정');
 }
 
 // ── 벌점 헬퍼 ──
@@ -1725,8 +1747,7 @@ function renderAdminTTAll(){
   if(!S.students.length){tbl.innerHTML='<tr><td style="padding:20px;color:#6b7280;">학생을 먼저 등록하세요.</td></tr>';renderDayPills(dates);return;}
   if(!filtered.length){tbl.innerHTML=`<tr><td style="padding:20px;color:#6b7280;">${gf}학년 학생이 없습니다.</td></tr>`;renderDayPills(dates);return;}
   const selDay=typeof window.adminTTSelDay!=='undefined'?window.adminTTSelDay:0,date=dates[selDay];
-  const dayIdx=new Date(date).getDay()===0?6:new Date(date).getDay()-1;
-  const periods=getPeriodsForDay(dayIdx);
+  const periods=getPeriodsForDate(date); // datePeriods 우선 반영
   if(!periods.length){tbl.innerHTML=`<tr><td style="padding:20px;color:#6b7280;">${DAYS[selDay]}요일은 자습이 없는 날입니다.</td></tr>`;renderDayPills(dates);return;}
   let h=`<thead><tr><th class="period-lbl">교시</th>`;
   if(gf==='all'){['1','2','3'].forEach(g=>{const cnt=filtered.filter(s=>s.grade===g).length;if(cnt>0)h+=`<th colspan="${cnt}" style="background:${g==='1'?'#dcfce7':g==='2'?'#dbeafe':'#ede9fe'};color:${g==='1'?'#15803d':g==='2'?'#1e40af':'#6d28d9'};text-align:center;">${g}학년</th>`;});}
@@ -1757,12 +1778,13 @@ function renderAdminTTOne(){
   DAYS.forEach((d,i)=>{const isToday=i===todayIdx;h+=`<th class="${isToday?'today-col':''}">${d}<br><span style="font-size:10px;font-weight:400;">${dates[i].slice(5)}</span></th>`;});
   h+=`</tr></thead><tbody>`;
   // 각 요일별 교시를 모아 유니크한 교시 목록 생성
-  const allPeriodNames=[...new Set(dates.flatMap((date,di)=>getPeriodsForDay(di).map(p=>p.name)))];
+  // 날짜별 datePeriods 포함해서 교시 목록 생성
+  const allPeriodNames=[...new Set(dates.flatMap((date,di)=>getPeriodsForDate(date).map(p=>p.name)))];
   if(!allPeriodNames.length){tbl.innerHTML='<tr><td style="padding:20px;color:#6b7280;">등록된 교시가 없습니다.</td></tr>';renderDayPillsHide();return;}
   allPeriodNames.forEach(pName=>{
     h+=`<tr><td class="period-lbl"><div style="font-weight:600;">${pName}</div></td>`;
     dates.forEach((date,di)=>{
-      const dayPeriods=getPeriodsForDay(di);
+      const dayPeriods=getPeriodsForDate(date); // datePeriods 우선
       const hasPeriod=dayPeriods.some(p=>p.name===pName);
       const isToday=di===todayIdx;
       if(!hasPeriod){h+=`<td style="${isToday?'background:#f0f7ff;':''}"><div class="tt-cell tt-unknown" style="font-size:10px;">-</div></td>`;return;}
@@ -1782,15 +1804,20 @@ function renderStuTTTab(){const inp=gs('stt-week');if(!inp.value)inp.value=TD;re
 function renderStuTT(){
   const monday=getMondayOf(gs('stt-week').value),dates=getWeekDates(monday),sid=S.cur.id,tbl=gs('stu-tt-table');
   const todayIdx=dates.indexOf(TD);
-  const allPeriodNames=[...new Set(dates.flatMap((date,di)=>getPeriodsForDay(di).map(p=>p.name)))];
+  // 날짜별 datePeriods 포함해서 교시 목록 생성
+  const allPeriodNames=[...new Set(dates.flatMap((date,di)=>getPeriodsForDate(date).map(p=>p.name)))];
   if(!allPeriodNames.length){tbl.innerHTML='<tr><td style="padding:20px;color:#6b7280;">선생님이 아직 교시를 설정하지 않았습니다.</td></tr>';return;}
   let h=`<thead><tr><th class="period-lbl">교시</th>`;
-  DAYS.forEach((d,i)=>{const isToday=i===todayIdx;const cnt=getPeriodsForDay(i).length;h+=`<th class="${isToday?'today-col':''}">${d}${cnt===0?'<br><span style="font-size:9px;color:#9ca3af;">자습없음</span>':''}<br><span style="font-size:10px;font-weight:400;">${dates[i].slice(5)}</span></th>`;});
+  DAYS.forEach((d,i)=>{
+    const isToday=i===todayIdx;
+    const cnt=getPeriodsForDate(dates[i]).length; // datePeriods 반영
+    h+=`<th class="${isToday?'today-col':''}">${d}${cnt===0?'<br><span style="font-size:9px;color:#9ca3af;">자습없음</span>':''}<br><span style="font-size:10px;font-weight:400;">${dates[i].slice(5)}</span></th>`;
+  });
   h+=`</tr></thead><tbody>`;
   allPeriodNames.forEach(pName=>{
     h+=`<tr><td class="period-lbl"><div style="font-weight:600;">${pName}</div></td>`;
     dates.forEach((date,di)=>{
-      const dayPeriods=getPeriodsForDay(di);
+      const dayPeriods=getPeriodsForDate(date); // datePeriods 우선
       const hasPeriod=dayPeriods.some(p=>p.name===pName);
       const isToday=di===todayIdx;
       if(!hasPeriod){h+=`<td style="${isToday?'background:#f0f7ff;':''}"><div class="tt-cell tt-unknown" style="font-size:10px;">-</div></td>`;return;}
