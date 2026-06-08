@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- saved from url=(0054)file:///C:/Users/user/Downloads/bisang_firebase_9.html -->
+<!-- saved from url=(0055)file:///C:/Users/user/Downloads/bisang_firebase_11.html -->
 <html lang="ko"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>비상반 관리 시스템</title>
-<link rel="manifest" href="file:///C:/Users/user/Downloads/bisang_firebase_9.html#">
+<link rel="manifest" href="file:///C:/Users/user/Downloads/bisang_firebase_11.html#">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f5;color:#111}
@@ -153,6 +153,7 @@ tr:hover td{background:#f9fafb}
   <div class="tab-bar">
     <button class="tab on" onclick="aTab(&#39;att&#39;,this)">출결 관리</button>
     <button class="tab" onclick="aTab(&#39;doc&#39;,this)">서류 체크</button>
+    <button class="tab" onclick="aTab(&#39;his&#39;,this)">확인 내역</button>
     <button class="tab" onclick="aTab(&#39;dm&#39;,this)">벌점 관리</button>
     <button class="tab" onclick="aTab(&#39;tt&#39;,this)">타임테이블</button>
     <button class="tab" onclick="aTab(&#39;nt&#39;,this)">공지사항</button>
@@ -196,19 +197,53 @@ tr:hover td{background:#f9fafb}
       <span style="background:#dbeafe;color:#1e40af;border-radius:4px;padding:1px 6px;font-size:11px;">병결 1점</span>
       <span style="background:#f3f4f6;color:#374151;border-radius:4px;padding:1px 6px;font-size:11px;">인정 0점</span>
     </div>
-    <!-- 사전 신청 -->
-    <div class="rb">
-      <div class="st" style="margin-bottom:0;">📋 사전 결석·지각 신청</div>
+    <!-- 사전 신청 - 대기 -->
+    <div class="rb" style="margin-top:.5rem;">
+      <div class="st" style="margin-bottom:0;">📋 사전 신청 — 대기</div>
       <span class="badge aa" id="pa-pending-cnt">대기 0건</span>
     </div>
     <div class="card" style="padding:0;overflow:hidden;">
-      <table><thead><tr><th>학번</th><th>이름</th><th>날짜</th><th>구분</th><th>사유</th><th>세부내용</th><th>예상벌점</th><th>상태</th><th>처리</th></tr></thead>
+      <table><thead><tr><th>학번</th><th>이름</th><th>날짜</th><th>구분</th><th>교시</th><th>사유</th><th>세부내용</th><th>제출시간</th><th>처리</th></tr></thead>
       <tbody id="pa-admin-tb"></tbody></table>
     </div>
+    <!-- 서류 체크 - 대기 -->
+    <div class="rb" style="margin-top:.5rem;">
+      <div class="st" style="margin-bottom:0;">📄 서류 체크 — 대기</div>
+      <span class="badge aa" id="doc-pnd2">대기 0건</span>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden;">
+      <table><thead><tr><th>학번</th><th>이름</th><th>서류</th><th>날짜</th><th>교시</th><th>제출일시</th><th>첨부</th><th>처리</th></tr></thead>
+      <tbody id="doc-att-tb"></tbody></table>
+    </div>
   </div>
+
+  <!-- 확인 내역 탭 -->
+  <div id="ta-his" class="tc">
+    <div class="rb">
+      <div class="st" style="margin-bottom:0;">확인 내역 조회</div>
+      <div class="row" style="gap:6px;">
+        <input type="date" id="his-dt" style="width:140px;margin:0;">
+        <button class="btn bs" onclick="renderHistory()">날짜 조회</button>
+        <button class="btn bs" onclick="gs(&#39;his-dt&#39;).value=&#39;&#39;;renderHistory()">전체</button>
+      </div>
+    </div>
+    <!-- 확인된 사전 신청 -->
+    <div class="st" style="margin-top:.5rem;">✅ 확인된 사전 신청</div>
+    <div class="card" style="padding:0;overflow:hidden;">
+      <table><thead><tr><th>학번</th><th>이름</th><th>날짜</th><th>구분</th><th>교시</th><th>사유</th><th>제출시간</th><th>상태</th></tr></thead>
+      <tbody id="pa-history-tb"></tbody></table>
+    </div>
+    <!-- 처리된 서류 -->
+    <div class="st" style="margin-top:.5rem;">📋 처리된 서류</div>
+    <div class="card" style="padding:0;overflow:hidden;">
+      <table><thead><tr><th>학번</th><th>이름</th><th>서류</th><th>날짜</th><th>교시</th><th>제출일시</th><th>첨부</th><th>상태</th></tr></thead>
+      <tbody id="doc-history-tb"></tbody></table>
+    </div>
+  </div>
+
   <div id="ta-doc" class="tc">
-    <div class="rb"><div class="st">서류 현황</div><span class="badge aa" id="doc-pnd">대기 0건</span></div>
-    <div class="card" style="padding:0;overflow:hidden;"><table><thead><tr><th>학번</th><th>이름</th><th>구분</th><th>제출일</th><th>첨부</th><th>상태</th><th>처리</th></tr></thead><tbody id="doc-tb"></tbody></table></div>
+    <div class="rb"><div class="st">서류 체크 — 전체</div><span class="badge aa" id="doc-pnd">대기 0건</span></div>
+    <div class="card" style="padding:0;overflow:hidden;"><table><thead><tr><th>학번</th><th>이름</th><th>서류</th><th>날짜</th><th>교시</th><th>제출일시</th><th>첨부</th><th>상태</th><th>처리</th></tr></thead><tbody id="doc-tb"></tbody></table></div>
   </div>
   <div id="ta-dm" class="tc">
     <div class="rb"><div class="st">벌점 현황</div>
@@ -383,10 +418,10 @@ tr:hover td{background:#f9fafb}
   </div>
   <div id="ts-spa" class="tc">
     <div class="st">사전 결석·지각 신청</div>
-    <div style="font-size:13px;color:#6b7280;margin-bottom:1rem;">미리 신청하면 선생님께 자동 전달됩니다.</div>
+    <div style="font-size:13px;color:#6b7280;margin-bottom:1rem;">미리 신청하면 선생님께 자동 전달됩니다. 추후 서류를 제출해야 벌점이 조정됩니다.</div>
     <div class="card">
       <div class="row" style="gap:8px;flex-wrap:wrap;align-items:flex-end;">
-        <div style="flex:1;min-width:120px;"><label>날짜</label><input type="date" id="pa-date" style="margin:0;"></div>
+        <div style="flex:1;min-width:120px;"><label>날짜</label><input type="date" id="pa-date" style="margin:0;" onchange="renderPreAbsTT()"></div>
         <div style="flex:1;min-width:100px;"><label>구분</label><select id="pa-type" style="margin:0;"><option value="결석">결석</option><option value="지각">지각</option><option value="조퇴">조퇴</option></select></div>
         <div style="flex:1;min-width:120px;"><label>사유</label>
           <select id="pa-reason" style="margin:0;" onchange="togglePaEtc()">
@@ -402,12 +437,18 @@ tr:hover td{background:#f9fafb}
       <div id="pa-etc-wrap" style="display:none;margin-top:8px;">
         <label>직접 입력</label><input type="text" id="pa-etc" placeholder="사유를 입력하세요" style="margin:0;">
       </div>
+      <!-- 교시별 타임테이블 -->
+      <div id="pa-tt-wrap" style="display:none;margin-top:12px;">
+        <label style="margin-bottom:6px;">해당 날짜 교시 선택 <span style="color:#9ca3af;font-weight:400;">(해당하는 교시 모두 선택)</span></label>
+        <div id="pa-tt-body" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
+      </div>
       <div style="margin-top:8px;"><label>세부 내용 (선택)</label><input type="text" id="pa-detail" placeholder="예: 정형외과 방문" style="margin:0;"></div>
+      <div style="font-size:12px;color:#f59e0b;margin-top:8px;">⚠️ 사전 신청 확인 후에도 추후 서류 제출이 필요합니다. 서류 승인 시 벌점이 조정됩니다.</div>
       <button class="btn bp" style="margin-top:12px;" onclick="subPreAbs()">신청하기</button>
       <div id="pa-msg" style="font-size:12px;color:#15803d;margin-top:8px;display:none;">사전 신청이 완료되었습니다.</div>
     </div>
     <div class="st" style="margin-top:.5rem;">내 사전 신청 현황</div>
-    <div class="card" style="padding:0;overflow:hidden;"><table><thead><tr><th>날짜</th><th>구분</th><th>사유</th><th>상태</th><th>취소</th></tr></thead><tbody id="pa-log"></tbody></table></div>
+    <div class="card" style="padding:0;overflow:hidden;"><table><thead><tr><th>날짜</th><th>구분</th><th>교시</th><th>사유</th><th>상태</th><th>취소</th></tr></thead><tbody id="pa-log"></tbody></table></div>
   </div>
   <div id="ts-sd" class="tc">
     <div class="st">내 벌점 현황</div>
@@ -422,9 +463,26 @@ tr:hover td{background:#f9fafb}
   <div id="ts-sf" class="tc">
     <div class="st">서류 제출 신청</div>
     <div class="card">
-      <label>서류 종류</label><select id="sf-type" style="margin-bottom:10px;"><option>병결확인서</option><option>학원보강확인서</option><option>기타</option></select>
-      <label>날짜</label><input type="date" id="sf-dt" style="margin-bottom:10px;">
-      <label>비고</label><input type="text" id="sf-note" placeholder="추가 내용">
+      <label>서류 종류</label>
+      <select id="sf-type" style="margin-bottom:10px;">
+        <option value="병결확인서">병결확인서</option>
+        <option value="학원보강확인서">학원보강확인서</option>
+        <option value="기타">기타</option>
+      </select>
+      <label>결석/지각 날짜 <span style="color:#9ca3af;font-weight:400;">(해당 날짜 출결에 자동 연결)</span></label>
+      <input type="date" id="sf-dt" style="margin-bottom:4px;" onchange="renderDocPeriodSel()">
+      <!-- 해당 날짜 교시 선택 -->
+      <div id="sf-period-wrap" style="display:none;margin-bottom:10px;">
+        <label>교시 선택 <span style="color:#9ca3af;font-weight:400;">(해당하는 교시 모두 선택)</span></label>
+        <div id="sf-period-body" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;"></div>
+      </div>
+      <label>비고</label>
+      <input type="text" id="sf-note" placeholder="추가 내용">
+      <!-- 제출일시 자동 표시 -->
+      <div style="font-size:12px;color:#6b7280;margin-bottom:10px;">
+        📅 제출 일시: <strong id="sf-submit-time">-</strong>
+        <button class="btn bs" style="margin-left:8px;padding:2px 8px;font-size:11px;" onclick="updateSubmitTime()">갱신</button>
+      </div>
       <label>첨부파일 <span style="color:#9ca3af;font-weight:400;">(사진·PDF, 최대 5개)</span></label>
       <div class="file-drop" id="sf-drop" onclick="gs(&#39;sf-file&#39;).click()" ondragover="fileDragOver(event)" ondragleave="fileDragLeave(event)" ondrop="fileDrop(event)">
         <input type="file" id="sf-file" multiple="" accept="image/*,application/pdf" onchange="fileChange(event)">
@@ -436,7 +494,7 @@ tr:hover td{background:#f9fafb}
       <div id="sf-msg" style="font-size:12px;color:#15803d;margin-top:8px;display:none;">신청 접수되었습니다.</div>
     </div>
     <div class="st" style="margin-top:.5rem;">제출 현황</div>
-    <div class="card" style="padding:0;overflow:hidden;"><table><thead><tr><th>서류</th><th>날짜</th><th>첨부</th><th>상태</th><th>비고</th></tr></thead><tbody id="sf-log"></tbody></table></div>
+    <div class="card" style="padding:0;overflow:hidden;"><table><thead><tr><th>서류</th><th>날짜</th><th>교시</th><th>제출일시</th><th>첨부</th><th>상태</th><th>비고</th></tr></thead><tbody id="sf-log"></tbody></table></div>
   </div>
   <div id="ts-sn" class="tc">
     <div class="st">공지사항</div><div id="nt-stu"></div>
@@ -560,7 +618,8 @@ window.saveData = async function() {
     try {
       gs('saving-indicator').style.display = 'block';
       const save = {
-        students: S.students, att: S.att, docs: S.docs.map(d=>({...d, files: d.files ? d.files.map(f=>({...f, data: f.data ? f.data.substring(0, 50000) : ''})) : []})),
+        students: S.students, att: S.att,
+        docs: S.docs.map(d=>({...d, files: d.files||[]})),
         dems: S.dems, rules: S.rules, notices: S.notices, notifs: S.notifs,
         periods: S.periods, regAbs: S.regAbs, preAbs: S.preAbs,
         dayPeriods: S.dayPeriods, datePeriods: S.datePeriods,
@@ -837,7 +896,7 @@ function logout(){
 }
 
 // ── 탭 전환 ──
-function aTab(n,el){document.querySelectorAll('#sc-admin .tab').forEach(t=>t.classList.remove('on'));document.querySelectorAll('#sc-admin .tc').forEach(t=>t.classList.remove('on'));el.classList.add('on');gs('ta-'+n).classList.add('on');({att:renderAtt,doc:renderDoc,dm:renderDm,tt:renderAdminTTTab,nt:renderNtAdmin,stu:renderStuList})[n]&&({att:renderAtt,doc:renderDoc,dm:renderDm,tt:renderAdminTTTab,nt:renderNtAdmin,stu:renderStuList})[n]()}
+function aTab(n,el){document.querySelectorAll('#sc-admin .tab').forEach(t=>t.classList.remove('on'));document.querySelectorAll('#sc-admin .tc').forEach(t=>t.classList.remove('on'));el.classList.add('on');gs('ta-'+n).classList.add('on');({att:renderAtt,doc:renderDoc,his:renderHistory,dm:renderDm,tt:renderAdminTTTab,nt:renderNtAdmin,stu:renderStuList})[n]&&({att:renderAtt,doc:renderDoc,his:renderHistory,dm:renderDm,tt:renderAdminTTTab,nt:renderNtAdmin,stu:renderStuList})[n]()}
 function sTab(n,el){document.querySelectorAll('#sc-stu .tab').forEach(t=>t.classList.remove('on'));document.querySelectorAll('#sc-stu .tc').forEach(t=>t.classList.remove('on'));el.classList.add('on');gs('ts-'+n).classList.add('on');({sa:renderStuAtt,stt:renderStuTTTab,spa:renderStuPreAbs,sd:renderStuDm,sf:renderStuDoc,sn:renderNtStu,snf:()=>{markAllRead();renderNotif();}})[n]&&({sa:renderStuAtt,stt:renderStuTTTab,spa:renderStuPreAbs,sd:renderStuDm,sf:renderStuDoc,sn:renderNtStu,snf:()=>{markAllRead();renderNotif();}})[n]()}
 
 // ── 관리자 렌더링 ──
@@ -848,7 +907,6 @@ function renderAdmin(){
   ['all','1','2','3'].forEach(x=>{const el=gs('att-gf-'+x);if(el)el.className='btn bs'+(x==='all'?' bp':'');});
   renderAtt();renderDoc();renderDm();renderNtAdmin();renderStuList();renderPreAbsAdmin();
 }
-
 // ── 출결 그리드 (행=학생, 열=교시) ──
 let _attGrade='all';
 function setAttGrade(g){
@@ -989,40 +1047,61 @@ function selectAtt(sid,dt,periodName,sel){
 }
 
 // ── 날짜별 벌점 전체 재계산 ──
-// 교시별 출결을 모두 읽어서 벌점을 정확히 계산
+// 규칙: 출결 상태 그대로 집계, 서류 승인은 appDoc에서만 처리
+// 사전신청 확인 여부와 무관하게 무단 벌점 부과
 function recalcDemerit(sid, baseDate){
   const periods=getPeriodsForDate(baseDate);
   const recs=S.att[sid]||[];
-  const approved=S.preAbs.find(p=>p.sid===sid&&p.date===baseDate&&p.status==='확인');
 
-  // 기존 자동 벌점 모두 제거
+  // 자동 부과 벌점만 제거 (서류 승인 벌점은 건드리지 않음)
   removeDemerit(sid,baseDate,'지각');
   removeDemerit(sid,baseDate,'무단결석');
-  removeDemerit(sid,baseDate,'서류인정');
-  removeDemerit(sid,baseDate,'사전인정');
 
   if(!periods.length) return;
 
   // 교시별 상태 집계
-  let lateCnt=0, absentCnt=0, byeolCnt=0;
-  let hasLate=false;
+  let lateCnt=0, absentCnt=0;
+
+  // 사전신청 확인 여부 및 사유 파악
+  const preAbsApproved=S.preAbs.filter(p=>
+    p.sid===sid && p.date===baseDate && p.status==='확인'
+  );
 
   periods.forEach(p=>{
     const recKey=`${baseDate}_${p.name}`;
-    const rec=recs.find(r=>r.date===recKey) || recs.find(r=>r.date===baseDate);
+    const recByPeriod=recs.find(r=>r.date===recKey);
+    const recByDate=recs.find(r=>r.date===baseDate);
     const isReg=isRegAbs(sid,baseDate,p.name);
-    const st=isReg&&!recs.find(r=>r.date===recKey)?'정기결석':(rec?rec.status:'출석');
 
-    if(st==='지각') hasLate=true;
-    else if(st==='결석') absentCnt++;
-    else if(st==='병결') byeolCnt++;
-    // 출석·조퇴·인정·정기결석은 벌점 없음
+    let st='출석', reason='';
+    if(isReg && !recByPeriod){ st='정기결석'; }
+    else if(recByPeriod){ st=recByPeriod.status; reason=recByPeriod.reason||''; }
+    else if(recByDate){ st=recByDate.status; reason=recByDate.reason||''; }
+
+    // 사전신청 확인된 교시인지 파악
+    const isPreAbsPeriod=preAbsApproved.some(pa=>
+      !pa.periods||pa.periods.length===0||pa.periods.includes(p.name)
+    );
+
+    // 벌점 집계
+    if(st==='지각'){
+      // 사전신청 확인된 지각도 1점×교시 (서류 없이는 감면 없음)
+      lateCnt++;
+    } else if(st==='결석'||st==='병결'){
+      // 사전신청 확인 + 서류 승인 없으면 무단 2점
+      // 단, 결석(서류제출)은 이미 appDoc에서 처리됨 → 여기선 0점
+      if(st==='결석(서류제출)'){
+        // 서류 승인 처리됨 → 무단 벌점 없음
+      } else {
+        absentCnt++;
+      }
+    }
+    // 출석·조퇴·인정·정기결석 = 0점
   });
 
   // 벌점 부과
-  if(hasLate) addDemerit(sid,baseDate,'지각',1,'지각');
-  if(absentCnt>0 && !approved) addDemerit(sid,baseDate,'무단결석',2*absentCnt,'무단결석');
-  if(byeolCnt>0) addDemerit(sid,baseDate,'병결(인정)',1*byeolCnt,'서류인정');
+  if(lateCnt>0) addDemerit(sid,baseDate,'지각',lateCnt,'지각');
+  if(absentCnt>0) addDemerit(sid,baseDate,'무단결석',2*absentCnt,'무단결석');
 }
 
 // ── 벌점 헬퍼 ──
@@ -1059,14 +1138,25 @@ function chAtt(id,dt,st){
 function renderDoc(){
   const p=S.docs.filter(d=>d.status==='대기').length;gs('doc-pnd').textContent='대기 '+p+'건';
   const tb=gs('doc-tb');
-  if(!S.docs.length){tb.innerHTML='<tr><td colspan="7" class="em">제출된 서류가 없습니다.</td></tr>';return}
+  if(!S.docs.length){tb.innerHTML='<tr><td colspan="9" class="em">제출된 서류가 없습니다.</td></tr>';return}
   tb.innerHTML='';
   S.docs.forEach((d,i)=>{
     const sc=d.status==='승인'?'gg':d.status==='반려'?'rr':'aa';
     const st=S.students.find(s=>s.id===d.sid);
     const files=d.files||[];
     const thumbs=files.length?files.map(f=>f.type&&f.type.startsWith('image/')?`<img src="${f.data}" onclick="viewImg('${f.data}')" style="width:36px;height:36px;object-fit:cover;border-radius:4px;cursor:pointer;" title="${f.name}">`:`<span style="font-size:20px;cursor:pointer;" title="${f.name}">📄</span>`).join(''):'<span style="color:#9ca3af;font-size:12px;">없음</span>';
-    tb.innerHTML+=`<tr><td style="font-size:12px;color:#6b7280;">${st?st.num:'-'}</td><td>${st?st.name:'-'}</td><td>${d.type}</td><td style="font-size:12px;">${d.date}</td><td><div style="display:flex;gap:4px;">${thumbs}</div></td><td>${ab(d.status,sc)}</td><td>${d.status==='대기'?`<button class="btn bs" onclick="appDoc(${i},'승인')">승인</button><button class="btn bs bd" style="margin-left:4px;" onclick="appDoc(${i},'반려')">반려</button>`:'-'}</td></tr>`;
+    const periodsLabel=(d.periods&&d.periods.length)?d.periods.join(', '):'전체';
+    tb.innerHTML+=`<tr>
+      <td style="font-size:12px;color:#6b7280;">${st?st.num:'-'}</td>
+      <td>${st?st.name:'-'}</td>
+      <td>${d.type}</td>
+      <td style="font-size:12px;">${d.date}</td>
+      <td style="font-size:11px;color:#6b7280;">${periodsLabel}</td>
+      <td style="font-size:11px;color:#9ca3af;">${d.submitTime||'-'}</td>
+      <td><div style="display:flex;gap:4px;">${thumbs}</div></td>
+      <td>${ab(d.status,sc)}</td>
+      <td>${d.status==='대기'?`<button class="btn bs" onclick="appDoc(${i},'승인')">승인</button><button class="btn bs bd" style="margin-left:4px;" onclick="appDoc(${i},'반려')">반려</button>`:'-'}</td>
+    </tr>`;
   });
 }
 
@@ -1075,19 +1165,45 @@ function appDoc(i,st){
   if(st==='승인'){
     const id=doc.sid,dt=doc.date;
     if(!S.att[id])S.att[id]=[];
-    const recs=S.att[id];const ei=recs.findIndex(r=>r.date===dt);
-    const entry={date:dt,status:'결석(서류제출)',reason:doc.type+' 승인',time:new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'}),fromDoc:true};
-    if(ei>=0)recs[ei]=entry;else recs.push(entry);
-    const cnt=getPeriodsForDate(dt).length||1;let pts=0,name='';
-    if(doc.type==='병결확인서'){pts=1*cnt;name='병결(인정)';}
-    else if(doc.type==='학원보강확인서'){pts=1*cnt;name='학원보강(인정)';}
-    else{pts=1*cnt;name='서류제출('+doc.type+')';}
-    removeDemerit(id,dt,'무단결석');addDemerit(id,dt,name,pts,'서류인정');
-    pushNotif(id,'doc_ok','서류가 승인되었습니다',`${doc.type} (${dt}) · 벌점 ${pts}점 부과`);
+    const recs=S.att[id];
+    const periods=getPeriodsForDate(dt);
+    const targetPeriods=(doc.periods&&doc.periods.length)?doc.periods:periods.map(p=>p.name);
+
+    // 교시별 출결 → 결석(서류제출)로 반영
+    targetPeriods.forEach(periodName=>{
+      const recKey=`${dt}_${periodName}`;
+      const ei=recs.findIndex(r=>r.date===recKey);
+      const entry={date:recKey,status:'결석(서류제출)',
+        reason:doc.type+' 승인',
+        time:new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'}),
+        fromDoc:true};
+      if(ei>=0)recs[ei]=entry;else recs.push(entry);
+    });
+
+    // 1) 기존 자동 벌점 제거
+    removeDemerit(id,dt,'무단결석');
+    removeDemerit(id,dt,'지각');
+    removeDemerit(id,dt,'서류인정');
+
+    // 2) 서류 종류별 인정 벌점 부과 (교시 수 기준)
+    const cnt=targetPeriods.length||1;
+    let pts=0,dmName='';
+    if(doc.type==='병결확인서'){pts=1*cnt;dmName='병결(인정)';}
+    else if(doc.type==='학원보강확인서'){pts=1*cnt;dmName='학원보강(인정)';}
+    else{pts=1*cnt;dmName='서류인정('+doc.type+')';}
+
+    if(pts>0)addDemerit(id,dt,dmName,pts,'서류인정');
+
+    // 3) 나머지 교시(서류 미포함)의 벌점은 recalcDemerit으로 재계산
+    recalcDemerit(id,dt);
+
+    pushNotif(id,'doc_ok','서류가 승인되었습니다',
+      `${doc.type} (${dt}) · ${targetPeriods.join(', ')} · ${dmName} ${pts}점으로 조정`);
   } else {
-    pushNotif(doc.sid,'doc_no','서류가 반려되었습니다',`${doc.type} (${doc.date}) · 선생님께 문의하세요.`);
+    pushNotif(doc.sid,'doc_no','서류가 반려되었습니다',
+      `${doc.type} (${doc.date}) · 선생님께 문의하세요.`);
   }
-  renderDoc();saveData();
+  renderDoc();renderDocInAtt();saveData();
 }
 
 function renderDm(){
@@ -1108,6 +1224,36 @@ function renderDm(){
     </tr>`;
   });
   renderRules();
+}
+
+function renderRules(){
+  const tb=gs('rule-tb');if(!tb)return;
+  tb.innerHTML='';
+  S.rules.forEach((r,i)=>{
+    tb.innerHTML+=`<tr><td>${r.n}</td><td>${r.p}점</td><td><button class="btn bs bd" onclick="delRule(${i})">삭제</button></td></tr>`;
+  });
+}
+function addRule(){
+  const n=gs('rule-nm').value.trim(),p=parseInt(gs('rule-pt').value);
+  if(!n||isNaN(p))return;
+  S.rules.push({n,p});
+  gs('rule-nm').value='';gs('rule-pt').value='';
+  renderRules();saveData();
+}
+function delRule(i){S.rules.splice(i,1);renderRules();saveData();}
+
+function openDm(){
+  if(!S.students.length){alert('등록된 학생이 없습니다.');return;}
+  gs('dm-s').innerHTML=S.students.map(s=>`<option value="${s.id}">${s.num} ${s.name}</option>`).join('');
+  gs('dm-r').innerHTML=S.rules.map((r,i)=>`<option value="${i}">${r.n} (${r.p}점)</option>`).join('');
+  gs('dm-dt').value=TD;
+  gs('mo-dm').style.display='flex';
+}
+function grantDm(){
+  const sid=gs('dm-s').value,ri=parseInt(gs('dm-r').value),dt=gs('dm-dt').value,r=S.rules[ri];
+  S.dems.push({sid,n:r.n,p:r.p,date:dt,auto:false});
+  pushNotif(sid,'dm','벌점이 부과되었습니다',`${dt} · ${r.n} · ${r.p}점 부과`);
+  cm('mo-dm');renderDm();saveData();
 }
 
 let _ddSid = null;
@@ -1259,7 +1405,7 @@ function changeAdminPw(){
 function delStu(i){const s=S.students[i];if(!confirm(s.name+' 학생을 삭제하시겠습니까?'))return;const id=s.id;S.students.splice(i,1);delete S.att[id];S.docs=S.docs.filter(d=>d.sid!==id);S.dems=S.dems.filter(d=>d.sid!==id);renderStuList();saveData();}
 
 // ── 학생 렌더링 ──
-function renderStu(){if(gs('stt-week'))gs('stt-week').value=TD;if(gs('pa-date'))gs('pa-date').value=TD;renderStuAtt();renderStuDm();renderStuDoc();renderNtStu();}
+function renderStu(){if(gs('stt-week'))gs('stt-week').value=TD;if(gs('pa-date'))gs('pa-date').value=TD;updateSubmitTime();renderStuAtt();renderStuDm();renderStuDoc();renderNtStu();}
 function renderStuAtt(){
   const id=S.cur.id,recs=S.att[id]||[];
   let p=0,l=0,e=0,a=0;
@@ -1335,39 +1481,110 @@ function renderYesterdayTT(sid){
   body.innerHTML=html;
 }
 function renderStuDm(){const id=S.cur.id,logs=S.dems.filter(d=>d.sid===id),tot=logs.reduce((a,d)=>a+d.p,0);gs('sd-tot').textContent=tot+'점';const el=gs('sd-st');if(tot>=10)el.innerHTML=ab('주의 대상','rr')+' 상담이 필요합니다.';else if(tot>=5)el.innerHTML=ab('경고','aa')+' 주의하세요.';else el.innerHTML=ab('정상','gg')+' 모범적으로 생활하고 있어요.';const tb=gs('sd-log');tb.innerHTML='';if(!logs.length){tb.innerHTML='<tr><td colspan="3" class="em">벌점 기록 없음</td></tr>';return}logs.slice().reverse().forEach(l=>{tb.innerHTML+=`<tr><td style="font-size:12px;">${l.date}</td><td>${l.n}</td><td>${l.p}점</td></tr>`})}
-function renderStuDoc(){const id=S.cur.id,my=S.docs.filter(d=>d.sid===id);const tb=gs('sf-log');tb.innerHTML='';if(!my.length){tb.innerHTML='<tr><td colspan="5" class="em">제출 내역 없음</td></tr>';return}my.slice().reverse().forEach(d=>{const sc=d.status==='승인'?'gg':d.status==='반려'?'rr':'aa';const note=d.status==='승인'?'<span style="font-size:11px;color:#1e40af;">✓ 출결 자동반영</span>':'-';const fcnt=(d.files||[]).length;const fLabel=fcnt?`<span style="font-size:12px;color:#1d4ed8;cursor:pointer;" onclick="showDocFiles(${S.docs.indexOf(d)})">📎 ${fcnt}개</span>`:'<span style="font-size:12px;color:#9ca3af;">없음</span>';tb.innerHTML+=`<tr><td>${d.type}</td><td style="font-size:12px;">${d.date}</td><td>${fLabel}</td><td>${ab(d.status,sc)}</td><td>${note}</td></tr>`})}
+function updateSubmitTime(){
+  const now=new Date().toLocaleString('ko-KR',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
+  const el=gs('sf-submit-time');if(el)el.textContent=now;
+  return now;
+}
+function renderDocPeriodSel(){
+  const date=gs('sf-dt').value;
+  if(!date){gs('sf-period-wrap').style.display='none';return;}
+  const periods=getPeriodsForDate(date);
+  if(!periods.length){gs('sf-period-wrap').style.display='none';return;}
+  gs('sf-period-wrap').style.display='block';
+  gs('sf-period-body').innerHTML=periods.map(p=>`
+    <label style="display:flex;align-items:center;gap:6px;background:#f9fafb;border:1px solid #e5e5e5;border-radius:8px;padding:6px 10px;cursor:pointer;">
+      <input type="checkbox" name="sf-period" value="${p.name}" style="width:auto;margin:0;" />
+      <span style="font-size:13px;font-weight:500;">${p.name}</span>
+      ${p.time?`<span style="font-size:11px;color:#9ca3af;">${p.time}</span>`:''}
+    </label>`).join('');
+  updateSubmitTime();
+}
+function renderStuDoc(){
+  const id=S.cur.id,my=S.docs.filter(d=>d.sid===id);
+  const tb=gs('sf-log');tb.innerHTML='';
+  if(!my.length){tb.innerHTML='<tr><td colspan="7" class="em">제출 내역 없음</td></tr>';return}
+  my.slice().reverse().forEach(d=>{
+    const sc=d.status==='승인'?'gg':d.status==='반려'?'rr':'aa';
+    const note=d.status==='승인'?'<span style="font-size:11px;color:#1e40af;">✓ 출결 반영</span>':'-';
+    const fcnt=(d.files||[]).length;
+    const fLabel=fcnt?`<span style="font-size:12px;color:#1d4ed8;cursor:pointer;" onclick="showDocFiles(${S.docs.indexOf(d)})">📎 ${fcnt}개</span>`:'<span style="font-size:12px;color:#9ca3af;">없음</span>';
+    const periodsLabel=(d.periods&&d.periods.length)?d.periods.join(', '):'전체';
+    tb.innerHTML+=`<tr>
+      <td>${d.type}</td>
+      <td style="font-size:12px;">${d.date}</td>
+      <td style="font-size:11px;color:#6b7280;">${periodsLabel}</td>
+      <td style="font-size:11px;color:#9ca3af;">${d.submitTime||'-'}</td>
+      <td>${fLabel}</td>
+      <td>${ab(d.status,sc)}</td>
+      <td>${note}</td>
+    </tr>`;
+  });
+}
 function subDoc(){
   const id=S.cur.id,type=gs('sf-type').value,date=gs('sf-dt').value||TD,note=gs('sf-note').value;
-  S.docs.push({sid:id,type,date,note,status:'대기',files:[...pendingFiles]});
+  const checkedPeriods=[...document.querySelectorAll('input[name="sf-period"]:checked')].map(c=>c.value);
+  const allPeriods=getPeriodsForDate(date).map(p=>p.name);
+  const selectedPeriods=checkedPeriods.length>0?checkedPeriods:allPeriods;
+  const submitTime=new Date().toLocaleString('ko-KR',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
+  S.docs.push({sid:id,type,date,note,periods:selectedPeriods,submitTime,status:'대기',files:[...pendingFiles]});
   pendingFiles=[];renderPreview();gs('sf-note').value='';
+  gs('sf-period-wrap').style.display='none';
   gs('sf-msg').style.display='block';setTimeout(()=>gs('sf-msg').style.display='none',3000);
   renderStuDoc();saveData();
 }
+
 function renderNtStu(){const el=gs('nt-stu');el.innerHTML='';if(!S.notices.length){el.innerHTML='<div class="em">공지사항이 없습니다.</div>';return}S.notices.forEach(n=>{el.innerHTML+=`<div class="card"><div style="font-weight:600;font-size:14px;margin-bottom:4px;">${n.t}</div><div style="font-size:12px;color:#6b7280;margin-bottom:8px;">${n.d}</div><div style="font-size:13px;color:#6b7280;">${n.b}</div></div>`})}
 
 // ── 사전 신청 ──
 function togglePaEtc(){gs('pa-etc-wrap').style.display=gs('pa-reason').value==='기타'?'block':'none';}
+
+function renderPreAbsTT(){
+  const date=gs('pa-date').value;
+  if(!date){gs('pa-tt-wrap').style.display='none';return;}
+  const periods=getPeriodsForDate(date);
+  if(!periods.length){gs('pa-tt-wrap').style.display='none';return;}
+  gs('pa-tt-wrap').style.display='block';
+  gs('pa-tt-body').innerHTML=periods.map(p=>`
+    <label style="display:flex;align-items:center;gap:6px;background:#f9fafb;border:1px solid #e5e5e5;border-radius:8px;padding:6px 10px;cursor:pointer;">
+      <input type="checkbox" name="pa-period" value="${p.name}" style="width:auto;margin:0;" />
+      <span style="font-size:13px;font-weight:500;">${p.name}</span>
+      ${p.time?`<span style="font-size:11px;color:#9ca3af;">${p.time}</span>`:''}
+    </label>`).join('');
+}
+
 function subPreAbs(){
   const sid=S.cur.id,date=gs('pa-date').value,type=gs('pa-type').value;
   const reasonSel=gs('pa-reason').value;
   const reason=reasonSel==='기타'?(gs('pa-etc').value.trim()||'기타'):reasonSel;
   const detail=gs('pa-detail').value.trim();
   if(!date){alert('날짜를 선택하세요.');return;}
-  S.preAbs.push({sid,date,type,reason,detail,status:'대기',submittedAt:new Date().toLocaleString('ko-KR',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'})});
+
+  // 선택된 교시 수집
+  const checkedPeriods=[...document.querySelectorAll('input[name="pa-period"]:checked')].map(c=>c.value);
+  const periods=getPeriodsForDate(date);
+  const selectedPeriods=checkedPeriods.length>0?checkedPeriods:periods.map(p=>p.name);
+
+  const now=new Date().toLocaleString('ko-KR',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
+  S.preAbs.push({sid,date,type,reason,detail,periods:selectedPeriods,status:'대기',submittedAt:now});
   gs('pa-date').value='';gs('pa-detail').value='';
+  gs('pa-tt-wrap').style.display='none';
   gs('pa-msg').style.display='block';setTimeout(()=>gs('pa-msg').style.display='none',3000);
   renderStuPreAbs();saveData();
 }
+
 function renderStuPreAbs(){
   const id=S.cur.id,my=S.preAbs.filter(p=>p.sid===id);
   const tb=gs('pa-log');tb.innerHTML='';
-  if(!my.length){tb.innerHTML='<tr><td colspan="5" class="em">사전 신청 내역이 없습니다.</td></tr>';return;}
+  if(!my.length){tb.innerHTML='<tr><td colspan="6" class="em">사전 신청 내역이 없습니다.</td></tr>';return;}
   my.slice().reverse().forEach(p=>{
     const realIdx=S.preAbs.indexOf(p);
     const sc=p.status==='확인'?'gg':p.status==='반려'?'rr':'aa';
+    const periodsLabel=(p.periods&&p.periods.length)?p.periods.join(', '):'전체';
     tb.innerHTML+=`<tr>
       <td style="font-size:12px;">${p.date}</td>
       <td>${ab(p.type,p.type==='결석'?'rr':p.type==='지각'?'aa':'gr')}</td>
+      <td style="font-size:11px;color:#6b7280;">${periodsLabel}</td>
       <td>${p.reason}${p.detail?`<br><span style="font-size:11px;color:#9ca3af;">${p.detail}</span>`:''}</td>
       <td>${ab(p.status,sc)}</td>
       <td>${p.status==='대기'?`<button class="btn bs bd" onclick="cancelPreAbs(${realIdx})">취소</button>`:'-'}</td>
@@ -1379,72 +1596,158 @@ function renderPreAbsAdmin(){
   const tb=gs('pa-admin-tb');if(!tb)return;
   const pending=S.preAbs.filter(p=>p.status==='대기').length;
   const cntEl=gs('pa-pending-cnt');if(cntEl)cntEl.textContent='대기 '+pending+'건';
-  if(!S.preAbs.length){tb.innerHTML='<tr><td colspan="9" class="em">사전 신청 내역이 없습니다.</td></tr>';return;}
-  const cnt=getPeriodCount();tb.innerHTML='';
-  S.preAbs.slice().sort((a,b)=>a.date.localeCompare(b.date)).forEach(p=>{
-    const i=S.preAbs.indexOf(p);
-    const stu=S.students.find(s=>s.id===p.sid);
-    const sc=p.status==='확인'?'gg':p.status==='반려'?'rr':'aa';
-    const typeC=p.type==='결석'?'rr':p.type==='지각'?'aa':'gr';
-    let preview='';
-    if(p.type==='지각')preview='1점(고정)';
-    else if(p.reason==='병결'||p.reason==='학원보강')preview=`${cnt}점(${cnt}교시×1)`;
-    else if(p.reason==='가족행사'){const year=p.date.slice(0,4);const fc=getFamilyCount(p.sid,year);preview=fc<2?`0점(연${fc+1}회,인정)`:`${cnt}점(연${fc+1}회,초과)`;}
-    else if(p.reason==='경조사'||p.reason==='학교행사')preview='0점(인정)';
-    else preview='0~2점(직접입력)';
+  const pendingList=S.preAbs.filter(p=>p.status==='대기').sort((a,b)=>a.date.localeCompare(b.date));
+  if(!pendingList.length){
+    tb.innerHTML='<tr><td colspan="9" class="em">대기 중인 사전 신청이 없습니다.</td></tr>';
+  } else {
+    tb.innerHTML='';
+    pendingList.forEach(p=>{
+      const i=S.preAbs.indexOf(p);
+      const stu=S.students.find(s=>s.id===p.sid);
+      const typeC=p.type==='결석'?'rr':p.type==='지각'?'aa':'gr';
+      const periodsLabel=(p.periods&&p.periods.length)?p.periods.join(', '):'전체';
+      tb.innerHTML+=`<tr>
+        <td style="font-size:12px;color:#6b7280;">${stu?stu.num:'-'}</td>
+        <td>${stu?stu.name:'-'}</td>
+        <td style="font-size:12px;">${p.date}</td>
+        <td>${ab(p.type,typeC)}</td>
+        <td style="font-size:11px;color:#6b7280;">${periodsLabel}</td>
+        <td>${p.reason}${p.detail?`<br><span style="font-size:11px;color:#9ca3af;">${p.detail}</span>`:''}</td>
+        <td style="font-size:12px;color:#6b7280;">${p.detail||'-'}</td>
+        <td style="font-size:11px;color:#9ca3af;">${p.submittedAt||'-'}</td>
+        <td>
+          <button class="btn bs" onclick="procPreAbs(${i},'확인')">확인</button>
+          <button class="btn bs bd" style="margin-left:4px;" onclick="procPreAbs(${i},'반려')">반려</button>
+        </td>
+      </tr>`;
+    });
+  }
+  renderDocInAtt();
+}
+
+function renderDocInAtt(){
+  const tb=gs('doc-att-tb');if(!tb)return;
+  const pendingDocs=S.docs.filter(d=>d.status==='대기');
+  const cnt2=gs('doc-pnd2');if(cnt2)cnt2.textContent='대기 '+pendingDocs.length+'건';
+  if(!pendingDocs.length){tb.innerHTML='<tr><td colspan="8" class="em">대기 중인 서류가 없습니다.</td></tr>';return;}
+  tb.innerHTML='';
+  pendingDocs.forEach(d=>{
+    const i=S.docs.indexOf(d);
+    const st=S.students.find(s=>s.id===d.sid);
+    const files=d.files||[];
+    const thumbs=files.length?files.map(f=>f.type&&f.type.startsWith('image/')?
+      `<img src="${f.data}" onclick="viewImg('${f.data}')" style="width:32px;height:32px;object-fit:cover;border-radius:4px;cursor:pointer;" title="${f.name}">`:
+      `<span style="font-size:18px;cursor:pointer;" title="${f.name}">📄</span>`).join(''):'<span style="color:#9ca3af;font-size:12px;">없음</span>';
+    const periodsLabel=(d.periods&&d.periods.length)?d.periods.join(', '):'전체';
     tb.innerHTML+=`<tr>
-      <td style="font-size:12px;color:#6b7280;">${stu?stu.num:'-'}</td><td>${stu?stu.name:'-'}</td>
-      <td style="font-size:12px;">${p.date}</td><td>${ab(p.type,typeC)}</td>
-      <td>${p.reason}</td><td style="font-size:12px;color:#6b7280;">${p.detail||'-'}</td>
-      <td style="font-size:12px;color:#92400e;font-weight:500;">${preview}</td>
-      <td>${ab(p.status,sc)}</td>
-      <td>${p.status==='대기'?`<button class="btn bs" onclick="procPreAbs(${i},'확인')">확인</button><button class="btn bs bd" style="margin-left:4px;" onclick="procPreAbs(${i},'반려')">반려</button>`:'-'}</td>
+      <td style="font-size:12px;color:#6b7280;">${st?st.num:'-'}</td>
+      <td>${st?st.name:'-'}</td>
+      <td>${d.type}</td>
+      <td style="font-size:12px;">${d.date}</td>
+      <td style="font-size:11px;color:#6b7280;">${periodsLabel}</td>
+      <td style="font-size:11px;color:#9ca3af;">${d.submitTime||'-'}</td>
+      <td><div style="display:flex;gap:4px;">${thumbs}</div></td>
+      <td>
+        <button class="btn bs" onclick="appDoc(${i},'승인')">승인</button>
+        <button class="btn bs bd" style="margin-left:4px;" onclick="appDoc(${i},'반려')">반려</button>
+      </td>
     </tr>`;
   });
 }
-function procPreAbs(i,status){
-  const p=S.preAbs[i];
-  if(status==='확인'&&p.reason==='기타'){openEtcPtsModal(i);return;}
-  _applyPreAbs(i,status,null);
+
+function renderHistory(){
+  const filterDate=gs('his-dt')?.value||'';
+  renderPreAbsHistory(filterDate);
+  renderDocHistory(filterDate);
 }
-function openEtcPtsModal(i){window._etcPtsIdx=i;gs('mo-etc-pts').style.display='flex';gs('etc-pts-val').value='1';}
-function confirmEtcPts(){const pts=parseInt(gs('etc-pts-val').value);if(isNaN(pts)||pts<0||pts>2){alert('0~2점 사이로 입력하세요.');return;}cm('mo-etc-pts');_applyPreAbs(window._etcPtsIdx,'확인',pts);}
-function _applyPreAbs(i,status,etcPts){
+
+function renderPreAbsHistory(filterDate){
+  const tb=gs('pa-history-tb');if(!tb)return;
+  const done=S.preAbs.filter(p=>p.status!=='대기'&&(filterDate?p.date===filterDate:true))
+    .sort((a,b)=>b.date.localeCompare(a.date));
+  if(!done.length){tb.innerHTML='<tr><td colspan="8" class="em">확인된 내역이 없습니다.</td></tr>';return;}
+  tb.innerHTML='';
+  done.forEach(p=>{
+    const stu=S.students.find(s=>s.id===p.sid);
+    const sc=p.status==='확인'?'gg':'rr';
+    const typeC=p.type==='결석'?'rr':p.type==='지각'?'aa':'gr';
+    const periodsLabel=(p.periods&&p.periods.length)?p.periods.join(', '):'전체';
+    tb.innerHTML+=`<tr>
+      <td style="font-size:12px;color:#6b7280;">${stu?stu.num:'-'}</td>
+      <td>${stu?stu.name:'-'}</td>
+      <td style="font-size:12px;">${p.date}</td>
+      <td>${ab(p.type,typeC)}</td>
+      <td style="font-size:11px;color:#6b7280;">${periodsLabel}</td>
+      <td>${p.reason}${p.detail?`<br><span style="font-size:11px;color:#9ca3af;">${p.detail}</span>`:''}</td>
+      <td style="font-size:11px;color:#9ca3af;">${p.submittedAt||'-'}</td>
+      <td>${ab(p.status,sc)}</td>
+    </tr>`;
+  });
+}
+
+function renderDocHistory(filterDate){
+  const tb=gs('doc-history-tb');if(!tb)return;
+  const done=S.docs.filter(d=>d.status!=='대기'&&(filterDate?d.date===filterDate:true))
+    .sort((a,b)=>b.date.localeCompare(a.date));
+  if(!done.length){tb.innerHTML='<tr><td colspan="8" class="em">처리된 서류가 없습니다.</td></tr>';return;}
+  tb.innerHTML='';
+  done.forEach(d=>{
+    const st=S.students.find(s=>s.id===d.sid);
+    const sc=d.status==='승인'?'gg':'rr';
+    const files=d.files||[];
+    const fcnt=files.length;
+    const fLabel=fcnt?`<span style="font-size:12px;color:#1d4ed8;cursor:pointer;" onclick="showDocFiles(${S.docs.indexOf(d)})">📎 ${fcnt}개</span>`:'<span style="font-size:12px;color:#9ca3af;">없음</span>';
+    const periodsLabel=(d.periods&&d.periods.length)?d.periods.join(', '):'전체';
+    tb.innerHTML+=`<tr>
+      <td style="font-size:12px;color:#6b7280;">${st?st.num:'-'}</td>
+      <td>${st?st.name:'-'}</td>
+      <td>${d.type}</td>
+      <td style="font-size:12px;">${d.date}</td>
+      <td style="font-size:11px;color:#6b7280;">${periodsLabel}</td>
+      <td style="font-size:11px;color:#9ca3af;">${d.submitTime||'-'}</td>
+      <td>${fLabel}</td>
+      <td>${ab(d.status,sc)}</td>
+    </tr>`;
+  });
+}
+
+
+function procPreAbs(i,status){
+  _applyPreAbs(i,status);
+}
+
+function _applyPreAbs(i,status){
   S.preAbs[i].status=status;const p=S.preAbs[i];
   if(status==='확인'){
     if(!S.att[p.sid])S.att[p.sid]=[];
     const recs=S.att[p.sid];
-    // 날짜 기록 업데이트
-    const ei=recs.findIndex(r=>r.date===p.date);
-    const entry={date:p.date,status:p.type,reason:p.reason+(p.detail?' ('+p.detail+')':''),time:'사전신청'};
-    if(ei>=0)recs[ei]=entry;else recs.push(entry);
-    // 날짜 기준 교시 수 계산
-    const cnt=getPeriodsForDate(p.date).length||1;
-    const year=p.date.slice(0,4);
-    let pts=0,dmName='';
-    // 기존 자동 벌점 모두 제거
-    removeDemerit(p.sid,p.date,'무단결석');
-    removeDemerit(p.sid,p.date,'지각');
-    removeDemerit(p.sid,p.date,'서류인정');
-    removeDemerit(p.sid,p.date,'사전인정');
-    if(p.type==='지각'){dmName='지각(사전인정)';pts=1;}
-    else if(p.reason==='병결'){dmName='병결(인정)';pts=1*cnt;}
-    else if(p.reason==='학원보강'){dmName='학원보강(인정)';pts=1*cnt;}
-    else if(p.reason==='가족행사'){const prevCnt=getFamilyCount(p.sid,year);if(prevCnt<2){dmName='가족행사(인정,연'+(prevCnt+1)+'회)';pts=0;}else{dmName='가족행사(연'+(prevCnt+1)+'회,초과)';pts=1*cnt;}}
-    else if(p.reason==='경조사'||p.reason==='학교행사'){dmName=p.reason+'(인정)';pts=0;}
-    else{dmName='기타('+p.reason+')';pts=etcPts!==null?etcPts:1;}
-    if(pts>0)addDemerit(p.sid,p.date,dmName,pts,'사전인정');
-    const ptsTxt=pts===0?'벌점 없음 (인정)':'벌점 '+pts+'점 부과';
-    pushNotif(p.sid,'att','사전 신청이 확인되었습니다',`${p.date} · ${p.type} (${p.reason}) · ${ptsTxt}`);
+    const periods=getPeriodsForDate(p.date);
+    const targetPeriods=(p.periods&&p.periods.length)?p.periods:periods.map(pd=>pd.name);
+
+    // 출결만 반영 (교시별)
+    targetPeriods.forEach(periodName=>{
+      const recKey=`${p.date}_${periodName}`;
+      const ei=recs.findIndex(r=>r.date===recKey);
+      const entry={date:recKey,status:p.type,
+        reason:p.reason+(p.detail?' ('+p.detail+')':''),time:'사전신청'};
+      if(ei>=0)recs[ei]=entry;else recs.push(entry);
+    });
+
+    // 벌점은 출결 상태에 맞게 recalcDemerit으로 재계산
+    // (결석→무단2점×교시, 지각→1점×교시, 조퇴→0점 — 서류 승인 전까지 무단 유지)
+    recalcDemerit(p.sid, p.date);
+
+    const periodCnt=targetPeriods.length||1;
+    const pts=p.type==='지각'?periodCnt:(p.type==='결석'?2*periodCnt:0);
+    pushNotif(p.sid,'att','사전 신청이 확인되었습니다',
+      `${p.date} · ${p.type} (${p.reason}) · ${pts}점 부과 · 서류 제출 후 조정 가능`);
   } else {
-    pushNotif(p.sid,'doc_no','사전 신청이 반려되었습니다',`${p.date} · ${p.reason} · 선생님께 문의하세요.`);
+    pushNotif(p.sid,'doc_no','사전 신청이 반려되었습니다',
+      `${p.date} · ${p.reason} · 선생님께 문의하세요.`);
   }
   renderPreAbsAdmin();saveData();
 }
 
-// ── 로그인 팝업 (공지 + 알림) ──
-let _popupItems=[];
-let _popupIdx=0;
 
 function showLoginPopup(sid){
   _popupItems=[];
@@ -1861,11 +2164,45 @@ function fileChange(e){addFiles(Array.from(e.target.files));e.target.value='';}
 function fileDragOver(e){e.preventDefault();gs('sf-drop').classList.add('over')}
 function fileDragLeave(){gs('sf-drop').classList.remove('over')}
 function fileDrop(e){e.preventDefault();gs('sf-drop').classList.remove('over');addFiles(Array.from(e.dataTransfer.files))}
-function addFiles(files){const allowed=files.filter(f=>f.type.startsWith('image/')||f.type==='application/pdf');const remaining=5-pendingFiles.length;allowed.slice(0,remaining).forEach(f=>{const reader=new FileReader();reader.onload=ev=>{pendingFiles.push({name:f.name,type:f.type,data:ev.target.result});renderPreview();};reader.readAsDataURL(f);});if(allowed.length>remaining)alert(`최대 5개까지 첨부 가능합니다.`);}
+function addFiles(files){
+  const allowed=files.filter(f=>f.type.startsWith('image/')||f.type==='application/pdf');
+  const remaining=5-pendingFiles.length;
+  if(allowed.length>remaining){alert(`최대 5개까지 첨부 가능합니다.`);}
+  allowed.slice(0,remaining).forEach(f=>{
+    if(f.type.startsWith('image/')){
+      // 이미지 압축 후 저장
+      const reader=new FileReader();
+      reader.onload=ev=>{
+        const img=new Image();
+        img.onload=()=>{
+          const canvas=document.createElement('canvas');
+          const MAX=800;
+          let w=img.width,h=img.height;
+          if(w>MAX||h>MAX){if(w>h){h=Math.round(h*MAX/w);w=MAX;}else{w=Math.round(w*MAX/h);h=MAX;}}
+          canvas.width=w;canvas.height=h;
+          canvas.getContext('2d').drawImage(img,0,0,w,h);
+          const compressed=canvas.toDataURL('image/jpeg',0.7);
+          pendingFiles.push({name:f.name,type:'image/jpeg',data:compressed});
+          renderPreview();
+        };
+        img.src=ev.target.result;
+      };
+      reader.readAsDataURL(f);
+    } else {
+      // PDF는 그대로
+      const reader=new FileReader();
+      reader.onload=ev=>{
+        pendingFiles.push({name:f.name,type:f.type,data:ev.target.result});
+        renderPreview();
+      };
+      reader.readAsDataURL(f);
+    }
+  });
+}
 function renderPreview(){const el=gs('sf-preview');el.innerHTML=pendingFiles.map((f,i)=>{const isImg=f.type.startsWith('image/');const inner=isImg?`<img src="${f.data}" onclick="viewImg('${f.data}')" title="${f.name}">`:`<div class="file-icon">📄<span class="file-name">${f.name}</span></div>`;return`<div class="file-thumb">${inner}<button class="del-btn" onclick="removeFile(${i})">✕</button></div>`;}).join('');}
 function removeFile(i){pendingFiles.splice(i,1);renderPreview()}
 function viewImg(src){const bg=document.createElement('div');bg.className='img-modal-bg';bg.innerHTML=`<img src="${src}">`;bg.onclick=()=>bg.remove();document.body.appendChild(bg);}
-function showDocFiles(i){const doc=S.docs[i];const files=doc.files||[];if(!files.length)return;const bg=document.createElement('div');bg.className='img-modal-bg';bg.style.flexDirection='column';bg.style.gap='12px';bg.style.padding='20px';const inner=files.map(f=>f.type&&f.type.startsWith('image/')?`<img src="${f.data}" style="max-width:80vw;max-height:60vh;border-radius:8px;object-fit:contain;">`:`<div style="background:#fff;border-radius:8px;padding:16px 24px;font-size:14px;color:#111;">📄 ${f.name}<br><a href="${f.data}" download="${f.name}" style="color:#1d4ed8;font-size:12px;">다운로드</a></div>`).join('');bg.innerHTML=`<div style="font-size:13px;color:#fff;margin-bottom:4px;">탭/클릭하여 닫기</div>${inner}`;bg.onclick=()=>bg.remove();document.body.appendChild(bg);}
+function showDocFiles(i){const doc=S.docs[i];const files=doc.files||[];if(!files.length)return;const bg=document.createElement('div');bg.className='img-modal-bg';bg.style.flexDirection='column';bg.style.gap='12px';bg.style.padding='20px';bg.style.overflowY='auto';const inner=files.map(f=>f.type&&f.type.startsWith('image/')?`<img src="${f.data}" style="max-width:80vw;max-height:70vh;border-radius:8px;object-fit:contain;">`:`<div style="background:#fff;border-radius:8px;padding:16px 24px;font-size:14px;color:#111;">📄 ${f.name}<br><a href="${f.data}" download="${f.name}" style="color:#1d4ed8;font-size:12px;">다운로드</a></div>`).join('');bg.innerHTML=`<div style="font-size:13px;color:#fff;margin-bottom:4px;">탭하여 닫기</div>${inner}`;bg.onclick=()=>bg.remove();document.body.appendChild(bg);}
 </script>
 
 
