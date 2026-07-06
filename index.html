@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- saved from url=(0055)file:///C:/Users/user/Downloads/bisang_firebase_14.html -->
+<!-- saved from url=(0055)file:///C:/Users/user/Downloads/bisang_firebase_15.html -->
 <html lang="ko"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>비상반 관리 시스템</title>
-<link rel="manifest" href="file:///C:/Users/user/Downloads/bisang_firebase_14.html#">
+<link rel="manifest" href="file:///C:/Users/user/Downloads/bisang_firebase_15.html#">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f5;color:#111}
@@ -1799,13 +1799,40 @@ function renderPreAbsHistory(filterDate){
 
 function revertPreAbs(i, newStatus){
   const p=S.preAbs[i];
+  if(!p){alert('항목을 찾을 수 없습니다.');return;}
   const stu=S.students.find(s=>s.id===p.sid);
   const msg=newStatus==='확인'
-    ?`${stu?stu.name:''} 학생의 사전 신청을 확인 처리하시겠습니까?\n(출결 반영 및 벌점 재계산됩니다)`
-    :`${stu?stu.name:''} 학생의 사전 신청을 반려로 변경하시겠습니까?`;
+    ?`${stu?stu.name:''} · ${p.date} · ${p.reason}\n사전 신청을 확인 처리하시겠습니까?\n(출결 반영 및 벌점 재계산됩니다)`
+    :`${stu?stu.name:''} · ${p.date}\n사전 신청을 반려로 변경하시겠습니까?`;
   if(!confirm(msg))return;
-  _applyPreAbs(i, newStatus);
+
+  // 직접 처리 (_applyPreAbs의 renderPreAbsAdmin 호출로 인한 인덱스 꼬임 방지)
+  S.preAbs[i].status=newStatus;
+
+  if(newStatus==='확인'){
+    if(!S.att[p.sid])S.att[p.sid]=[];
+    const recs=S.att[p.sid];
+    const periods=getPeriodsForDate(p.date);
+    const targetPeriods=(p.periods&&p.periods.length)?p.periods:periods.map(pd=>pd.name);
+    targetPeriods.forEach(periodName=>{
+      const recKey=`${p.date}_${periodName}`;
+      const ei=recs.findIndex(r=>r.date===recKey);
+      const entry={date:recKey,status:p.type,
+        reason:p.reason+(p.detail?' ('+p.detail+')':''),time:'사전신청'};
+      if(ei>=0)recs[ei]=entry;else recs.push(entry);
+    });
+    recalcDemerit(p.sid,p.date);
+    const pts=p.type==='지각'?(targetPeriods.length||1):(p.type==='결석'?2*(targetPeriods.length||1):0);
+    pushNotif(p.sid,'att','사전 신청이 확인 처리되었습니다',
+      `${p.date} · ${p.type} (${p.reason}) · ${pts}점 부과`);
+  } else {
+    pushNotif(p.sid,'doc_no','사전 신청이 반려로 변경되었습니다',
+      `${p.date} · ${p.reason} · 선생님께 문의하세요.`);
+  }
+
+  saveData();
   renderHistory();
+  renderPreAbsAdmin();
 }
 
 function renderDocHistory(filterDate){
