@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- saved from url=(0055)file:///C:/Users/user/Downloads/bisang_firebase_17.html -->
+<!-- saved from url=(0055)file:///C:/Users/user/Downloads/bisang_firebase_18.html -->
 <html lang="ko"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>비상반 관리 시스템</title>
-<link rel="manifest" href="file:///C:/Users/user/Downloads/bisang_firebase_17.html#">
+<link rel="manifest" href="file:///C:/Users/user/Downloads/bisang_firebase_18.html#">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f5;color:#111}
@@ -627,26 +627,37 @@ let messaging = null;
 // ── Firestore 저장/불러오기 ──
 const DB_DOC = 'bisang-class/data';
 let saveTimer = null;
+let _lastSaveTime = 0;
 
 window._saveDataFn = window.saveData = async function() {
+  // debounce 제거 - 즉시 저장 (단, 100ms 내 중복 호출 무시)
+  const now = Date.now();
+  if(now - _lastSaveTime < 100) return;
+  _lastSaveTime = now;
+  
   clearTimeout(saveTimer);
-  saveTimer = setTimeout(async () => {
-    try {
-      window._isSaving = true;
-      gs('saving-indicator').style.display = 'block';
-      const save = {
-        students: S.students, att: S.att,
-        docs: S.docs.map(d=>({...d, files: d.files||[]})),
-        dems: S.dems, rules: S.rules, notices: S.notices, notifs: S.notifs,
-        periods: S.periods, regAbs: S.regAbs, preAbs: S.preAbs,
-        dayPeriods: S.dayPeriods, datePeriods: S.datePeriods,
-        _adminPw: ADMIN_PW
-      };
-      await setDoc(doc(db, 'bisang-class', 'data'), save);
-      gs('saving-indicator').style.display = 'none';
-      window._isSaving = false;
-    } catch(e) { console.error('저장 오류:', e); gs('saving-indicator').style.display = 'none'; window._isSaving = false; }
-  }, 800);
+  try {
+    window._isSaving = true;
+    gs('saving-indicator').style.display = 'block';
+    const save = {
+      students: S.students, att: S.att,
+      docs: S.docs.map(d=>({...d, files: d.files||[]})),
+      dems: S.dems, rules: S.rules, notices: S.notices, notifs: S.notifs,
+      periods: S.periods, regAbs: S.regAbs, preAbs: S.preAbs,
+      dayPeriods: S.dayPeriods, datePeriods: S.datePeriods,
+      _adminPw: ADMIN_PW,
+      _saveTimestamp: now
+    };
+    await setDoc(doc(db, 'bisang-class', 'data'), save);
+    gs('saving-indicator').style.display = 'none';
+    // 저장 완료 후 1초간 snapshot 무시 (내가 트리거한 snapshot 방지)
+    window._isSaving = true;
+    setTimeout(()=>{ window._isSaving = false; }, 1000);
+  } catch(e) {
+    console.error('저장 오류:', e);
+    gs('saving-indicator').style.display = 'none';
+    window._isSaving = false;
+  }
 };
 
 window._loadDataFn = window.loadData = async function() {
@@ -1662,7 +1673,7 @@ function renderPreAbsTT(){
     </label>`).join('');
 }
 
-function subPreAbs(){
+async function subPreAbs(){
   const sid=S.cur.id,date=gs('pa-date').value,type=gs('pa-type').value;
   const reasonSel=gs('pa-reason').value;
   const reason=reasonSel==='기타'?(gs('pa-etc').value.trim()||'기타'):reasonSel;
@@ -1680,7 +1691,8 @@ function subPreAbs(){
   gs('pa-date').value='';gs('pa-detail').value='';
   gs('pa-tt-wrap').style.display='none';
   gs('pa-msg').style.display='block';setTimeout(()=>gs('pa-msg').style.display='none',3000);
-  renderStuPreAbs();saveData();
+  await saveData();
+  renderStuPreAbs();
 }
 
 function renderStuPreAbs(){
@@ -1701,7 +1713,7 @@ function renderStuPreAbs(){
     </tr>`;
   });
 }
-function cancelPreAbs(i){if(!confirm('사전 신청을 취소하시겠습니까?'))return;S.preAbs.splice(i,1);renderStuPreAbs();saveData();}
+async function cancelPreAbs(i){if(!confirm('사전 신청을 취소하시겠습니까?'))return;S.preAbs.splice(i,1);await saveData();renderStuPreAbs();}
 function renderPreAbsAdmin(){
   ensurePreAbsIds();
   const tb=gs('pa-admin-tb');if(!tb)return;
@@ -1780,7 +1792,6 @@ function renderPreAbsHistory(filterDate){
   if(!done.length){tb.innerHTML='<tr><td colspan="9" class="em">확인된 내역이 없습니다.</td></tr>';return;}
   tb.innerHTML='';
   done.forEach(p=>{
-    const i=S.preAbs.indexOf(p);
     const stu=S.students.find(s=>s.id===p.sid);
     const sc=p.status==='확인'?'gg':'rr';
     const typeC=p.type==='결석'?'rr':p.type==='지각'?'aa':'gr';
@@ -1804,43 +1815,7 @@ function renderPreAbsHistory(filterDate){
   });
 }
 
-function revertPreAbs(i, newStatus){
-  const p=S.preAbs[i];
-  if(!p){alert('항목을 찾을 수 없습니다.');return;}
-  const stu=S.students.find(s=>s.id===p.sid);
-  const msg=newStatus==='확인'
-    ?`${stu?stu.name:''} · ${p.date} · ${p.reason}\n사전 신청을 확인 처리하시겠습니까?\n(출결 반영 및 벌점 재계산됩니다)`
-    :`${stu?stu.name:''} · ${p.date}\n사전 신청을 반려로 변경하시겠습니까?`;
-  if(!confirm(msg))return;
 
-  // 직접 처리 (_applyPreAbs의 renderPreAbsAdmin 호출로 인한 인덱스 꼬임 방지)
-  S.preAbs[i].status=newStatus;
-
-  if(newStatus==='확인'){
-    if(!S.att[p.sid])S.att[p.sid]=[];
-    const recs=S.att[p.sid];
-    const periods=getPeriodsForDate(p.date);
-    const targetPeriods=(p.periods&&p.periods.length)?p.periods:periods.map(pd=>pd.name);
-    targetPeriods.forEach(periodName=>{
-      const recKey=`${p.date}_${periodName}`;
-      const ei=recs.findIndex(r=>r.date===recKey);
-      const entry={date:recKey,status:p.type,
-        reason:p.reason+(p.detail?' ('+p.detail+')':''),time:'사전신청'};
-      if(ei>=0)recs[ei]=entry;else recs.push(entry);
-    });
-    recalcDemerit(p.sid,p.date);
-    const pts=p.type==='지각'?(targetPeriods.length||1):(p.type==='결석'?2*(targetPeriods.length||1):0);
-    pushNotif(p.sid,'att','사전 신청이 확인 처리되었습니다',
-      `${p.date} · ${p.type} (${p.reason}) · ${pts}점 부과`);
-  } else {
-    pushNotif(p.sid,'doc_no','사전 신청이 반려로 변경되었습니다',
-      `${p.date} · ${p.reason} · 선생님께 문의하세요.`);
-  }
-
-  saveData();
-  renderHistory();
-  renderPreAbsAdmin();
-}
 
 function renderDocHistory(filterDate){
   const tb=gs('doc-history-tb');if(!tb)return;
@@ -1876,14 +1851,17 @@ function procPreAbs(i,status){
 
 // id 기반 사전신청 처리 (인덱스 꼬임 방지)
 function ensurePreAbsIds(){
-  S.preAbs.forEach((p,i)=>{
-    if(!p.id) p.id='pa_'+p.sid+'_'+p.date+'_'+i;
+  S.preAbs.forEach((p)=>{
+    // 인덱스 없이 고정된 값만 사용 (배열 순서 변경에도 동일한 id 유지)
+    if(!p.id){
+      p.id='pa_'+p.sid+'_'+p.date+'_'+(p.submittedAt||'').replace(/\s|\.|\//g,'');
+    }
   });
 }
 function findPreAbsIdx(id){
   return S.preAbs.findIndex(p=>p.id===id);
 }
-function procPreAbsById(id, status){
+async function procPreAbsById(id, status){
   ensurePreAbsIds();
   const i = findPreAbsIdx(id);
   if(i<0){
@@ -1891,9 +1869,9 @@ function procPreAbsById(id, status){
     alert('항목을 찾을 수 없습니다. 페이지를 새로고침 후 다시 시도하세요.');
     return;
   }
-  _applyPreAbs(i, status);
+  await _applyPreAbs(i, status);
 }
-function revertPreAbsById(id, newStatus){
+async function revertPreAbsById(id, newStatus){
   ensurePreAbsIds();
   const i = findPreAbsIdx(id);
   if(i<0){
@@ -1929,10 +1907,11 @@ function revertPreAbsById(id, newStatus){
     pushNotif(p.sid,'doc_no','사전 신청이 반려로 변경되었습니다',
       `${p.date} · ${p.reason} · 선생님께 문의하세요.`);
   }
-  saveData();
-  setTimeout(()=>{renderHistory();renderPreAbsAdmin();}, 500);
+  await saveData();
+  renderHistory();
+  renderPreAbsAdmin();
 }
-function _applyPreAbs(i,status){
+async function _applyPreAbs(i,status){
   S.preAbs[i].status=status;const p=S.preAbs[i];
   if(status==='확인'){
     if(!S.att[p.sid])S.att[p.sid]=[];
@@ -1961,7 +1940,8 @@ function _applyPreAbs(i,status){
     pushNotif(p.sid,'doc_no','사전 신청이 반려되었습니다',
       `${p.date} · ${p.reason} · 선생님께 문의하세요.`);
   }
-  renderPreAbsAdmin();saveData();
+  await saveData();
+  renderPreAbsAdmin();
 }
 
 
