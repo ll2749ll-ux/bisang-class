@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- saved from url=(0055)file:///C:/Users/user/Downloads/bisang_firebase_15.html -->
+<!-- saved from url=(0055)file:///C:/Users/user/Downloads/bisang_firebase_16.html -->
 <html lang="ko"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>비상반 관리 시스템</title>
-<link rel="manifest" href="file:///C:/Users/user/Downloads/bisang_firebase_15.html#">
+<link rel="manifest" href="file:///C:/Users/user/Downloads/bisang_firebase_16.html#">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f5;color:#111}
@@ -632,6 +632,7 @@ window._saveDataFn = window.saveData = async function() {
   clearTimeout(saveTimer);
   saveTimer = setTimeout(async () => {
     try {
+      window._isSaving = true;
       gs('saving-indicator').style.display = 'block';
       const save = {
         students: S.students, att: S.att,
@@ -643,7 +644,8 @@ window._saveDataFn = window.saveData = async function() {
       };
       await setDoc(doc(db, 'bisang-class', 'data'), save);
       gs('saving-indicator').style.display = 'none';
-    } catch(e) { console.error('저장 오류:', e); gs('saving-indicator').style.display = 'none'; }
+      window._isSaving = false;
+    } catch(e) { console.error('저장 오류:', e); gs('saving-indicator').style.display = 'none'; window._isSaving = false; }
   }, 800);
 };
 
@@ -673,6 +675,8 @@ window._loadDataFn = window.loadData = async function() {
 window.startRealtimeSync = function() {
   onSnapshot(doc(db, 'bisang-class', 'data'), (snap) => {
     if (!snap.exists()) return;
+    // 저장 중일 때는 snapshot 무시 (saveData 완료 전 롤백 방지)
+    if(window._isSaving) return;
     const d = snap.data();
     if(d.students) S.students = d.students;
     if(d.att) S.att = d.att;
@@ -688,8 +692,9 @@ window.startRealtimeSync = function() {
     if(d.datePeriods) S.datePeriods = d.datePeriods;
     if(d._adminPw) ADMIN_PW = d._adminPw;
     // 현재 화면 갱신
+    ensurePreAbsIds();
     if(S.role === 'admin') renderAdmin();
-    if(S.role === 'student') { renderStu(); updateBadge(); }
+    if(S.role === 'student') { renderStu(); updateBadge(); renderPreAbsDocList(); }
   });
 };
 
@@ -1105,7 +1110,6 @@ function recalcDemerit(sid, baseDate){
 }
 
 // ── 벌점 헬퍼 ──
-function getPeriodCount(){return S.periods.length;}
 function getFamilyCount(sid,year){return S.preAbs.filter(p=>p.sid===sid&&p.reason==='가족행사'&&p.status==='확인'&&p.date.startsWith(year)).length;}
 function removeDemerit(sid,date,tag){S.dems=S.dems.filter(d=>!(d.sid===sid&&d.date===date&&d.tag===tag));}
 function addDemerit(sid,date,name,pts,tag){
@@ -1671,7 +1675,8 @@ function subPreAbs(){
   const selectedPeriods=checkedPeriods.length>0?checkedPeriods:periods.map(p=>p.name);
 
   const now=new Date().toLocaleString('ko-KR',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
-  S.preAbs.push({sid,date,type,reason,detail,periods:selectedPeriods,status:'대기',submittedAt:now});
+  const paId='pa_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
+  S.preAbs.push({id:paId,sid,date,type,reason,detail,periods:selectedPeriods,status:'대기',submittedAt:now});
   gs('pa-date').value='';gs('pa-detail').value='';
   gs('pa-tt-wrap').style.display='none';
   gs('pa-msg').style.display='block';setTimeout(()=>gs('pa-msg').style.display='none',3000);
@@ -1698,6 +1703,7 @@ function renderStuPreAbs(){
 }
 function cancelPreAbs(i){if(!confirm('사전 신청을 취소하시겠습니까?'))return;S.preAbs.splice(i,1);renderStuPreAbs();saveData();}
 function renderPreAbsAdmin(){
+  ensurePreAbsIds();
   const tb=gs('pa-admin-tb');if(!tb)return;
   const pending=S.preAbs.filter(p=>p.status==='대기').length;
   const cntEl=gs('pa-pending-cnt');if(cntEl)cntEl.textContent='대기 '+pending+'건';
@@ -1721,8 +1727,8 @@ function renderPreAbsAdmin(){
         <td style="font-size:12px;color:#6b7280;">${p.detail||'-'}</td>
         <td style="font-size:11px;color:#9ca3af;">${p.submittedAt||'-'}</td>
         <td>
-          <button class="btn bs" onclick="procPreAbs(${i},'확인')">확인</button>
-          <button class="btn bs bd" style="margin-left:4px;" onclick="procPreAbs(${i},'반려')">반려</button>
+          <button class="btn bs" onclick="procPreAbsById('${p.id}','확인')">확인</button>
+          <button class="btn bs bd" style="margin-left:4px;" onclick="procPreAbsById('${p.id}','반려')">반려</button>
         </td>
       </tr>`;
     });
@@ -1767,6 +1773,7 @@ function renderHistory(){
 }
 
 function renderPreAbsHistory(filterDate){
+  ensurePreAbsIds();
   const tb=gs('pa-history-tb');if(!tb)return;
   const done=S.preAbs.filter(p=>p.status!=='대기'&&(filterDate?p.date===filterDate:true))
     .sort((a,b)=>b.date.localeCompare(a.date));
@@ -1779,9 +1786,9 @@ function renderPreAbsHistory(filterDate){
     const typeC=p.type==='결석'?'rr':p.type==='지각'?'aa':'gr';
     const periodsLabel=(p.periods&&p.periods.length)?p.periods.join(', '):'전체';
     const editBtn=p.status==='반려'
-      ?`<button class="btn bs" onclick="revertPreAbs(${i},'확인')">✅ 확인으로 변경</button>`
+      ?`<button class="btn bs" onclick="revertPreAbsById('${p.id}','확인')">✅ 확인으로 변경</button>`
       :p.status==='확인'
-      ?`<button class="btn bs bd" onclick="revertPreAbs(${i},'반려')">반려로 변경</button>`
+      ?`<button class="btn bs bd" onclick="revertPreAbsById('${p.id}','반려')">반려로 변경</button>`
       :'-';
     tb.innerHTML+=`<tr>
       <td style="font-size:12px;color:#6b7280;">${stu?stu.num:'-'}</td>
@@ -1866,6 +1873,65 @@ function procPreAbs(i,status){
   _applyPreAbs(i,status);
 }
 
+
+// id 기반 사전신청 처리 (인덱스 꼬임 방지)
+function ensurePreAbsIds(){
+  S.preAbs.forEach((p,i)=>{
+    if(!p.id) p.id='pa_'+p.sid+'_'+p.date+'_'+i;
+  });
+}
+function findPreAbsIdx(id){
+  return S.preAbs.findIndex(p=>p.id===id);
+}
+function procPreAbsById(id, status){
+  ensurePreAbsIds();
+  const i = findPreAbsIdx(id);
+  if(i<0){
+    console.error('procPreAbsById: 항목 못 찾음, id='+id);
+    alert('항목을 찾을 수 없습니다. 페이지를 새로고침 후 다시 시도하세요.');
+    return;
+  }
+  _applyPreAbs(i, status);
+}
+function revertPreAbsById(id, newStatus){
+  ensurePreAbsIds();
+  const i = findPreAbsIdx(id);
+  if(i<0){
+    alert('항목을 찾을 수 없습니다. 페이지를 새로고침 후 다시 시도하세요.');
+    return;
+  }
+  const p=S.preAbs[i];
+  const stu=S.students.find(s=>s.id===p.sid);
+  const msg=newStatus==='확인'
+    ?`${stu?stu.name:''} · ${p.date} · ${p.reason}\n확인 처리하시겠습니까?`
+    :`${stu?stu.name:''} · ${p.date}\n반려로 변경하시겠습니까?`;
+  if(!confirm(msg))return;
+
+  S.preAbs[i].status=newStatus;
+
+  if(newStatus==='확인'){
+    if(!S.att[p.sid])S.att[p.sid]=[];
+    const recs=S.att[p.sid];
+    const periods=getPeriodsForDate(p.date);
+    const targetPeriods=(p.periods&&p.periods.length)?p.periods:periods.map(pd=>pd.name);
+    targetPeriods.forEach(periodName=>{
+      const recKey=`${p.date}_${periodName}`;
+      const ei=recs.findIndex(r=>r.date===recKey);
+      const entry={date:recKey,status:p.type,
+        reason:p.reason+(p.detail?' ('+p.detail+')':''),time:'사전신청'};
+      if(ei>=0)recs[ei]=entry;else recs.push(entry);
+    });
+    recalcDemerit(p.sid,p.date);
+    const pts=p.type==='지각'?(targetPeriods.length||1):(p.type==='결석'?2*(targetPeriods.length||1):0);
+    pushNotif(p.sid,'att','사전 신청이 확인 처리되었습니다',
+      `${p.date} · ${p.type} (${p.reason}) · ${pts}점 부과`);
+  } else {
+    pushNotif(p.sid,'doc_no','사전 신청이 반려로 변경되었습니다',
+      `${p.date} · ${p.reason} · 선생님께 문의하세요.`);
+  }
+  saveData();
+  setTimeout(()=>{renderHistory();renderPreAbsAdmin();}, 500);
+}
 function _applyPreAbs(i,status){
   S.preAbs[i].status=status;const p=S.preAbs[i];
   if(status==='확인'){
@@ -2003,7 +2069,7 @@ function showAdminPopup(){
         <td style="padding:4px 6px;color:#6b7280;">${d.date}</td>
         <td style="padding:4px 6px;">${fcnt?`📎 ${fcnt}개`:'-'}</td>
       </tr>`;}).join('')}</tbody></table>
-      <button class="btn bp" style="margin-top:10px;font-size:12px;padding:5px 12px;" onclick="cm('mo-admin-popup');aTab('doc',document.querySelectorAll('#sc-admin .tab')[1])">서류 체크로 이동 →</button>
+      <button class="btn bp" style="margin-top:10px;font-size:12px;padding:5px 12px;" onclick="cm('mo-admin-popup');document.querySelectorAll('#sc-admin .tab').forEach(t=>t.classList.remove('on'));document.querySelectorAll('#sc-admin .tc').forEach(t=>t.classList.remove('on'));document.querySelector("[onclick=\"aTab('doc',this)\"]").classList.add('on');gs('ta-doc').classList.add('on');renderDoc()">서류 체크로 이동 →</button>
     </div>`;
   }
   if(pendingPreAbs.length){
@@ -2023,7 +2089,7 @@ function showAdminPopup(){
         <td style="padding:4px 6px;">${p.reason}${p.detail?` (${p.detail})`:''}</td>
         <td style="padding:4px 6px;color:#6b7280;">${p.date}</td>
       </tr>`;}).join('')}</tbody></table>
-      <button class="btn bp" style="margin-top:10px;font-size:12px;padding:5px 12px;background:#92400e;border-color:#92400e;" onclick="cm('mo-admin-popup');aTab('att',document.querySelectorAll('#sc-admin .tab')[0])">출결 관리로 이동 →</button>
+      <button class="btn bp" style="margin-top:10px;font-size:12px;padding:5px 12px;background:#92400e;border-color:#92400e;" onclick="cm('mo-admin-popup');document.querySelectorAll('#sc-admin .tab').forEach(t=>t.classList.remove('on'));document.querySelectorAll('#sc-admin .tc').forEach(t=>t.classList.remove('on'));document.querySelector("[onclick=\"aTab('att',this)\"]").classList.add('on');gs('ta-att').classList.add('on');renderAtt()">출결 관리로 이동 →</button>
     </div>`;
   }
   gs('admin-popup-body').innerHTML=html;
