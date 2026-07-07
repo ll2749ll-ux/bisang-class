@@ -1,10 +1,9 @@
 <!DOCTYPE html>
-<!-- saved from url=(0055)file:///C:/Users/user/Downloads/bisang_firebase_18.html -->
+<!-- saved from url=(0044)file:///C:/Users/user/Downloads/index_3.html -->
 <html lang="ko"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>비상반 관리 시스템</title>
-<link rel="manifest" href="file:///C:/Users/user/Downloads/bisang_firebase_18.html#">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f5;color:#111}
@@ -606,7 +605,7 @@ tr:hover td{background:#f9fafb}
 <!-- Firebase SDK -->
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getFirestore, doc, getDoc, setDoc, onSnapshot, collection, query, orderBy } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, getDocs, onSnapshot, collection, query, orderBy } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { getMessaging, getToken, onMessage } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging.js';
 
 const firebaseConfig = {
@@ -625,87 +624,168 @@ window._db = db; // 전역 노출 (adminLogin에서 사용)
 let messaging = null;
 
 // ── Firestore 저장/불러오기 ──
-const DB_DOC = 'bisang-class/data';
-let saveTimer = null;
-let _lastSaveTime = 0;
+// 구조 개편 (덮어쓰기 충돌 근본 해결):
+//  - 'bisang-class/data'  : 관리자 전용 데이터 (학생명단·출결·벌점·규칙·공지·교시·정기결석)
+//  - 컬렉션 'preabs'      : 사전신청 1건 = 문서 1개 (문서 id = p.id)
+//  - 컬렉션 'docs'        : 서류제출 1건 = 문서 1개 (문서 id = d.id) → 문서당 1MB 제한도 해결
+//  - 컬렉션 'notifs'      : 학생 1명 = 문서 1개 {list:[...]}
+// 학생은 자기 문서만 쓰고, 관리자는 해당 건의 문서만 수정 → 서로 덮어쓸 일 없음.
+let _saveInFlight = false, _savePending = false;
 
 window._saveDataFn = window.saveData = async function() {
-  // debounce 제거 - 즉시 저장 (단, 100ms 내 중복 호출 무시)
-  const now = Date.now();
-  if(now - _lastSaveTime < 100) return;
-  _lastSaveTime = now;
-  
-  clearTimeout(saveTimer);
+  // 메인 문서는 관리자 데이터 전용 — 학생 화면에서는 절대 쓰지 않음 (안전장치)
+  if(S.role === 'student') { console.warn('saveData: 학생 모드에서는 메인 문서를 저장하지 않습니다'); return; }
+  if(_saveInFlight){ _savePending = true; return; } // 저장 중이면 완료 후 한 번 더 저장 (조용히 버리지 않음)
+  _saveInFlight = true;
   try {
     window._isSaving = true;
     gs('saving-indicator').style.display = 'block';
     const save = {
       students: S.students, att: S.att,
-      docs: S.docs.map(d=>({...d, files: d.files||[]})),
-      dems: S.dems, rules: S.rules, notices: S.notices, notifs: S.notifs,
-      periods: S.periods, regAbs: S.regAbs, preAbs: S.preAbs,
+      dems: S.dems, rules: S.rules, notices: S.notices,
+      periods: S.periods, regAbs: S.regAbs,
       dayPeriods: S.dayPeriods, datePeriods: S.datePeriods,
       _adminPw: ADMIN_PW,
-      _saveTimestamp: now
+      _saveTimestamp: Date.now()
     };
     await setDoc(doc(db, 'bisang-class', 'data'), save);
     gs('saving-indicator').style.display = 'none';
-    // 저장 완료 후 1초간 snapshot 무시 (내가 트리거한 snapshot 방지)
-    window._isSaving = true;
+    // 저장 완료 후 1초간 메인 문서 snapshot 무시 (내가 트리거한 snapshot 방지)
     setTimeout(()=>{ window._isSaving = false; }, 1000);
   } catch(e) {
     console.error('저장 오류:', e);
     gs('saving-indicator').style.display = 'none';
     window._isSaving = false;
+    alert('⚠️ 저장에 실패했습니다. 네트워크 확인 후 다시 시도하세요.');
+  } finally {
+    _saveInFlight = false;
+    if(_savePending){ _savePending = false; window.saveData(); }
   }
 };
+
+// ── 건별 저장 함수 (사전신청 / 서류 / 알림) ──
+window._savePreAbsFn = async function(p){
+  try { await setDoc(doc(db,'preabs',p.id), JSON.parse(JSON.stringify(p))); return true; }
+  catch(e){ console.error('사전신청 저장 오류:',e); alert('⚠️ 사전신청 저장 실패. 네트워크 확인 후 다시 시도하세요.'); return false; }
+};
+window._delPreAbsFn = async function(id){
+  try { await deleteDoc(doc(db,'preabs',id)); return true; }
+  catch(e){ console.error('사전신청 삭제 오류:',e); return false; }
+};
+window._saveDocFn = async function(d){
+  try { await setDoc(doc(db,'docs',d.id), JSON.parse(JSON.stringify(d))); return true; }
+  catch(e){ console.error('서류 저장 오류:',e); alert('⚠️ 서류 제출 저장 실패. 첨부 용량이 너무 크거나 네트워크 문제일 수 있습니다.'); return false; }
+};
+window._delDocFn = async function(id){
+  try { await deleteDoc(doc(db,'docs',id)); return true; }
+  catch(e){ console.error('서류 삭제 오류:',e); return false; }
+};
+window._saveNotifFn = async function(sid){
+  try { await setDoc(doc(db,'notifs',String(sid)), {list: JSON.parse(JSON.stringify(S.notifs[sid]||[]))}); return true; }
+  catch(e){ console.error('알림 저장 오류:',e); return false; }
+};
+
+function sortPreAbs(){ S.preAbs.sort((a,b)=>(a._ts||0)-(b._ts||0)); }
+function sortDocs(){ S.docs.sort((a,b)=>(a._ts||0)-(b._ts||0)); }
 
 window._loadDataFn = window.loadData = async function() {
   try {
     const snap = await getDoc(doc(db, 'bisang-class', 'data'));
+    let legacy = {preAbs:null, docs:null, notifs:null};
     if (snap.exists()) {
       const d = snap.data();
       if(d.students) S.students = d.students;
       if(d.att) S.att = d.att;
-      if(d.docs) S.docs = d.docs;
       if(d.dems) S.dems = d.dems;
       if(d.rules) S.rules = d.rules;
       if(d.notices) S.notices = d.notices;
-      if(d.notifs) S.notifs = d.notifs;
       if(d.periods) S.periods = d.periods;
       if(d.regAbs) S.regAbs = d.regAbs;
-      if(d.preAbs) S.preAbs = d.preAbs;
       if(d._adminPw) ADMIN_PW = d._adminPw;
       if(d.dayPeriods) S.dayPeriods = d.dayPeriods;
       if(d.datePeriods) S.datePeriods = d.datePeriods;
+      // 옛 구조에 남아있는 데이터 (마이그레이션용)
+      if(d.preAbs) legacy.preAbs = d.preAbs;
+      if(d.docs) legacy.docs = d.docs;
+      if(d.notifs) legacy.notifs = d.notifs;
+    }
+    // 컬렉션 로드
+    const [paSnap, docSnap, ntSnap] = await Promise.all([
+      getDocs(collection(db,'preabs')),
+      getDocs(collection(db,'docs')),
+      getDocs(collection(db,'notifs'))
+    ]);
+    S.preAbs = paSnap.docs.map(x=>x.data()); sortPreAbs();
+    S.docs = docSnap.docs.map(x=>x.data()); sortDocs();
+    S.notifs = {};
+    ntSnap.docs.forEach(x=>{ S.notifs[x.id] = (x.data().list)||[]; });
+
+    // ── 1회성 마이그레이션: 옛 단일문서 데이터를 컬렉션으로 이전 ──
+    if(legacy.preAbs && legacy.preAbs.length && !S.preAbs.length){
+      let ts = Date.now();
+      for(const p of legacy.preAbs){
+        if(!p.id) p.id='pa_'+p.sid+'_'+p.date+'_'+((p.submittedAt||'').replace(/\s|\.|\//g,''));
+        if(!p._ts) p._ts = ts++;
+        await setDoc(doc(db,'preabs',p.id), JSON.parse(JSON.stringify(p)));
+      }
+      S.preAbs = legacy.preAbs; sortPreAbs();
+    }
+    if(legacy.docs && legacy.docs.length && !S.docs.length){
+      let ts = Date.now();
+      for(const d2 of legacy.docs){
+        if(!d2.id) d2.id='doc_'+d2.sid+'_'+(ts);
+        if(!d2._ts) d2._ts = ts++;
+        await setDoc(doc(db,'docs',d2.id), JSON.parse(JSON.stringify(d2)));
+      }
+      S.docs = legacy.docs; sortDocs();
+    }
+    if(legacy.notifs && Object.keys(legacy.notifs).length && !Object.keys(S.notifs).length){
+      for(const sid of Object.keys(legacy.notifs)){
+        await setDoc(doc(db,'notifs',String(sid)), {list: JSON.parse(JSON.stringify(legacy.notifs[sid]||[]))});
+      }
+      S.notifs = legacy.notifs;
     }
   } catch(e) { console.error('불러오기 오류:', e); }
 };
 
 // ── 실시간 데이터 동기화 ──
+function refreshUI(){
+  if(S.role === 'admin') renderAdmin();
+  if(S.role === 'student') { renderStu(); updateBadge(); renderPreAbsDocList(); }
+}
 window.startRealtimeSync = function() {
+  // 1) 메인 문서 (관리자 데이터) — 로컬 pending 없을 때만 반영
   onSnapshot(doc(db, 'bisang-class', 'data'), (snap) => {
     if (!snap.exists()) return;
-    // 저장 중일 때는 snapshot 무시 (saveData 완료 전 롤백 방지)
-    if(window._isSaving) return;
+    if(window._isSaving) return; // 내가 저장 중/직후엔 무시 (롤백 방지)
     const d = snap.data();
     if(d.students) S.students = d.students;
     if(d.att) S.att = d.att;
-    if(d.docs) S.docs = d.docs;
     if(d.dems) S.dems = d.dems;
     if(d.rules) S.rules = d.rules;
     if(d.notices) S.notices = d.notices;
-    if(d.notifs) S.notifs = d.notifs;
     if(d.periods) S.periods = d.periods;
     if(d.regAbs) S.regAbs = d.regAbs;
-    if(d.preAbs) S.preAbs = d.preAbs;
     if(d.dayPeriods) S.dayPeriods = d.dayPeriods;
     if(d.datePeriods) S.datePeriods = d.datePeriods;
     if(d._adminPw) ADMIN_PW = d._adminPw;
-    // 현재 화면 갱신
-    ensurePreAbsIds();
-    if(S.role === 'admin') renderAdmin();
-    if(S.role === 'student') { renderStu(); updateBadge(); renderPreAbsDocList(); }
+    refreshUI();
+  });
+  // 2) 사전신청 — 건별 문서라 덮어쓰기 충돌 없음, snapshot 그대로 신뢰
+  onSnapshot(collection(db,'preabs'), (snap)=>{
+    S.preAbs = snap.docs.map(x=>x.data()); sortPreAbs();
+    refreshUI();
+  });
+  // 3) 서류제출
+  onSnapshot(collection(db,'docs'), (snap)=>{
+    S.docs = snap.docs.map(x=>x.data()); sortDocs();
+    refreshUI();
+  });
+  // 4) 알림 (학생별 문서)
+  onSnapshot(collection(db,'notifs'), (snap)=>{
+    S.notifs = {};
+    snap.docs.forEach(x=>{ S.notifs[x.id] = (x.data().list)||[]; });
+    if(S.role==='student'){ updateBadge(); }
   });
 };
 
@@ -787,6 +867,11 @@ window.addEventListener('DOMContentLoaded', async () => {
 // Firebase 모듈 로드 전 폴백 (모듈 로드 후 window.saveData로 덮어씌워짐)
 function saveData(){ if(window._saveDataFn) return window._saveDataFn(); }
 function loadData(){ if(window._loadDataFn) return window._loadDataFn(); }
+function savePreAbsItem(p){ if(window._savePreAbsFn) return window._savePreAbsFn(p); }
+function deletePreAbsItem(id){ if(window._delPreAbsFn) return window._delPreAbsFn(id); }
+function saveDocItem(d){ if(window._saveDocFn) return window._saveDocFn(d); }
+function deleteDocItem(id){ if(window._delDocFn) return window._delDocFn(id); }
+function saveNotifList(sid){ if(window._saveNotifFn) return window._saveNotifFn(sid); }
 
 const TD = new Date().toISOString().slice(0,10);
 let ADMIN_PW = 'solcom1007!!';
@@ -824,7 +909,7 @@ function pushNotif(sid,type,title,desc){
   S.notifs[sid].unshift({type,title,desc,time:new Date().toLocaleString('ko-KR',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}),read:false});
   if(S.cur&&S.cur.id===sid)updateBadge();
   if(window.sendPushViaFirestore) sendPushViaFirestore(sid,title,desc);
-  // saveData는 호출자가 담당 (중복 저장 방지)
+  saveNotifList(sid); // 알림은 학생별 별도 문서에 저장 (메인 문서와 무관)
 }
 function updateBadge(){
   const sid=S.cur&&S.cur.id;if(!sid)return;
@@ -851,14 +936,14 @@ function readNotif(i){
   const sid=S.cur.id;
   if(S.notifs[sid]&&S.notifs[sid][i]){
     S.notifs[sid].splice(i,1); // 읽으면 삭제
-    saveData();
+    saveNotifList(sid);
   }
   updateBadge();renderNotif();
 }
 function markAllRead(){
   const sid=S.cur.id;
   S.notifs[sid]=[];
-  updateBadge();renderNotif();saveData();
+  updateBadge();renderNotif();saveNotifList(sid);
 }
 
 // ── 로그인 ──
@@ -1127,13 +1212,8 @@ function addDemerit(sid,date,name,pts,tag){
   if(pts<=0)return;
   removeDemerit(sid,date,tag);
   S.dems.push({sid,n:name,p:pts,date,tag,auto:true});
-  // 알림만 발송, saveData는 호출자가 담당
-  if(S.notifs){
-    if(!S.notifs[sid])S.notifs[sid]=[];
-    S.notifs[sid].unshift({type:'dm',title:'벌점이 부과되었습니다',desc:`${date} · ${name} · ${pts}점 부과`,time:new Date().toLocaleString('ko-KR',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}),read:false});
-    if(S.cur&&S.cur.id===sid)updateBadge();
-    if(window.sendPushViaFirestore)sendPushViaFirestore(sid,'벌점이 부과되었습니다',`${date} · ${name} · ${pts}점 부과`);
-  }
+  // 알림 발송 (알림은 학생별 별도 문서에 저장, 출결·벌점 saveData는 호출자가 담당)
+  pushNotif(sid,'dm','벌점이 부과되었습니다',`${date} · ${name} · ${pts}점 부과`);
 }
 
 function chAtt(id,dt,st){
@@ -1151,6 +1231,7 @@ function chAtt(id,dt,st){
 }
 
 function renderDoc(){
+  ensureDocIds();
   const p=S.docs.filter(d=>d.status==='대기').length;gs('doc-pnd').textContent='대기 '+p+'건';
   const tb=gs('doc-tb');
   if(!S.docs.length){tb.innerHTML='<tr><td colspan="9" class="em">제출된 서류가 없습니다.</td></tr>';return}
@@ -1170,13 +1251,19 @@ function renderDoc(){
       <td style="font-size:11px;color:#9ca3af;">${d.submitTime||'-'}</td>
       <td><div style="display:flex;gap:4px;">${thumbs}</div></td>
       <td>${ab(d.status,sc)}</td>
-      <td>${d.status==='대기'?`<button class="btn bs" onclick="appDoc(${i},'승인')">승인</button><button class="btn bs bd" style="margin-left:4px;" onclick="appDoc(${i},'반려')">반려</button>`:'-'}</td>
+      <td>${d.status==='대기'?`<button class="btn bs" onclick="appDocById('${d.id}','승인')">승인</button><button class="btn bs bd" style="margin-left:4px;" onclick="appDocById('${d.id}','반려')">반려</button>`:'-'}</td>
     </tr>`;
   });
 }
 
-function appDoc(i,st){
-  const doc=S.docs[i];doc.status=st;
+function ensureDocIds(){
+  S.docs.forEach(d=>{ if(!d.id) d.id='doc_'+d.sid+'_'+((d.submitTime||'').replace(/\s|\.|\/|:/g,''))+'_'+(d._ts||''); });
+}
+function appDocById(docId,st){
+  ensureDocIds();
+  const doc=S.docs.find(d=>d.id===docId);
+  if(!doc){alert('항목을 찾을 수 없습니다. 페이지를 새로고침 후 다시 시도하세요.');return;}
+  doc.status=st;
   if(st==='승인'){
     const id=doc.sid,dt=doc.date;
     if(!S.att[id])S.att[id]=[];
@@ -1218,7 +1305,9 @@ function appDoc(i,st){
     pushNotif(doc.sid,'doc_no','서류가 반려되었습니다',
       `${doc.type} (${doc.date}) · 선생님께 문의하세요.`);
   }
-  renderDoc();renderDocInAtt();saveData();
+  saveDocItem(doc);     // 이 서류 건의 상태만 별도 문서에 저장
+  saveData();           // 출결·벌점 변경분은 메인 문서에 저장 (관리자만 쓰므로 충돌 없음)
+  renderDoc();renderDocInAtt();
 }
 
 function renderDm(){
@@ -1417,10 +1506,17 @@ function changeAdminPw(){
   S._adminPw=ADMIN_PW;
   saveData();
 }
-function delStu(i){const s=S.students[i];if(!confirm(s.name+' 학생을 삭제하시겠습니까?'))return;const id=s.id;S.students.splice(i,1);delete S.att[id];S.docs=S.docs.filter(d=>d.sid!==id);S.dems=S.dems.filter(d=>d.sid!==id);renderStuList();saveData();}
+function delStu(i){const s=S.students[i];if(!confirm(s.name+' 학생을 삭제하시겠습니까?'))return;const id=s.id;S.students.splice(i,1);delete S.att[id];S.dems=S.dems.filter(d=>d.sid!==id);
+  // 해당 학생의 사전신청/서류/알림 문서도 함께 삭제
+  ensurePreAbsIds();ensureDocIds();
+  S.preAbs.filter(p=>p.sid===id).forEach(p=>deletePreAbsItem(p.id));
+  S.docs.filter(d=>d.sid===id).forEach(d=>deleteDocItem(d.id));
+  S.preAbs=S.preAbs.filter(p=>p.sid!==id);S.docs=S.docs.filter(d=>d.sid!==id);
+  S.notifs[id]=[];saveNotifList(id);
+  renderStuList();saveData();}
 
 // ── 학생 렌더링 ──
-function renderStu(){if(gs('stt-week'))gs('stt-week').value=TD;if(gs('pa-date'))gs('pa-date').value=TD;updateSubmitTime();renderStuAtt();renderStuDm();renderStuDoc();renderNtStu();renderPreAbsDocList();}
+function renderStu(){if(gs('stt-week')&&!gs('stt-week').value)gs('stt-week').value=TD;if(gs('pa-date')&&!gs('pa-date').value)gs('pa-date').value=TD;updateSubmitTime();renderStuAtt();renderStuDm();renderStuDoc();renderNtStu();renderPreAbsDocList();}
 
 // 서류 제출 탭 - 사전 신청 날짜 리스트
 function renderPreAbsDocList(){
@@ -1628,7 +1724,7 @@ function renderStuDoc(){
     const sc=d.status==='승인'?'gg':d.status==='반려'?'rr':'aa';
     const note=d.status==='승인'?'<span style="font-size:11px;color:#1e40af;">✓ 출결 반영</span>':'-';
     const fcnt=(d.files||[]).length;
-    const fLabel=fcnt?`<span style="font-size:12px;color:#1d4ed8;cursor:pointer;" onclick="showDocFiles(${S.docs.indexOf(d)})">📎 ${fcnt}개</span>`:'<span style="font-size:12px;color:#9ca3af;">없음</span>';
+    const fLabel=fcnt?`<span style="font-size:12px;color:#1d4ed8;cursor:pointer;" onclick="showDocFilesById('${d.id}')">📎 ${fcnt}개</span>`:'<span style="font-size:12px;color:#9ca3af;">없음</span>';
     const periodsLabel=(d.periods&&d.periods.length)?d.periods.join(', '):'전체';
     tb.innerHTML+=`<tr>
       <td>${d.type}</td>
@@ -1641,17 +1737,20 @@ function renderStuDoc(){
     </tr>`;
   });
 }
-function subDoc(){
+async function subDoc(){
   const id=S.cur.id,type=gs('sf-type').value,date=gs('sf-dt').value||TD,note=gs('sf-note').value;
   const checkedPeriods=[...document.querySelectorAll('input[name="sf-period"]:checked')].map(c=>c.value);
   const allPeriods=getPeriodsForDate(date).map(p=>p.name);
   const selectedPeriods=checkedPeriods.length>0?checkedPeriods:allPeriods;
   const submitTime=new Date().toLocaleString('ko-KR',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
-  S.docs.push({sid:id,type,date,note,periods:selectedPeriods,submitTime,status:'대기',files:[...pendingFiles]});
+  const item={id:'doc_'+Date.now()+'_'+Math.random().toString(36).slice(2,7),sid:id,type,date,note,periods:selectedPeriods,submitTime,status:'대기',files:[...pendingFiles],_ts:Date.now()};
+  S.docs.push(item);
+  const ok=await saveDocItem(item); // 이 제출 건만 별도 문서로 저장 (건당 1MB 제한도 안전)
+  if(!ok){S.docs=S.docs.filter(d=>d.id!==item.id);renderStuDoc();return;}
   pendingFiles=[];renderPreview();gs('sf-note').value='';
   gs('sf-period-wrap').style.display='none';
   gs('sf-msg').style.display='block';setTimeout(()=>gs('sf-msg').style.display='none',3000);
-  renderStuDoc();saveData();
+  renderStuDoc();
 }
 
 function renderNtStu(){const el=gs('nt-stu');el.innerHTML='';if(!S.notices.length){el.innerHTML='<div class="em">공지사항이 없습니다.</div>';return}S.notices.forEach(n=>{el.innerHTML+=`<div class="card"><div style="font-weight:600;font-size:14px;margin-bottom:4px;">${n.t}</div><div style="font-size:12px;color:#6b7280;margin-bottom:8px;">${n.d}</div><div style="font-size:13px;color:#6b7280;">${n.b}</div></div>`})}
@@ -1687,11 +1786,13 @@ async function subPreAbs(){
 
   const now=new Date().toLocaleString('ko-KR',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
   const paId='pa_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
-  S.preAbs.push({id:paId,sid,date,type,reason,detail,periods:selectedPeriods,status:'대기',submittedAt:now});
+  const item={id:paId,sid,date,type,reason,detail,periods:selectedPeriods,status:'대기',submittedAt:now,_ts:Date.now()};
+  S.preAbs.push(item);
+  const ok=await savePreAbsItem(item); // 이 신청 건만 별도 문서로 저장 — 다른 데이터를 건드리지 않음
+  if(!ok){S.preAbs=S.preAbs.filter(p=>p.id!==paId);renderStuPreAbs();return;}
   gs('pa-date').value='';gs('pa-detail').value='';
   gs('pa-tt-wrap').style.display='none';
   gs('pa-msg').style.display='block';setTimeout(()=>gs('pa-msg').style.display='none',3000);
-  await saveData();
   renderStuPreAbs();
 }
 
@@ -1699,8 +1800,8 @@ function renderStuPreAbs(){
   const id=S.cur.id,my=S.preAbs.filter(p=>p.sid===id);
   const tb=gs('pa-log');tb.innerHTML='';
   if(!my.length){tb.innerHTML='<tr><td colspan="6" class="em">사전 신청 내역이 없습니다.</td></tr>';return;}
+  ensurePreAbsIds();
   my.slice().reverse().forEach(p=>{
-    const realIdx=S.preAbs.indexOf(p);
     const sc=p.status==='확인'?'gg':p.status==='반려'?'rr':'aa';
     const periodsLabel=(p.periods&&p.periods.length)?p.periods.join(', '):'전체';
     tb.innerHTML+=`<tr>
@@ -1709,11 +1810,11 @@ function renderStuPreAbs(){
       <td style="font-size:11px;color:#6b7280;">${periodsLabel}</td>
       <td>${p.reason}${p.detail?`<br><span style="font-size:11px;color:#9ca3af;">${p.detail}</span>`:''}</td>
       <td>${ab(p.status,sc)}</td>
-      <td>${p.status==='대기'?`<button class="btn bs bd" onclick="cancelPreAbs(${realIdx})">취소</button>`:'-'}</td>
+      <td>${p.status==='대기'?`<button class="btn bs bd" onclick="cancelPreAbs('${p.id}')">취소</button>`:'-'}</td>
     </tr>`;
   });
 }
-async function cancelPreAbs(i){if(!confirm('사전 신청을 취소하시겠습니까?'))return;S.preAbs.splice(i,1);await saveData();renderStuPreAbs();}
+async function cancelPreAbs(id){if(!confirm('사전 신청을 취소하시겠습니까?'))return;S.preAbs=S.preAbs.filter(p=>p.id!==id);await deletePreAbsItem(id);renderStuPreAbs();}
 function renderPreAbsAdmin(){
   ensurePreAbsIds();
   const tb=gs('pa-admin-tb');if(!tb)return;
@@ -1749,6 +1850,7 @@ function renderPreAbsAdmin(){
 }
 
 function renderDocInAtt(){
+  ensureDocIds();
   const tb=gs('doc-att-tb');if(!tb)return;
   const pendingDocs=S.docs.filter(d=>d.status==='대기');
   const cnt2=gs('doc-pnd2');if(cnt2)cnt2.textContent='대기 '+pendingDocs.length+'건';
@@ -1771,8 +1873,8 @@ function renderDocInAtt(){
       <td style="font-size:11px;color:#9ca3af;">${d.submitTime||'-'}</td>
       <td><div style="display:flex;gap:4px;">${thumbs}</div></td>
       <td>
-        <button class="btn bs" onclick="appDoc(${i},'승인')">승인</button>
-        <button class="btn bs bd" style="margin-left:4px;" onclick="appDoc(${i},'반려')">반려</button>
+        <button class="btn bs" onclick="appDocById('${d.id}','승인')">승인</button>
+        <button class="btn bs bd" style="margin-left:4px;" onclick="appDocById('${d.id}','반려')">반려</button>
       </td>
     </tr>`;
   });
@@ -1818,6 +1920,7 @@ function renderPreAbsHistory(filterDate){
 
 
 function renderDocHistory(filterDate){
+  ensureDocIds();
   const tb=gs('doc-history-tb');if(!tb)return;
   const done=S.docs.filter(d=>d.status!=='대기'&&(filterDate?d.date===filterDate:true))
     .sort((a,b)=>b.date.localeCompare(a.date));
@@ -1828,7 +1931,7 @@ function renderDocHistory(filterDate){
     const sc=d.status==='승인'?'gg':'rr';
     const files=d.files||[];
     const fcnt=files.length;
-    const fLabel=fcnt?`<span style="font-size:12px;color:#1d4ed8;cursor:pointer;" onclick="showDocFiles(${S.docs.indexOf(d)})">📎 ${fcnt}개</span>`:'<span style="font-size:12px;color:#9ca3af;">없음</span>';
+    const fLabel=fcnt?`<span style="font-size:12px;color:#1d4ed8;cursor:pointer;" onclick="showDocFilesById('${d.id}')">📎 ${fcnt}개</span>`:'<span style="font-size:12px;color:#9ca3af;">없음</span>';
     const periodsLabel=(d.periods&&d.periods.length)?d.periods.join(', '):'전체';
     tb.innerHTML+=`<tr>
       <td style="font-size:12px;color:#6b7280;">${st?st.num:'-'}</td>
@@ -1907,7 +2010,8 @@ async function revertPreAbsById(id, newStatus){
     pushNotif(p.sid,'doc_no','사전 신청이 반려로 변경되었습니다',
       `${p.date} · ${p.reason} · 선생님께 문의하세요.`);
   }
-  await saveData();
+  await savePreAbsItem(S.preAbs[i]); // 이 신청 건의 상태만 별도 문서에 저장
+  await saveData();                    // 출결·벌점 변경분은 메인 문서에 저장
   renderHistory();
   renderPreAbsAdmin();
 }
@@ -1940,7 +2044,8 @@ async function _applyPreAbs(i,status){
     pushNotif(p.sid,'doc_no','사전 신청이 반려되었습니다',
       `${p.date} · ${p.reason} · 선생님께 문의하세요.`);
   }
-  await saveData();
+  await savePreAbsItem(p); // 이 신청 건의 상태만 별도 문서에 저장
+  await saveData();          // 출결·벌점 변경분은 메인 문서에 저장
   renderPreAbsAdmin();
 }
 
@@ -1991,7 +2096,7 @@ function closeLoginPopup(){
   const notifIdxs=_popupItems.filter(i=>i.type==='notif').map(i=>i.idx);
   if(notifIdxs.length>0){
     S.notifs[sid]=(S.notifs[sid]||[]).filter((_,i)=>!notifIdxs.includes(i));
-    updateBadge();saveData();
+    updateBadge();saveNotifList(sid);
   }
   gs('mo-login-popup').style.display='none';
 }
@@ -2410,7 +2515,7 @@ function addFiles(files){
 function renderPreview(){const el=gs('sf-preview');el.innerHTML=pendingFiles.map((f,i)=>{const isImg=f.type.startsWith('image/');const inner=isImg?`<img src="${f.data}" onclick="viewImg('${f.data}')" title="${f.name}">`:`<div class="file-icon">📄<span class="file-name">${f.name}</span></div>`;return`<div class="file-thumb">${inner}<button class="del-btn" onclick="removeFile(${i})">✕</button></div>`;}).join('');}
 function removeFile(i){pendingFiles.splice(i,1);renderPreview()}
 function viewImg(src){const bg=document.createElement('div');bg.className='img-modal-bg';bg.innerHTML=`<img src="${src}">`;bg.onclick=()=>bg.remove();document.body.appendChild(bg);}
-function showDocFiles(i){const doc=S.docs[i];const files=doc.files||[];if(!files.length)return;const bg=document.createElement('div');bg.className='img-modal-bg';bg.style.flexDirection='column';bg.style.gap='12px';bg.style.padding='20px';bg.style.overflowY='auto';const inner=files.map(f=>f.type&&f.type.startsWith('image/')?`<img src="${f.data}" style="max-width:80vw;max-height:70vh;border-radius:8px;object-fit:contain;">`:`<div style="background:#fff;border-radius:8px;padding:16px 24px;font-size:14px;color:#111;">📄 ${f.name}<br><a href="${f.data}" download="${f.name}" style="color:#1d4ed8;font-size:12px;">다운로드</a></div>`).join('');bg.innerHTML=`<div style="font-size:13px;color:#fff;margin-bottom:4px;">탭하여 닫기</div>${inner}`;bg.onclick=()=>bg.remove();document.body.appendChild(bg);}
+function showDocFilesById(id){const doc=S.docs.find(x=>x.id===id);if(!doc)return;const files=doc.files||[];if(!files.length)return;const bg=document.createElement('div');bg.className='img-modal-bg';bg.style.flexDirection='column';bg.style.gap='12px';bg.style.padding='20px';bg.style.overflowY='auto';const inner=files.map(f=>f.type&&f.type.startsWith('image/')?`<img src="${f.data}" style="max-width:80vw;max-height:70vh;border-radius:8px;object-fit:contain;">`:`<div style="background:#fff;border-radius:8px;padding:16px 24px;font-size:14px;color:#111;">📄 ${f.name}<br><a href="${f.data}" download="${f.name}" style="color:#1d4ed8;font-size:12px;">다운로드</a></div>`).join('');bg.innerHTML=`<div style="font-size:13px;color:#fff;margin-bottom:4px;">탭하여 닫기</div>${inner}`;bg.onclick=()=>bg.remove();document.body.appendChild(bg);}
 </script>
 
 
