@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- saved from url=(0055)file:///C:/Users/user/Downloads/bisang_firebase_20.html -->
+<!-- saved from url=(0055)file:///C:/Users/user/Downloads/bisang_firebase_21.html -->
 <html lang="ko"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>비상반 관리 시스템</title>
-<link rel="manifest" href="file:///C:/Users/user/Downloads/bisang_firebase_20.html#">
+<link rel="manifest" href="file:///C:/Users/user/Downloads/bisang_firebase_21.html#">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f5;color:#111}
@@ -506,7 +506,7 @@ tr:hover td{background:#f9fafb}
     <div style="font-size:13px;color:#6b7280;margin-bottom:1rem;">미리 신청하면 선생님께 자동 전달됩니다. 추후 서류를 제출해야 벌점이 조정됩니다.</div>
     <div class="card">
       <div class="row" style="gap:8px;flex-wrap:wrap;align-items:flex-end;">
-        <div style="flex:1;min-width:120px;"><label>날짜</label><input type="date" id="pa-date" style="margin:0;" onchange="renderPreAbsTT()"></div>
+        <div style="flex:1;min-width:120px;"><label>날짜</label><input type="date" id="pa-date" style="margin:0;" onchange="renderPreAbsTT()" oninput="renderPreAbsTT()"></div>
         <div style="flex:1;min-width:150px;"><label>신청 구분</label>
           <select id="pa-cat" style="margin:0;">
             <option value="학원보강">학원보강 (결석)</option>
@@ -1041,7 +1041,7 @@ function logout(){
 
 // ── 탭 전환 ──
 function aTab(n,el){document.querySelectorAll('#sc-admin .tab').forEach(t=>t.classList.remove('on'));document.querySelectorAll('#sc-admin .tc').forEach(t=>t.classList.remove('on'));el.classList.add('on');gs('ta-'+n).classList.add('on');({att:renderAtt,doc:renderDoc,his:renderHistory,dm:renderDm,tt:renderAdminTTTab,nt:renderNtAdmin,stu:renderStuList})[n]&&({att:renderAtt,doc:renderDoc,his:renderHistory,dm:renderDm,tt:renderAdminTTTab,nt:renderNtAdmin,stu:renderStuList})[n]()}
-function sTab(n,el){document.querySelectorAll('#sc-stu .tab').forEach(t=>t.classList.remove('on'));document.querySelectorAll('#sc-stu .tc').forEach(t=>t.classList.remove('on'));el.classList.add('on');gs('ts-'+n).classList.add('on');({sa:renderStuAtt,stt:renderStuTTTab,spa:renderStuPreAbs,sd:renderStuDm,sf:renderStuDoc,sn:renderNtStu,snf:()=>{markAllRead();renderNotif();}})[n]&&({sa:renderStuAtt,stt:renderStuTTTab,spa:renderStuPreAbs,sd:renderStuDm,sf:renderStuDoc,sn:renderNtStu,snf:()=>{markAllRead();renderNotif();}})[n]()}
+function sTab(n,el){document.querySelectorAll('#sc-stu .tab').forEach(t=>t.classList.remove('on'));document.querySelectorAll('#sc-stu .tc').forEach(t=>t.classList.remove('on'));el.classList.add('on');gs('ts-'+n).classList.add('on');({sa:renderStuAtt,stt:renderStuTTTab,spa:renderSpaTab,sd:renderStuDm,sf:renderStuDoc,sn:renderNtStu,snf:()=>{markAllRead();renderNotif();}})[n]&&({sa:renderStuAtt,stt:renderStuTTTab,spa:renderSpaTab,sd:renderStuDm,sf:renderStuDoc,sn:renderNtStu,snf:()=>{markAllRead();renderNotif();}})[n]()}
 
 // ── 관리자 렌더링 ──
 function renderAdmin(){
@@ -1606,7 +1606,7 @@ function changeAdminPw(){
 function delStu(i){const s=S.students[i];if(!confirm(s.name+' 학생을 삭제하시겠습니까?'))return;const id=s.id;S.students.splice(i,1);delete S.att[id];S.docs=S.docs.filter(d=>d.sid!==id);S.dems=S.dems.filter(d=>d.sid!==id);renderStuList();saveData();}
 
 // ── 학생 렌더링 ──
-function renderStu(){if(gs('stt-week'))gs('stt-week').value=TD;if(gs('pa-date'))gs('pa-date').value=TD;updateSubmitTime();renderStuAtt();renderStuDm();renderStuDoc();renderNtStu();renderPreAbsDocList();}
+function renderStu(){if(gs('stt-week'))gs('stt-week').value=TD;if(gs('pa-date')){gs('pa-date').value=TD;renderPreAbsTT();}updateSubmitTime();renderStuAtt();renderStuDm();renderStuDoc();renderNtStu();renderPreAbsDocList();}
 
 // 서류 제출 탭 - 사전 신청 날짜 리스트
 function renderPreAbsDocList(){
@@ -1883,8 +1883,11 @@ function renderPreAbsTT(){
   const date=gs('pa-date').value;
   if(!date){gs('pa-tt-wrap').style.display='none';return;}
   const periods=getPeriodsForDate(date);
-  if(!periods.length){gs('pa-tt-wrap').style.display='none';return;}
   gs('pa-tt-wrap').style.display='block';
+  if(!periods.length){
+    gs('pa-tt-body').innerHTML='<div style="font-size:12px;color:#9ca3af;padding:4px;">이 날짜에는 등록된 자습 교시가 없습니다.</div>';
+    return;
+  }
   gs('pa-tt-body').innerHTML=periods.map(p=>`
     <label style="display:flex;align-items:center;gap:6px;background:#f9fafb;border:1px solid #e5e5e5;border-radius:8px;padding:6px 10px;cursor:pointer;">
       <input type="checkbox" name="pa-period" value="${p.name}" style="width:auto;margin:0;" />
@@ -1922,6 +1925,12 @@ async function subPreAbs(){
   renderStuPreAbs();
 }
 
+function renderSpaTab(){
+  // 사전신청 탭 진입 시: 날짜 기본값 + 교시 목록 + 신청 현황 모두 렌더링
+  if(gs('pa-date')&&!gs('pa-date').value)gs('pa-date').value=TD;
+  renderPreAbsTT();
+  renderStuPreAbs();
+}
 function renderStuPreAbs(){
   const id=S.cur.id,my=S.preAbs.filter(p=>p.sid===id);
   const tb=gs('pa-log');tb.innerHTML='';
