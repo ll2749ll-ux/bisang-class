@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- saved from url=(0055)file:///C:/Users/user/Downloads/bisang_firebase_22.html -->
+<!-- saved from url=(0055)file:///C:/Users/user/Downloads/bisang_firebase_23.html -->
 <html lang="ko"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>비상반 관리 시스템</title>
-<link rel="manifest" href="file:///C:/Users/user/Downloads/bisang_firebase_22.html#">
+<link rel="manifest" href="file:///C:/Users/user/Downloads/bisang_firebase_23.html#">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f5;color:#111}
@@ -1136,7 +1136,7 @@ function renderAtt(){
         else a++; // 결석, 병결, 정기결석, 결석(서류제출) 모두 결석으로 집계
       }
 
-      const canClick=!rec?.fromDoc; // 서류승인만 잠금, 정기결석은 수정 가능
+      const canClick=true; // 서류승인 출결도 교사가 직접 수정 가능
       const stOptions=['출석','지각','조퇴','결석','결석(허락)','결석(서류제출)','병결','인정','정기결석'];
       const stColor2={출석:'#dcfce7;color:#15803d',지각:'#fef3c7;color:#92400e',조퇴:'#fef3c7;color:#92400e',결석:'#fee2e2;color:#b91c1c',병결:'#dbeafe;color:#1e40af',인정:'#f3f4f6;color:#374151','결석(허락)':'#fce7f3;color:#9d174d','결석(서류제출)':'#dbeafe;color:#1e40af',정기결석:'#fef3c7;color:#92400e'};
       const curClr=stColor2[st]||'#f3f4f6;color:#374151';
@@ -1148,7 +1148,7 @@ function renderAtt(){
       } else {
         // 정기결석인 경우 현재 선택값 결정: 출석 기록이 있으면 그 값, 없으면 정기결석
         const selVal=isReg&&!rec?'정기결석':(rec?rec.status:'출석');
-        const opts=['출석','지각','조퇴','결석','병결','인정','정기결석'].map(o=>`<option value="${o}"${selVal===o?' selected':''}>${o}${o==='정기결석'?' 🔒':''}</option>`).join('');
+        const opts=stOptions.map(o=>`<option value="${o}"${selVal===o?' selected':''}>${o}${o==='정기결석'?' 🔒':''}</option>`).join('');
         rows+=`<td style="padding:4px;border-bottom:1px solid #f3f4f6;text-align:center;">
           <select onchange="selectAtt('${s.id}','${dt}','${prd.name}',this)" style="padding:3px 4px;font-size:12px;border-radius:6px;border:1px solid #d1d5db;background:${curClr};font-weight:500;margin:0;width:auto;cursor:pointer;">
             ${opts}
