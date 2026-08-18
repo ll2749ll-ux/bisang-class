@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- saved from url=(0055)file:///C:/Users/user/Downloads/bisang_firebase_21.html -->
+<!-- saved from url=(0055)file:///C:/Users/user/Downloads/bisang_firebase_22.html -->
 <html lang="ko"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>비상반 관리 시스템</title>
-<link rel="manifest" href="file:///C:/Users/user/Downloads/bisang_firebase_21.html#">
+<link rel="manifest" href="file:///C:/Users/user/Downloads/bisang_firebase_22.html#">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f5;color:#111}
@@ -195,6 +195,7 @@ tr:hover td{background:#f9fafb}
       <span style="background:#fef3c7;color:#92400e;border-radius:4px;padding:1px 6px;font-size:11px;">조퇴</span>
       <span style="background:#fee2e2;color:#b91c1c;border-radius:4px;padding:1px 6px;font-size:11px;">결석 2점</span>
       <span style="background:#fce7f3;color:#9d174d;border-radius:4px;padding:1px 6px;font-size:11px;">결석(허락) 1점</span>
+      <span style="background:#dbeafe;color:#1e40af;border-radius:4px;padding:1px 6px;font-size:11px;">결석(서류제출) 서류별</span>
       <span style="background:#dbeafe;color:#1e40af;border-radius:4px;padding:1px 6px;font-size:11px;">병결 1점</span>
       <span style="background:#f3f4f6;color:#374151;border-radius:4px;padding:1px 6px;font-size:11px;">인정 0점</span>
     </div>
@@ -1136,7 +1137,7 @@ function renderAtt(){
       }
 
       const canClick=!rec?.fromDoc; // 서류승인만 잠금, 정기결석은 수정 가능
-      const stOptions=['출석','지각','조퇴','결석','결석(허락)','병결','인정','정기결석'];
+      const stOptions=['출석','지각','조퇴','결석','결석(허락)','결석(서류제출)','병결','인정','정기결석'];
       const stColor2={출석:'#dcfce7;color:#15803d',지각:'#fef3c7;color:#92400e',조퇴:'#fef3c7;color:#92400e',결석:'#fee2e2;color:#b91c1c',병결:'#dbeafe;color:#1e40af',인정:'#f3f4f6;color:#374151','결석(허락)':'#fce7f3;color:#9d174d','결석(서류제출)':'#dbeafe;color:#1e40af',정기결석:'#fef3c7;color:#92400e'};
       const curClr=stColor2[st]||'#f3f4f6;color:#374151';
       if(!canClick){
@@ -1186,7 +1187,7 @@ function selectAtt(sid,dt,periodName,sel){
   // 해당 날짜 벌점 전체 재계산
   recalcDemerit(sid,baseDate);
 
-  const stColor={출석:'#dcfce7;color:#15803d',지각:'#fef3c7;color:#92400e',조퇴:'#fef3c7;color:#92400e',결석:'#fee2e2;color:#b91c1c',병결:'#dbeafe;color:#1e40af',인정:'#f3f4f6;color:#374151'};
+  const stColor={출석:'#dcfce7;color:#15803d',지각:'#fef3c7;color:#92400e',조퇴:'#fef3c7;color:#92400e',결석:'#fee2e2;color:#b91c1c','결석(허락)':'#fce7f3;color:#9d174d','결석(서류제출)':'#dbeafe;color:#1e40af',병결:'#dbeafe;color:#1e40af',인정:'#f3f4f6;color:#374151'};
   sel.style.cssText=`padding:3px 4px;font-size:12px;border-radius:6px;border:1px solid #d1d5db;background:${stColor[next]||'#f3f4f6;color:#374151'};font-weight:500;margin:0;width:auto;cursor:pointer;`;
   saveData();
 }
@@ -1201,10 +1202,11 @@ function recalcDemerit(sid, baseDate){
   removeDemerit(sid,baseDate,'지각');
   removeDemerit(sid,baseDate,'무단결석');
   removeDemerit(sid,baseDate,'결석허락');
+  removeDemerit(sid,baseDate,'서류인정');
 
   if(!periods.length) return;
 
-  let lateCnt=0, absentCnt=0, approvedCnt=0;
+  let lateCnt=0, absentCnt=0, approvedCnt=0, docCnt=0;
 
   periods.forEach(p=>{
     const recKey=`${baseDate}_${p.name}`;
@@ -1218,14 +1220,28 @@ function recalcDemerit(sid, baseDate){
     else if(recByDate) st=recByDate.status;
 
     if(st==='지각') lateCnt++;
-    else if(st==='결석'||st==='병결') absentCnt++;   // 무단: 2점
-    else if(st==='결석(허락)') approvedCnt++;         // 허락: 1점
-    // 출석·조퇴·인정·정기결석·결석(서류제출) = 0점
+    else if(st==='결석'||st==='병결') absentCnt++;      // 무단: 교시당 2점
+    else if(st==='결석(허락)') approvedCnt++;            // 허락: 교시당 1점
+    else if(st==='결석(서류제출)') docCnt++;             // 서류인정: 종류별
+    // 출석·조퇴·인정·정기결석 = 0점
   });
 
   if(lateCnt>0) addDemerit(sid,baseDate,'지각',lateCnt,'지각');
   if(absentCnt>0) addDemerit(sid,baseDate,'무단결석',2*absentCnt,'무단결석');
   if(approvedCnt>0) addDemerit(sid,baseDate,'결석(허락)',1*approvedCnt,'결석허락');
+
+  // 결석(서류제출) → 승인된 서류 종류 기준으로 인정 벌점 계산
+  if(docCnt>0){
+    const apDoc=S.docs.find(d=>d.sid===sid&&d.date===baseDate&&d.status==='승인');
+    const t=apDoc?apDoc.type:'';
+    let per=1, dmName='서류인정';
+    if(t==='학교행사'){per=0;dmName='학교행사(인정)';}
+    else if(t==='병결'||t==='병결확인서'){per=1;dmName='병결(인정)';}
+    else if(t==='학원보강증'||t==='학원보강확인서'){per=1;dmName='학원보강(인정)';}
+    else if(t==='학원수강증'){per=1;dmName='학원수강(인정)';}
+    else if(t==='가족행사'){per=1;dmName='가족행사(인정)';}
+    if(per>0) addDemerit(sid,baseDate,dmName,per*docCnt,'서류인정');
+  }
 }
 
 // ── 벌점 헬퍼 ──
@@ -1317,27 +1333,12 @@ function appDoc(i,st){
       if(ei>=0)recs[ei]=entry;else recs.push(entry);
     });
 
-    // 기존 자동 벌점 제거
-    removeDemerit(id,dt,'무단결석');
-    removeDemerit(id,dt,'지각');
-    removeDemerit(id,dt,'서류인정');
-
-    // 서류 종류별 인정 벌점 (교시당)
-    const cnt=targetPeriods.length||1;
-    let pts=0,dmName='';
-    if(doc.type==='병결'||doc.type==='병결확인서'){pts=1*cnt;dmName='병결(인정)';}
-    else if(doc.type==='학원보강증'||doc.type==='학원보강확인서'){pts=1*cnt;dmName='학원보강(인정)';}
-    else if(doc.type==='학원수강증'){pts=1*cnt;dmName='학원수강(인정)';}
-    else if(doc.type==='가족행사'){pts=1*cnt;dmName='가족행사(인정)';}
-    else if(doc.type==='학교행사'){pts=0;dmName='학교행사(인정)';}
-    else{pts=1*cnt;dmName='서류인정('+doc.type+')';}
-
-    if(pts>0)addDemerit(id,dt,dmName,pts,'서류인정');
-
-    // 나머지 교시 벌점 재계산
+    // 벌점은 recalcDemerit이 서류 종류까지 반영해 일괄 재계산
     recalcDemerit(id,dt);
 
-    const ptsTxt=pts===0?'벌점 0점 (전액 인정)':`${dmName} ${pts}점으로 조정`;
+    const cnt=targetPeriods.length||1;
+    const isZero=doc.type==='학교행사';
+    const ptsTxt=isZero?'벌점 0점 (전액 인정)':`${doc.type}(인정) ${cnt}점으로 조정`;
     pushNotif(id,'doc_ok','서류가 승인되었습니다',
       `${doc.type} (${dt}) · ${targetPeriods.join(', ')} · ${ptsTxt}`);
   } else {
