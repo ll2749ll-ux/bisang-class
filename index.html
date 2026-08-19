@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- saved from url=(0055)file:///C:/Users/user/Downloads/bisang_firebase_23.html -->
+<!-- saved from url=(0055)file:///C:/Users/user/Downloads/bisang_firebase_26.html -->
 <html lang="ko"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>비상반 관리 시스템</title>
-<link rel="manifest" href="file:///C:/Users/user/Downloads/bisang_firebase_23.html#">
+<link rel="manifest" href="file:///C:/Users/user/Downloads/bisang_firebase_26.html#">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f5;color:#111}
@@ -190,14 +190,14 @@ tr:hover td{background:#f9fafb}
     </div>
     <div style="font-size:11px;color:#9ca3af;margin-bottom:1rem;">
       💡 각 셀의 드롭다운으로 출결 상태를 선택하세요 &nbsp;
-      <span style="background:#dcfce7;color:#15803d;border-radius:4px;padding:1px 6px;font-size:11px;">출석</span>
-      <span style="background:#fef3c7;color:#92400e;border-radius:4px;padding:1px 6px;font-size:11px;">지각 1점</span>
-      <span style="background:#fef3c7;color:#92400e;border-radius:4px;padding:1px 6px;font-size:11px;">조퇴</span>
-      <span style="background:#fee2e2;color:#b91c1c;border-radius:4px;padding:1px 6px;font-size:11px;">결석 2점</span>
-      <span style="background:#fce7f3;color:#9d174d;border-radius:4px;padding:1px 6px;font-size:11px;">결석(허락) 1점</span>
-      <span style="background:#dbeafe;color:#1e40af;border-radius:4px;padding:1px 6px;font-size:11px;">결석(서류제출) 서류별</span>
-      <span style="background:#dbeafe;color:#1e40af;border-radius:4px;padding:1px 6px;font-size:11px;">병결 1점</span>
-      <span style="background:#f3f4f6;color:#374151;border-radius:4px;padding:1px 6px;font-size:11px;">인정 0점</span>
+      <span style="background:#dcfce7;color:#15803d;border-radius:4px;padding:1px 6px;font-size:11px;">출석 0점</span>
+      <span style="background:#ffedd5;color:#c2410c;border-radius:4px;padding:1px 6px;font-size:11px;">지각·조퇴 (지각 1점/교시)</span>
+      <span style="background:#fef9c3;color:#a16207;border-radius:4px;padding:1px 6px;font-size:11px;">정기결석 0점</span>
+      <span style="background:#fee2e2;color:#b91c1c;border-radius:4px;padding:1px 6px;font-size:11px;">결석(무단) 2점/교시</span>
+      <span style="background:#dbeafe;color:#1e40af;border-radius:4px;padding:1px 6px;font-size:11px;">병결·서류제출·가족행사(초과)·생일 1점/교시</span>
+      <span style="background:#f3f4f6;color:#374151;border-radius:4px;padding:1px 6px;font-size:11px;">가족행사 0점</span>
+      <span style="background:#ccfbf1;color:#0f766e;border-radius:4px;padding:1px 6px;font-size:11px;">학교행사·인정 0점</span>
+      <span style="background:#ede9fe;color:#6d28d9;border-radius:4px;padding:1px 6px;font-size:11px;">정기결석(증빙완료) 0점</span>
     </div>
     <!-- 해당 날짜 사전 신청 리스트 -->
     <div id="att-preabs-wrap" style="margin-top:.75rem;display:none;">
@@ -394,7 +394,7 @@ tr:hover td{background:#f9fafb}
       </div>
     </div>
     <div class="card" style="padding:0;overflow:hidden;">
-      <table><thead><tr><th>학생</th><th>요일</th><th>범위</th><th>사유</th><th>삭제</th></tr></thead><tbody id="reg-abs-tb"></tbody></table>
+      <table><thead><tr><th>학생</th><th>요일</th><th>범위</th><th>사유</th><th>증빙서류</th><th>삭제</th></tr></thead><tbody id="reg-abs-tb"></tbody></table>
     </div>
   </div>
   <div id="ta-nt" class="tc">
@@ -911,11 +911,8 @@ let S = {
 function gs(id){return document.getElementById(id)}
 function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));gs(id).classList.add('active')}
 function ab(s,cls){return`<span class="badge ${cls}">${s}</span>`}
-function attB(s){const m={출석:'gg',지각:'aa',조퇴:'aa',결석:'rr','결석(서류제출)':'bg',정기결석:'aa',병결:'bg',인정:'gr','결석(허락)':'pp'};return ab(s||'미입력',m[s]||'gr')}
-function attCell(s,id,dt,fromDoc){
-  if(fromDoc)return`<span style="font-size:11px;color:#6b7280;">🔒 서류승인</span>`;
-  return`<select style="width:100px;padding:3px 6px;font-size:12px;margin:0;" onchange="chAtt('${id}','${dt}',this.value)">${['출석','지각','조퇴','결석','결석(서류제출)'].map(x=>`<option${s===x?' selected':''}>${x}</option>`).join('')}</select>`;
-}
+function attB(s){const m={출석:'gg',지각:'aa',조퇴:'aa',결석:'rr','결석(서류제출)':'bg',정기결석:'aa',병결:'bg',인정:'gg','학교행사':'gg','가족행사':'gr','가족행사(초과)':'bg','생일':'bg'};return ab(s||'미입력',m[s]||'gr')}
+
 function cm(id){gs(id).style.display='none'}
 function showPushBanner(msg){
   let b=document.getElementById('push-banner');
@@ -1103,7 +1100,7 @@ function renderAtt(){
 
   // 본문: 학생별 행
   let p=0,l=0,e=0,a=0;
-  const stColor={출석:'#dcfce7;color:#15803d',지각:'#fef3c7;color:#92400e',조퇴:'#fef3c7;color:#92400e',결석:'#fee2e2;color:#b91c1c','결석(허락)':'#fce7f3;color:#9d174d','결석(서류제출)':'#dbeafe;color:#1e40af','병결':'#dbeafe;color:#1e40af','인정':'#f3f4f6;color:#374151',정기결석:'#fef3c7;color:#92400e'};
+  const stColor={출석:'#dcfce7;color:#15803d',지각:'#ffedd5;color:#c2410c',조퇴:'#ffedd5;color:#c2410c',결석:'#fee2e2;color:#b91c1c','병결':'#dbeafe;color:#1e40af','결석(서류제출)':'#dbeafe;color:#1e40af','가족행사(초과)':'#dbeafe;color:#1e40af','생일':'#dbeafe;color:#1e40af','가족행사':'#f3f4f6;color:#374151','학교행사':'#ccfbf1;color:#0f766e','인정':'#ccfbf1;color:#0f766e',정기결석:'#fef9c3;color:#a16207'};
 
   let rows='';
   // 학년 구분선
@@ -1124,10 +1121,11 @@ function renderAtt(){
       const recKey=`${dt}_${prd.name}`;
       const recs=S.att[s.id]||[];
       const rec=recs.find(r=>r.date===recKey)||recs.find(r=>r.date===dt);
-      // 정기결석 여부
+      // 정기결석 여부 + 증빙서류 수령 여부
       const isReg=isRegAbs(s.id,dt,prd.name);
+      const regDocOk=isReg&&S.regAbs.some(r=>r.sid===s.id&&r.day===dayIdx&&(r.type==='day'||r.period===prd.name)&&r.docReceived);
       let st=isReg?'정기결석':(rec?rec.status:'출석');
-      const clr=stColor[st]||'#f3f4f6;color:#374151';
+      const clr=regDocOk?'#ede9fe;color:#6d28d9':(stColor[st]||'#f3f4f6;color:#374151');
 
       if(prd===periods[0]){
         if(st==='출석')p++;
@@ -1136,17 +1134,11 @@ function renderAtt(){
         else a++; // 결석, 병결, 정기결석, 결석(서류제출) 모두 결석으로 집계
       }
 
-      const canClick=true; // 서류승인 출결도 교사가 직접 수정 가능
-      const stOptions=['출석','지각','조퇴','결석','결석(허락)','결석(서류제출)','병결','인정','정기결석'];
-      const stColor2={출석:'#dcfce7;color:#15803d',지각:'#fef3c7;color:#92400e',조퇴:'#fef3c7;color:#92400e',결석:'#fee2e2;color:#b91c1c',병결:'#dbeafe;color:#1e40af',인정:'#f3f4f6;color:#374151','결석(허락)':'#fce7f3;color:#9d174d','결석(서류제출)':'#dbeafe;color:#1e40af',정기결석:'#fef3c7;color:#92400e'};
-      const curClr=stColor2[st]||'#f3f4f6;color:#374151';
-      if(!canClick){
-        rows+=`<td style="padding:4px;border-bottom:1px solid #f3f4f6;text-align:center;" onclick="alert('서류 승인으로 처리된 출결입니다.')">
-          <div style="background:${curClr};border-radius:6px;padding:4px 6px;font-size:12px;font-weight:500;min-width:50px;display:inline-block;cursor:default;">${st}</div>
-          ${rec&&rec.time?`<div style="font-size:10px;color:#9ca3af;">${rec.time}</div>`:''}
-        </td>`;
-      } else {
-        // 정기결석인 경우 현재 선택값 결정: 출석 기록이 있으면 그 값, 없으면 정기결석
+      const stOptions=['출석','지각','조퇴','결석','병결','결석(서류제출)','가족행사(초과)','생일','가족행사','학교행사','인정','정기결석'];
+      const stColor2={출석:'#dcfce7;color:#15803d',지각:'#ffedd5;color:#c2410c',조퇴:'#ffedd5;color:#c2410c',결석:'#fee2e2;color:#b91c1c',병결:'#dbeafe;color:#1e40af','결석(서류제출)':'#dbeafe;color:#1e40af','가족행사(초과)':'#dbeafe;color:#1e40af','생일':'#dbeafe;color:#1e40af','가족행사':'#f3f4f6;color:#374151','학교행사':'#ccfbf1;color:#0f766e',인정:'#ccfbf1;color:#0f766e',정기결석:'#fef9c3;color:#a16207'};
+      const curClr=regDocOk?'#ede9fe;color:#6d28d9':(stColor2[st]||'#f3f4f6;color:#374151');
+      {
+        // 모든 셀 수정 가능 (서류승인 출결 포함)
         const selVal=isReg&&!rec?'정기결석':(rec?rec.status:'출석');
         const opts=stOptions.map(o=>`<option value="${o}"${selVal===o?' selected':''}>${o}${o==='정기결석'?' 🔒':''}</option>`).join('');
         rows+=`<td style="padding:4px;border-bottom:1px solid #f3f4f6;text-align:center;">
@@ -1187,7 +1179,7 @@ function selectAtt(sid,dt,periodName,sel){
   // 해당 날짜 벌점 전체 재계산
   recalcDemerit(sid,baseDate);
 
-  const stColor={출석:'#dcfce7;color:#15803d',지각:'#fef3c7;color:#92400e',조퇴:'#fef3c7;color:#92400e',결석:'#fee2e2;color:#b91c1c','결석(허락)':'#fce7f3;color:#9d174d','결석(서류제출)':'#dbeafe;color:#1e40af',병결:'#dbeafe;color:#1e40af',인정:'#f3f4f6;color:#374151'};
+  const stColor={출석:'#dcfce7;color:#15803d',지각:'#ffedd5;color:#c2410c',조퇴:'#ffedd5;color:#c2410c',결석:'#fee2e2;color:#b91c1c',병결:'#dbeafe;color:#1e40af','결석(서류제출)':'#dbeafe;color:#1e40af','가족행사(초과)':'#dbeafe;color:#1e40af','생일':'#dbeafe;color:#1e40af','가족행사':'#f3f4f6;color:#374151','학교행사':'#ccfbf1;color:#0f766e',인정:'#ccfbf1;color:#0f766e',정기결석:'#fef9c3;color:#a16207'};
   sel.style.cssText=`padding:3px 4px;font-size:12px;border-radius:6px;border:1px solid #d1d5db;background:${stColor[next]||'#f3f4f6;color:#374151'};font-weight:500;margin:0;width:auto;cursor:pointer;`;
   saveData();
 }
@@ -1206,7 +1198,11 @@ function recalcDemerit(sid, baseDate){
 
   if(!periods.length) return;
 
-  let lateCnt=0, absentCnt=0, approvedCnt=0, docCnt=0;
+  // 벌점 집계 (최종 규칙)
+  // 지각: 1점/교시 | 결석(무단): 2점/교시
+  // 병결·결석(서류제출)·가족행사(초과)·생일: 1점/교시
+  // 출석·조퇴·정기결석·가족행사·학교행사·인정: 0점
+  let lateCnt=0, absentCnt=0, blueCnt=0;
 
   periods.forEach(p=>{
     const recKey=`${baseDate}_${p.name}`;
@@ -1220,28 +1216,14 @@ function recalcDemerit(sid, baseDate){
     else if(recByDate) st=recByDate.status;
 
     if(st==='지각') lateCnt++;
-    else if(st==='결석'||st==='병결') absentCnt++;      // 무단: 교시당 2점
-    else if(st==='결석(허락)') approvedCnt++;            // 허락: 교시당 1점
-    else if(st==='결석(서류제출)') docCnt++;             // 서류인정: 종류별
-    // 출석·조퇴·인정·정기결석 = 0점
+    else if(st==='결석') absentCnt++;
+    else if(st==='병결'||st==='결석(서류제출)'||st==='가족행사(초과)'||st==='생일'||st==='결석(허락)') blueCnt++;
+    // 출석·조퇴·정기결석·가족행사·학교행사·인정 = 0점
   });
 
   if(lateCnt>0) addDemerit(sid,baseDate,'지각',lateCnt,'지각');
   if(absentCnt>0) addDemerit(sid,baseDate,'무단결석',2*absentCnt,'무단결석');
-  if(approvedCnt>0) addDemerit(sid,baseDate,'결석(허락)',1*approvedCnt,'결석허락');
-
-  // 결석(서류제출) → 승인된 서류 종류 기준으로 인정 벌점 계산
-  if(docCnt>0){
-    const apDoc=S.docs.find(d=>d.sid===sid&&d.date===baseDate&&d.status==='승인');
-    const t=apDoc?apDoc.type:'';
-    let per=1, dmName='서류인정';
-    if(t==='학교행사'){per=0;dmName='학교행사(인정)';}
-    else if(t==='병결'||t==='병결확인서'){per=1;dmName='병결(인정)';}
-    else if(t==='학원보강증'||t==='학원보강확인서'){per=1;dmName='학원보강(인정)';}
-    else if(t==='학원수강증'){per=1;dmName='학원수강(인정)';}
-    else if(t==='가족행사'){per=1;dmName='가족행사(인정)';}
-    if(per>0) addDemerit(sid,baseDate,dmName,per*docCnt,'서류인정');
-  }
+  if(blueCnt>0) addDemerit(sid,baseDate,'결석(인정 1점)',1*blueCnt,'서류인정');
 }
 
 // ── 벌점 헬퍼 ──
@@ -1260,19 +1242,7 @@ function addDemerit(sid,date,name,pts,tag){
   }
 }
 
-function chAtt(id,dt,st){
-  if(!S.att[id])S.att[id]=[];
-  const r=S.att[id];const i=r.findIndex(x=>x.date===dt);
-  const e={date:dt,status:st,time:new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'})};
-  if(i>=0)r[i]=e;else r.push(e);
-  // 날짜에서 실제 요일 교시 수 계산
-  const baseDate=dt.length>10?dt.split('_')[0]:dt;
-  const cnt=getPeriodsForDate(baseDate).length||1;
-  if(st==='지각'){addDemerit(id,baseDate,'지각',1,'지각');}
-  else if(st==='결석'){const approved=S.preAbs.find(p=>p.sid===id&&p.date===baseDate&&p.status==='확인');if(!approved)addDemerit(id,baseDate,'무단결석',2*cnt,'무단결석');}
-  else if(st==='출석'){removeDemerit(id,baseDate,'지각');removeDemerit(id,baseDate,'무단결석');}
-  saveData();
-}
+
 
 function renderDoc(){
   const p=S.docs.filter(d=>d.status==='대기').length;gs('doc-pnd').textContent='대기 '+p+'건';
@@ -1322,23 +1292,30 @@ function appDoc(i,st){
     const periods=getPeriodsForDate(dt);
     const targetPeriods=(doc.periods&&doc.periods.length)?doc.periods:periods.map(p=>p.name);
 
-    // 교시별 출결 → 결석(서류제출)로 반영
+    // 서류 종류 → 출결 상태 매핑
+    // 병결·학원보강증·학원수강증 → 결석(서류제출) 1점/교시
+    // 가족행사 → 가족행사 0점 (초과 시 교사가 수동으로 '가족행사(초과)'로 변경)
+    // 학교행사 → 학교행사 0점
+    let newStatus='결석(서류제출)';
+    if(doc.type==='가족행사')newStatus='가족행사';
+    else if(doc.type==='학교행사')newStatus='학교행사';
+
     targetPeriods.forEach(periodName=>{
       const recKey=`${dt}_${periodName}`;
       const ei=recs.findIndex(r=>r.date===recKey);
-      const entry={date:recKey,status:'결석(서류제출)',
+      const entry={date:recKey,status:newStatus,
         reason:doc.type+' 승인',
         time:new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'}),
         fromDoc:true};
       if(ei>=0)recs[ei]=entry;else recs.push(entry);
     });
 
-    // 벌점은 recalcDemerit이 서류 종류까지 반영해 일괄 재계산
+    // 벌점 일괄 재계산
     recalcDemerit(id,dt);
 
     const cnt=targetPeriods.length||1;
-    const isZero=doc.type==='학교행사';
-    const ptsTxt=isZero?'벌점 0점 (전액 인정)':`${doc.type}(인정) ${cnt}점으로 조정`;
+    const isZero=(newStatus==='가족행사'||newStatus==='학교행사');
+    const ptsTxt=isZero?'벌점 0점 (인정)':`${cnt}점으로 조정 (1점×${cnt}교시)`;
     pushNotif(id,'doc_ok','서류가 승인되었습니다',
       `${doc.type} (${dt}) · ${targetPeriods.join(', ')} · ${ptsTxt}`);
   } else {
@@ -2523,7 +2500,17 @@ function updateRegPeriodSel(){
 function updateRegStuSel(){const sel=gs('reg-stu');if(!sel)return;sel.innerHTML=S.students.map(s=>`<option value="${s.id}">${s.num} ${s.name}</option>`).join('');}
 function addRegAbs(){const sid=gs('reg-stu').value,day=parseInt(gs('reg-day').value),type=gs('reg-type').value,period=type==='period'?gs('reg-period').value:'',reason=gs('reg-reason').value.trim()||'정기결석';if(!sid){alert('학생을 선택하세요.');return;}const dup=S.regAbs.some(r=>r.sid===sid&&r.day===day&&r.type===type&&(type==='day'||r.period===period));if(dup){alert('이미 등록된 항목입니다.');return;}S.regAbs.push({sid,day,type,period,reason});renderRegAbsList();saveData();}
 function delRegAbs(i){S.regAbs.splice(i,1);renderRegAbsList();saveData();}
-function renderRegAbsList(){const tb=gs('reg-abs-tb');if(!S.regAbs.length){tb.innerHTML='<tr><td colspan="5" class="em">등록된 정기 결석이 없습니다.</td></tr>';return;}tb.innerHTML=S.regAbs.map((r,i)=>{const stu=S.students.find(s=>s.id===r.sid);const scope=r.type==='day'?'요일 전체':`${r.period}`;return`<tr><td>${stu?stu.name:'-'}</td><td>${DAYS[r.day]}요일</td><td>${scope}</td><td style="color:#6b7280;">${r.reason}</td><td><button class="btn bs bd" onclick="delRegAbs(${i})">삭제</button></td></tr>`}).join('');}
+function renderRegAbsList(){const tb=gs('reg-abs-tb');if(!S.regAbs.length){tb.innerHTML='<tr><td colspan="6" class="em">등록된 정기 결석이 없습니다.</td></tr>';return;}tb.innerHTML=S.regAbs.map((r,i)=>{const stu=S.students.find(s=>s.id===r.sid);const scope=r.type==='day'?'요일 전체':`${r.period}`;const ok=!!r.docReceived;return`<tr><td>${stu?stu.name:'-'}</td><td>${DAYS[r.day]}요일</td><td>${scope}</td><td style="color:#6b7280;">${r.reason}</td><td>
+  <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;padding:3px 8px;border-radius:6px;background:${ok?'#ede9fe':'#fef3c7'};">
+    <input type="checkbox" ${ok?'checked':''} onchange="toggleRegDoc(${i})" style="width:auto;margin:0;" />
+    <span style="font-size:12px;font-weight:500;color:${ok?'#6d28d9':'#92400e'};">${ok?'수령 완료':'미수령'}</span>
+  </label></td><td><button class="btn bs bd" onclick="delRegAbs(${i})">삭제</button></td></tr>`}).join('');}
+async function toggleRegDoc(i){
+  if(!S.regAbs[i])return;
+  S.regAbs[i].docReceived=!S.regAbs[i].docReceived;
+  await saveData();
+  renderRegAbsList();
+}
 function renderAdminTTTab(){
   _selDay=0;
   document.querySelectorAll('#day-period-tabs .day-btn').forEach((b,i)=>{b.classList.toggle('on',i===0);});
@@ -2712,6 +2699,7 @@ function removeFile(i){pendingFiles.splice(i,1);renderPreview()}
 function viewImg(src){const bg=document.createElement('div');bg.className='img-modal-bg';bg.innerHTML=`<img src="${src}">`;bg.onclick=()=>bg.remove();document.body.appendChild(bg);}
 function showDocFiles(i){const doc=S.docs[i];const files=doc.files||[];if(!files.length)return;const bg=document.createElement('div');bg.className='img-modal-bg';bg.style.flexDirection='column';bg.style.gap='12px';bg.style.padding='20px';bg.style.overflowY='auto';const inner=files.map(f=>f.type&&f.type.startsWith('image/')?`<img src="${f.data}" style="max-width:80vw;max-height:70vh;border-radius:8px;object-fit:contain;">`:`<div style="background:#fff;border-radius:8px;padding:16px 24px;font-size:14px;color:#111;">📄 ${f.name}<br><a href="${f.data}" download="${f.name}" style="color:#1d4ed8;font-size:12px;">다운로드</a></div>`).join('');bg.innerHTML=`<div style="font-size:13px;color:#fff;margin-bottom:4px;">탭하여 닫기</div>${inner}`;bg.onclick=()=>bg.remove();document.body.appendChild(bg);}
 </script>
+<div style="position:fixed;bottom:4px;right:8px;font-size:10px;color:#c4c4c4;z-index:1;pointer-events:none;">v3.0</div>
 
 
 </body></html>
