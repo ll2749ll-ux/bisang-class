@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- saved from url=(0055)file:///C:/Users/user/Downloads/bisang_firebase_26.html -->
+<!-- saved from url=(0055)file:///C:/Users/user/Downloads/bisang_firebase_27.html -->
 <html lang="ko"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>비상반 관리 시스템</title>
-<link rel="manifest" href="file:///C:/Users/user/Downloads/bisang_firebase_26.html#">
+<link rel="manifest" href="file:///C:/Users/user/Downloads/bisang_firebase_27.html#">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f5;color:#111}
@@ -394,6 +394,16 @@ tr:hover td{background:#f9fafb}
       </div>
     </div>
     <div class="card" style="padding:0;overflow:hidden;">
+      <div style="padding:10px 12px;border-bottom:1px solid #f3f4f6;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+        <select id="reg-filter-stu" style="margin:0;width:auto;min-width:140px;" onchange="renderRegAbsList()"><option value="">전체 학생</option></select>
+        <select id="reg-filter-doc" style="margin:0;width:auto;" onchange="renderRegAbsList()">
+          <option value="">증빙 전체</option>
+          <option value="no">미수령만</option>
+          <option value="yes">수령완료만</option>
+        </select>
+        <button class="btn bs" onclick="gs(&#39;reg-filter-stu&#39;).value=&#39;&#39;;gs(&#39;reg-filter-doc&#39;).value=&#39;&#39;;renderRegAbsList()">초기화</button>
+        <span id="reg-cnt" style="font-size:12px;color:#6b7280;"></span>
+      </div>
       <table><thead><tr><th>학생</th><th>요일</th><th>범위</th><th>사유</th><th>증빙서류</th><th>삭제</th></tr></thead><tbody id="reg-abs-tb"></tbody></table>
     </div>
   </div>
@@ -2500,11 +2510,67 @@ function updateRegPeriodSel(){
 function updateRegStuSel(){const sel=gs('reg-stu');if(!sel)return;sel.innerHTML=S.students.map(s=>`<option value="${s.id}">${s.num} ${s.name}</option>`).join('');}
 function addRegAbs(){const sid=gs('reg-stu').value,day=parseInt(gs('reg-day').value),type=gs('reg-type').value,period=type==='period'?gs('reg-period').value:'',reason=gs('reg-reason').value.trim()||'정기결석';if(!sid){alert('학생을 선택하세요.');return;}const dup=S.regAbs.some(r=>r.sid===sid&&r.day===day&&r.type===type&&(type==='day'||r.period===period));if(dup){alert('이미 등록된 항목입니다.');return;}S.regAbs.push({sid,day,type,period,reason});renderRegAbsList();saveData();}
 function delRegAbs(i){S.regAbs.splice(i,1);renderRegAbsList();saveData();}
-function renderRegAbsList(){const tb=gs('reg-abs-tb');if(!S.regAbs.length){tb.innerHTML='<tr><td colspan="6" class="em">등록된 정기 결석이 없습니다.</td></tr>';return;}tb.innerHTML=S.regAbs.map((r,i)=>{const stu=S.students.find(s=>s.id===r.sid);const scope=r.type==='day'?'요일 전체':`${r.period}`;const ok=!!r.docReceived;return`<tr><td>${stu?stu.name:'-'}</td><td>${DAYS[r.day]}요일</td><td>${scope}</td><td style="color:#6b7280;">${r.reason}</td><td>
-  <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;padding:3px 8px;border-radius:6px;background:${ok?'#ede9fe':'#fef3c7'};">
-    <input type="checkbox" ${ok?'checked':''} onchange="toggleRegDoc(${i})" style="width:auto;margin:0;" />
-    <span style="font-size:12px;font-weight:500;color:${ok?'#6d28d9':'#92400e'};">${ok?'수령 완료':'미수령'}</span>
-  </label></td><td><button class="btn bs bd" onclick="delRegAbs(${i})">삭제</button></td></tr>`}).join('');}
+function renderRegAbsList(){
+  const tb=gs('reg-abs-tb');if(!tb)return;
+  // 학생 필터 select 채우기 (선택 유지, regAbs에 등록된 학생만)
+  const fsel=gs('reg-filter-stu');
+  if(fsel){
+    const cur=fsel.value;
+    const sidSet=[...new Set(S.regAbs.map(r=>r.sid))];
+    const stuList=sidSet.map(sid=>S.students.find(s=>s.id===sid)).filter(Boolean)
+      .sort((a,b)=>(a.grade||'0').localeCompare(b.grade||'0')||a.num.localeCompare(b.num));
+    fsel.innerHTML='<option value="">전체 학생</option>'+stuList.map(s=>`<option value="${s.id}">${s.grade||''}학년 ${s.num} ${s.name}</option>`).join('');
+    fsel.value=cur;
+  }
+  const filterStu=fsel?fsel.value:'';
+  const filterDoc=gs('reg-filter-doc')?gs('reg-filter-doc').value:'';
+
+  let list=S.regAbs.map((r,i)=>({...r,_idx:i}));
+  if(filterStu)list=list.filter(r=>r.sid===filterStu);
+  if(filterDoc==='no')list=list.filter(r=>!r.docReceived);
+  if(filterDoc==='yes')list=list.filter(r=>!!r.docReceived);
+
+  const cntEl=gs('reg-cnt');
+  if(cntEl)cntEl.textContent=`${list.length}건 표시 (전체 ${S.regAbs.length}건)`;
+
+  if(!list.length){
+    tb.innerHTML=`<tr><td colspan="6" class="em">${S.regAbs.length?'조건에 맞는 항목이 없습니다.':'등록된 정기 결석이 없습니다.'}</td></tr>`;
+    return;
+  }
+
+  // 학생(학년→학번)별로 묶고, 같은 학생 내에서 요일→교시 정렬
+  list.sort((a,b)=>{
+    const sa=S.students.find(s=>s.id===a.sid)||{},sb=S.students.find(s=>s.id===b.sid)||{};
+    return (sa.grade||'0').localeCompare(sb.grade||'0')||(sa.num||'').localeCompare(sb.num||'')||a.day-b.day||(a.period||'').localeCompare(b.period||'');
+  });
+
+  let rows='',lastSid='';
+  list.forEach(r=>{
+    const stu=S.students.find(s=>s.id===r.sid);
+    const scope=r.type==='day'?'요일 전체':`${r.period}`;
+    const ok=!!r.docReceived;
+    // 학생이 바뀔 때 구분 헤더 행
+    if(r.sid!==lastSid){
+      lastSid=r.sid;
+      const myCnt=list.filter(x=>x.sid===r.sid).length;
+      rows+=`<tr><td colspan="6" style="padding:6px 10px;background:#f0f9ff;color:#0369a1;font-size:12px;font-weight:600;">👤 ${stu?(stu.grade||'')+'학년 '+stu.num+' '+stu.name:'(삭제된 학생)'} — ${myCnt}건</td></tr>`;
+    }
+    rows+=`<tr>
+      <td>${stu?stu.name:'-'}</td>
+      <td>${DAYS[r.day]}요일</td>
+      <td>${scope}</td>
+      <td style="color:#6b7280;">${r.reason}</td>
+      <td>
+        <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;padding:3px 8px;border-radius:6px;background:${ok?'#ede9fe':'#fef3c7'};">
+          <input type="checkbox" ${ok?'checked':''} onchange="toggleRegDoc(${r._idx})" style="width:auto;margin:0;" />
+          <span style="font-size:12px;font-weight:500;color:${ok?'#6d28d9':'#92400e'};">${ok?'수령 완료':'미수령'}</span>
+        </label>
+      </td>
+      <td><button class="btn bs bd" onclick="delRegAbs(${r._idx})">삭제</button></td>
+    </tr>`;
+  });
+  tb.innerHTML=rows;
+}
 async function toggleRegDoc(i){
   if(!S.regAbs[i])return;
   S.regAbs[i].docReceived=!S.regAbs[i].docReceived;
@@ -2699,7 +2765,7 @@ function removeFile(i){pendingFiles.splice(i,1);renderPreview()}
 function viewImg(src){const bg=document.createElement('div');bg.className='img-modal-bg';bg.innerHTML=`<img src="${src}">`;bg.onclick=()=>bg.remove();document.body.appendChild(bg);}
 function showDocFiles(i){const doc=S.docs[i];const files=doc.files||[];if(!files.length)return;const bg=document.createElement('div');bg.className='img-modal-bg';bg.style.flexDirection='column';bg.style.gap='12px';bg.style.padding='20px';bg.style.overflowY='auto';const inner=files.map(f=>f.type&&f.type.startsWith('image/')?`<img src="${f.data}" style="max-width:80vw;max-height:70vh;border-radius:8px;object-fit:contain;">`:`<div style="background:#fff;border-radius:8px;padding:16px 24px;font-size:14px;color:#111;">📄 ${f.name}<br><a href="${f.data}" download="${f.name}" style="color:#1d4ed8;font-size:12px;">다운로드</a></div>`).join('');bg.innerHTML=`<div style="font-size:13px;color:#fff;margin-bottom:4px;">탭하여 닫기</div>${inner}`;bg.onclick=()=>bg.remove();document.body.appendChild(bg);}
 </script>
-<div style="position:fixed;bottom:4px;right:8px;font-size:10px;color:#c4c4c4;z-index:1;pointer-events:none;">v3.0</div>
+<div style="position:fixed;bottom:4px;right:8px;font-size:10px;color:#c4c4c4;z-index:1;pointer-events:none;">v3.1</div>
 
 
 </body></html>
