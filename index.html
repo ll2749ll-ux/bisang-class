@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- saved from url=(0055)file:///C:/Users/user/Downloads/bisang_firebase_29.html -->
+<!-- saved from url=(0055)file:///C:/Users/user/Downloads/bisang_firebase_30.html -->
 <html lang="ko"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>비상반 관리 시스템</title>
-<link rel="manifest" href="file:///C:/Users/user/Downloads/bisang_firebase_29.html#">
+<link rel="manifest" href="file:///C:/Users/user/Downloads/bisang_firebase_30.html#">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f5;color:#111}
@@ -710,7 +710,7 @@ tr:hover td{background:#f9fafb}
 <!-- Firebase SDK -->
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getFirestore, doc, getDoc, setDoc, onSnapshot, collection, query, orderBy } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { getFirestore, doc, getDoc, setDoc, onSnapshot, runTransaction, collection, query, orderBy } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { getMessaging, getToken, onMessage } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging.js';
 
 const firebaseConfig = {
@@ -733,32 +733,78 @@ const DB_DOC = 'bisang-class/data';
 let saveTimer = null;
 let _lastSaveTime = 0;
 
-window._saveDataFn = window.saveData = async function() {
-  const now = Date.now();
-  if(now - (window._lastSaveTime||0) < 100) return;
-  window._lastSaveTime = now;
+// ── 병합 유틸: id 기준으로 서버에만 있는 항목을 로컬에 보존 ──
+// (다른 기기·학생이 그 사이 추가한 신청/서류가 덮어써 사라지는 것 방지)
+window._delPreAbs = window._delPreAbs || new Set();  // 이 세션에서 삭제한 항목 (부활 방지)
+window._delDocs   = window._delDocs   || new Set();
+function _mergeById(localArr, serverArr, delSet){
+  const local = Array.isArray(localArr)?localArr:[];
+  const server = Array.isArray(serverArr)?serverArr:[];
+  const localIds = new Set(local.map(x=>x&&x.id).filter(Boolean));
+  const merged = local.slice();
+  server.forEach(item=>{
+    if(!item) return;
+    const id = item.id;
+    if(id && !localIds.has(id) && !delSet.has(id)) merged.push(item);
+  });
+  return merged;
+}
 
-  clearTimeout(saveTimer);
+let _saveInFlight = false;
+let _savePending = false;
+window._saveDataFn = window.saveData = async function() {
+  // 직렬화: 저장 중이면 "한 번 더" 예약만 하고 반환 (호출 유실 없음)
+  if(_saveInFlight){ _savePending = true; return; }
+  _saveInFlight = true;
   try {
-    window._isSaving = true;
-    gs('saving-indicator').style.display = 'block';
-    const save = {
-      students: S.students, att: S.att,
-      docs: S.docs.map(d=>({...d, files: d.files||[]})),
-      dems: S.dems, rules: S.rules, notices: S.notices, notifs: S.notifs,
-      periods: S.periods, regAbs: S.regAbs, preAbs: S.preAbs,
-      dayPeriods: S.dayPeriods, datePeriods: S.datePeriods,
-      settings: S.settings||{studentAccess:true},
-      _adminPw: ADMIN_PW,
-      _saveTimestamp: now
-    };
-    await setDoc(doc(db, 'bisang-class', 'data'), save);
-    gs('saving-indicator').style.display = 'none';
-    window._isSaving = false;
-  } catch(e) {
-    console.error('저장 오류:', e);
-    gs('saving-indicator').style.display = 'none';
-    window._isSaving = false;
+    do {
+      _savePending = false;
+      const now = Date.now();
+      window._lastSaveTime = now;
+      gs('saving-indicator').style.display = 'block';
+      try {
+        // 트랜잭션: 서버 최신을 읽어 preAbs/docs를 병합 후 저장
+        await runTransaction(db, async (tx) => {
+          const ref = doc(db, 'bisang-class', 'data');
+          const snap = await tx.get(ref);
+          const server = snap.exists() ? snap.data() : {};
+          // 학생이 다른 기기에서 추가한 신청·서류 보존
+          S.preAbs = _mergeById(S.preAbs, server.preAbs, window._delPreAbs);
+          S.docs   = _mergeById(S.docs,   server.docs,   window._delDocs);
+          ensurePreAbsIds(); ensureDocIds();
+          const save = {
+            students: S.students, att: S.att,
+            docs: S.docs.map(d=>({...d, files: d.files||[]})),
+            dems: S.dems, rules: S.rules, notices: S.notices, notifs: S.notifs,
+            periods: S.periods, regAbs: S.regAbs, preAbs: S.preAbs,
+            dayPeriods: S.dayPeriods, datePeriods: S.datePeriods,
+            settings: S.settings||{studentAccess:true},
+            _adminPw: ADMIN_PW,
+            _saveTimestamp: now
+          };
+          tx.set(ref, save);
+        });
+      } catch(e) {
+        console.error('저장 오류:', e);
+        // 트랜잭션 실패 시 단순 저장 폴백 (오프라인 등)
+        try {
+          const save = {
+            students: S.students, att: S.att,
+            docs: S.docs.map(d=>({...d, files: d.files||[]})),
+            dems: S.dems, rules: S.rules, notices: S.notices, notifs: S.notifs,
+            periods: S.periods, regAbs: S.regAbs, preAbs: S.preAbs,
+            dayPeriods: S.dayPeriods, datePeriods: S.datePeriods,
+            settings: S.settings||{studentAccess:true},
+            _adminPw: ADMIN_PW,
+            _saveTimestamp: now
+          };
+          await setDoc(doc(db, 'bisang-class', 'data'), save);
+        } catch(e2) { console.error('폴백 저장도 실패:', e2); }
+      }
+      gs('saving-indicator').style.display = 'none';
+    } while(_savePending); // 저장 중 들어온 변경까지 마저 저장
+  } finally {
+    _saveInFlight = false;
   }
 };
 
@@ -790,30 +836,37 @@ window.startRealtimeSync = function() {
   onSnapshot(doc(db, 'bisang-class', 'data'), (snap) => {
     if (!snap.exists()) return;
     const d = snap.data();
-
-    // 내가 저장한 데이터가 더 최신이면 무시 (롤백 방지)
     const snapTs = d._saveTimestamp || 0;
-    if(snapTs < (window._lastSaveTime || 0)) {
-      console.log('오래된 snapshot 무시:', snapTs, '<', window._lastSaveTime);
-      return;
+
+    // 내가 방금 저장한 것의 echo면 무시 (그 외에는 절대 버리지 않고 병합)
+    if(snapTs === (window._lastSaveTime||0)) return;
+
+    const newer = snapTs > (window._lastSaveTime||0);
+    if(newer){
+      // 다른 기기의 더 새로운 저장: 전체 수용하되 preAbs/docs는 병합 (내 로컬 추가분 보존)
+      const localPre=S.preAbs, localDocs=S.docs;
+      if(d.students) S.students = d.students;
+      if(d.att) S.att = d.att;
+      if(d.dems) S.dems = d.dems;
+      if(d.rules) S.rules = d.rules;
+      if(d.notices) S.notices = d.notices;
+      if(d.notifs) S.notifs = d.notifs;
+      if(d.periods) S.periods = d.periods;
+      if(d.regAbs) S.regAbs = d.regAbs;
+      if(d.dayPeriods) S.dayPeriods = d.dayPeriods;
+      if(d.datePeriods) S.datePeriods = d.datePeriods;
+      if(d.settings) S.settings = d.settings;
+      if(d._adminPw) ADMIN_PW = d._adminPw;
+      S.preAbs = _mergeById(localPre, d.preAbs, window._delPreAbs);
+      S.docs   = _mergeById(localDocs, d.docs, window._delDocs);
+    } else {
+      // 오래된 snapshot (시계 차이 등): 다른 필드는 롤백하지 않고
+      // 서버에만 있는 신청·서류만 로컬에 흡수 (소실 방지)
+      S.preAbs = _mergeById(S.preAbs, d.preAbs, window._delPreAbs);
+      S.docs   = _mergeById(S.docs,   d.docs,   window._delDocs);
     }
 
-    if(d.students) S.students = d.students;
-    if(d.att) S.att = d.att;
-    if(d.docs) S.docs = d.docs;
-    if(d.dems) S.dems = d.dems;
-    if(d.rules) S.rules = d.rules;
-    if(d.notices) S.notices = d.notices;
-    if(d.notifs) S.notifs = d.notifs;
-    if(d.periods) S.periods = d.periods;
-    if(d.regAbs) S.regAbs = d.regAbs;
-    if(d.preAbs) S.preAbs = d.preAbs;
-    if(d.dayPeriods) S.dayPeriods = d.dayPeriods;
-    if(d.datePeriods) S.datePeriods = d.datePeriods;
-    if(d.settings) S.settings = d.settings;
-    if(d._adminPw) ADMIN_PW = d._adminPw;
-
-    ensurePreAbsIds();
+    ensurePreAbsIds(); ensureDocIds();
     if(S.role === 'admin') renderAdmin();
     if(S.role === 'student') {
       if(S.settings&&S.settings.studentAccess===false){
@@ -1549,6 +1602,9 @@ async function executeReset(){
   const delTT=gs('reset-timetable').checked;
   if(!confirm('⚠️ 마지막 확인입니다.\n정말 전체 데이터를 리셋하시겠습니까?\n이 작업은 되돌릴 수 없습니다.'))return;
   // 데이터 초기화
+  // 리셋 대상 id를 삭제 목록에 등록 (병합으로 부활 방지)
+  S.preAbs.forEach(p=>{if(p&&p.id)window._delPreAbs.add(p.id);});
+  S.docs.forEach(d=>{if(d&&d.id)window._delDocs.add(d.id);});
   S.att={};S.docs=[];S.dems=[];S.preAbs=[];S.notices=[];S.notifs={};S.regAbs=[];
   if(delStudents)S.students=[];
   if(delTT){S.dayPeriods={0:[],1:[],2:[],3:[],4:[],5:[],6:[]};S.datePeriods={};S.periods=[];}
@@ -1850,17 +1906,19 @@ function renderStuDoc(){
     </tr>`;
   });
 }
-function subDoc(){
+async function subDoc(){
   const id=S.cur.id,type=gs('sf-type').value,date=gs('sf-dt').value||TD,note=gs('sf-note').value;
   const checkedPeriods=[...document.querySelectorAll('input[name="sf-period"]:checked')].map(c=>c.value);
   const allPeriods=getPeriodsForDate(date).map(p=>p.name);
   const selectedPeriods=checkedPeriods.length>0?checkedPeriods:allPeriods;
   const submitTime=new Date().toLocaleString('ko-KR',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
-  S.docs.push({sid:id,type,date,note,periods:selectedPeriods,submitTime,status:'대기',files:[...pendingFiles]});
+  const docId='doc_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
+  S.docs.push({id:docId,sid:id,type,date,note,periods:selectedPeriods,submitTime,status:'대기',files:[...pendingFiles]});
   pendingFiles=[];renderPreview();gs('sf-note').value='';
   gs('sf-period-wrap').style.display='none';
   gs('sf-msg').style.display='block';setTimeout(()=>gs('sf-msg').style.display='none',3000);
-  renderStuDoc();saveData();
+  await saveData();
+  renderStuDoc();
 }
 
 function renderNtStu(){const el=gs('nt-stu');el.innerHTML='';if(!S.notices.length){el.innerHTML='<div class="em">공지사항이 없습니다.</div>';return}S.notices.forEach(n=>{el.innerHTML+=`<div class="card"><div style="font-weight:600;font-size:14px;margin-bottom:4px;">${n.t}</div><div style="font-size:12px;color:#6b7280;margin-bottom:8px;">${n.d}</div><div style="font-size:13px;color:#6b7280;">${n.b}</div></div>`})}
@@ -1938,7 +1996,14 @@ function renderStuPreAbs(){
     </tr>`;
   });
 }
-async function cancelPreAbs(i){if(!confirm('사전 신청을 취소하시겠습니까?'))return;S.preAbs.splice(i,1);await saveData();renderStuPreAbs();}
+async function cancelPreAbs(i){
+  if(!confirm('사전 신청을 취소하시겠습니까?'))return;
+  const p=S.preAbs[i];
+  if(p&&p.id)window._delPreAbs.add(p.id); // 병합 시 부활 방지
+  S.preAbs.splice(i,1);
+  await saveData();
+  renderStuPreAbs();
+}
 function renderPreAbsAdmin(){
   ensurePreAbsIds();
   const tb=gs('pa-admin-tb');if(!tb)return;
@@ -2080,6 +2145,13 @@ function ensurePreAbsIds(){
     // 인덱스 없이 고정된 값만 사용 (배열 순서 변경에도 동일한 id 유지)
     if(!p.id){
       p.id='pa_'+p.sid+'_'+p.date+'_'+(p.submittedAt||'').replace(/\s|\.|\//g,'');
+    }
+  });
+}
+function ensureDocIds(){
+  S.docs.forEach((d)=>{
+    if(!d.id){
+      d.id='doc_'+d.sid+'_'+d.date+'_'+(d.submitTime||'').replace(/\s|\.|\//g,'')+'_'+(d.type||'');
     }
   });
 }
@@ -2876,7 +2948,7 @@ function removeFile(i){pendingFiles.splice(i,1);renderPreview()}
 function viewImg(src){const bg=document.createElement('div');bg.className='img-modal-bg';bg.innerHTML=`<img src="${src}">`;bg.onclick=()=>bg.remove();document.body.appendChild(bg);}
 function showDocFiles(i){const doc=S.docs[i];const files=doc.files||[];if(!files.length)return;const bg=document.createElement('div');bg.className='img-modal-bg';bg.style.flexDirection='column';bg.style.gap='12px';bg.style.padding='20px';bg.style.overflowY='auto';const inner=files.map(f=>f.type&&f.type.startsWith('image/')?`<img src="${f.data}" style="max-width:80vw;max-height:70vh;border-radius:8px;object-fit:contain;">`:`<div style="background:#fff;border-radius:8px;padding:16px 24px;font-size:14px;color:#111;">📄 ${f.name}<br><a href="${f.data}" download="${f.name}" style="color:#1d4ed8;font-size:12px;">다운로드</a></div>`).join('');bg.innerHTML=`<div style="font-size:13px;color:#fff;margin-bottom:4px;">탭하여 닫기</div>${inner}`;bg.onclick=()=>bg.remove();document.body.appendChild(bg);}
 </script>
-<div style="position:fixed;bottom:4px;right:8px;font-size:10px;color:#c4c4c4;z-index:1;pointer-events:none;">v3.2</div>
+<div style="position:fixed;bottom:4px;right:8px;font-size:10px;color:#c4c4c4;z-index:1;pointer-events:none;">v3.3</div>
 
 
 </body></html>
