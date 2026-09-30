@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- saved from url=(0055)file:///C:/Users/user/Downloads/bisang_firebase_30.html -->
+<!-- saved from url=(0055)file:///C:/Users/user/Downloads/bisang_firebase_31.html -->
 <html lang="ko"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>비상반 관리 시스템</title>
-<link rel="manifest" href="file:///C:/Users/user/Downloads/bisang_firebase_30.html#">
+<link rel="manifest" href="file:///C:/Users/user/Downloads/bisang_firebase_31.html#">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f5;color:#111}
@@ -101,12 +101,12 @@ tr:hover td{background:#f9fafb}
   </div>
   <div id="lp-choose" style="display: block;">
     <div style="display:flex;gap:12px;margin-bottom:1rem;">
-      <button class="ltb" onclick="loginChoose(&#39;admin&#39;)" style="border-color:#bfdbfe;">
+      <button class="ltb" onclick="loginChoose('admin')" style="border-color:#bfdbfe;">
         <div class="lic" style="background:#dbeafe;font-size:24px;">🏫</div>
         <div style="font-size:15px;font-weight:700;color:#1e40af;">관리자</div>
         <div style="font-size:12px;color:#6b7280;">선생님 전용</div>
       </button>
-      <button class="ltb" onclick="loginChoose(&#39;student&#39;)" style="border-color:#ddd9fe;">
+      <button class="ltb" onclick="loginChoose('student')" style="border-color:#ddd9fe;">
         <div class="lic" style="background:#ede9fe;font-size:24px;">📚</div>
         <div style="font-size:15px;font-weight:700;color:#6d28d9;">학생</div>
         <div style="font-size:12px;color:#6b7280;">비상반 학생</div>
@@ -121,7 +121,7 @@ tr:hover td{background:#f9fafb}
         <div><div style="font-size:15px;font-weight:700;">관리자 로그인</div><div style="font-size:12px;color:#6b7280;">선생님 전용</div></div>
       </div>
       <label>비밀번호</label>
-      <input type="password" id="a-pw" placeholder="관리자 비밀번호" onkeydown="if(event.key===&#39;Enter&#39;)adminLogin()">
+      <input type="password" id="a-pw" placeholder="관리자 비밀번호" onkeydown="if(event.key==='Enter')adminLogin()">
       <button class="btn bp" style="width:100%;justify-content:center;" onclick="adminLogin()">로그인</button>
       <div id="a-err" style="color:#b91c1c;font-size:12px;margin-top:8px;display:none;">비밀번호를 확인하세요.</div>
     </div>
@@ -134,8 +134,8 @@ tr:hover td{background:#f9fafb}
         <div class="lic" style="background:#ede9fe;width:40px;height:40px;font-size:18px;">📚</div>
         <div><div style="font-size:15px;font-weight:700;">학생 로그인</div><div style="font-size:12px;color:#6b7280;">비상반 학생</div></div>
       </div>
-      <label>학번</label><input type="text" id="s-num" placeholder="학번 입력 (예: 30101)" onkeydown="if(event.key===&#39;Enter&#39;)document.getElementById(&#39;s-name&#39;).focus()">
-      <label>이름</label><input type="text" id="s-name" placeholder="이름 입력" onkeydown="if(event.key===&#39;Enter&#39;)stuLogin()">
+      <label>학번</label><input type="text" id="s-num" placeholder="학번 입력 (예: 30101)" onkeydown="if(event.key==='Enter')document.getElementById('s-name').focus()">
+      <label>이름</label><input type="text" id="s-name" placeholder="이름 입력" onkeydown="if(event.key==='Enter')stuLogin()">
       <button class="btn bp" style="width:100%;justify-content:center;margin-top:4px;" onclick="stuLogin()">로그인</button>
       <div id="s-err" style="color:#b91c1c;font-size:12px;margin-top:8px;display:none;"></div>
     </div>
@@ -151,13 +151,13 @@ tr:hover td{background:#f9fafb}
     <div class="row" style="gap:8px;"><span class="badge bg">선생님</span><button class="btn bs" onclick="showLoginHistory()">🕐 접속기록</button><button class="btn bs" onclick="logout()">로그아웃</button></div>
   </div>
   <div class="tab-bar">
-    <button class="tab on" onclick="aTab(&#39;att&#39;,this)">출결 관리</button>
-    <button class="tab" onclick="aTab(&#39;doc&#39;,this)">서류 체크</button>
-    <button class="tab" onclick="aTab(&#39;his&#39;,this)">확인 내역</button>
-    <button class="tab" onclick="aTab(&#39;dm&#39;,this)">벌점 관리</button>
-    <button class="tab" onclick="aTab(&#39;tt&#39;,this)">타임테이블</button>
-    <button class="tab" onclick="aTab(&#39;nt&#39;,this)">공지사항</button>
-    <button class="tab" onclick="aTab(&#39;stu&#39;,this)">학생 관리</button>
+    <button class="tab on" onclick="aTab('att',this)">출결 관리</button>
+    <button class="tab" onclick="aTab('doc',this)">서류 체크</button>
+    <button class="tab" onclick="aTab('his',this)">확인 내역</button>
+    <button class="tab" onclick="aTab('dm',this)">벌점 관리</button>
+    <button class="tab" onclick="aTab('tt',this)">타임테이블</button>
+    <button class="tab" onclick="aTab('nt',this)">공지사항</button>
+    <button class="tab" onclick="aTab('stu',this)">학생 관리</button>
   </div>
   <div id="ta-att" class="tc on">
     <div class="rb">
@@ -169,10 +169,10 @@ tr:hover td{background:#f9fafb}
     </div>
     <!-- 학년 필터 -->
     <div class="row" style="gap:6px;margin-bottom:.75rem;flex-wrap:wrap;">
-      <button class="btn bs bp" id="att-gf-all" onclick="setAttGrade(&#39;all&#39;)">전체</button>
-      <button class="btn bs" id="att-gf-1" onclick="setAttGrade(&#39;1&#39;)">1학년</button>
-      <button class="btn bs" id="att-gf-2" onclick="setAttGrade(&#39;2&#39;)">2학년</button>
-      <button class="btn bs" id="att-gf-3" onclick="setAttGrade(&#39;3&#39;)">3학년</button>
+      <button class="btn bs bp" id="att-gf-all" onclick="setAttGrade('all')">전체</button>
+      <button class="btn bs" id="att-gf-1" onclick="setAttGrade('1')">1학년</button>
+      <button class="btn bs" id="att-gf-2" onclick="setAttGrade('2')">2학년</button>
+      <button class="btn bs" id="att-gf-3" onclick="setAttGrade('3')">3학년</button>
     </div>
     <!-- 통계 -->
     <div class="sg">
@@ -237,7 +237,7 @@ tr:hover td{background:#f9fafb}
       <div class="row" style="gap:6px;">
         <input type="date" id="his-dt" style="width:140px;margin:0;">
         <button class="btn bs" onclick="renderHistory()">날짜 조회</button>
-        <button class="btn bs" onclick="gs(&#39;his-dt&#39;).value=&#39;&#39;;renderHistory()">전체</button>
+        <button class="btn bs" onclick="gs('his-dt').value='';renderHistory()">전체</button>
       </div>
     </div>
     <!-- 확인된 사전 신청 -->
@@ -265,7 +265,7 @@ tr:hover td{background:#f9fafb}
         <div style="flex:1;min-width:130px;"><label>날짜 필터</label>
           <input type="date" id="doc-filter-dt" style="margin:0;" onchange="renderDoc()">
         </div>
-        <button class="btn bs" onclick="gs(&#39;doc-filter-stu&#39;).value=&#39;&#39;;gs(&#39;doc-filter-dt&#39;).value=&#39;&#39;;renderDoc()">필터 초기화</button>
+        <button class="btn bs" onclick="gs('doc-filter-stu').value='';gs('doc-filter-dt').value='';renderDoc()">필터 초기화</button>
       </div>
     </div>
     <div class="card" style="padding:0;overflow:hidden;"><table><thead><tr><th>학번</th><th>이름</th><th>서류</th><th>날짜</th><th>교시</th><th>제출일시</th><th>첨부</th><th>상태</th><th>처리</th></tr></thead><tbody id="doc-tb"></tbody></table></div>
@@ -279,10 +279,10 @@ tr:hover td{background:#f9fafb}
     </div>
     <!-- 학년 필터 -->
     <div class="row" style="gap:6px;margin-bottom:.75rem;flex-wrap:wrap;">
-      <button class="btn bs bp" id="dm-gf-all" onclick="setDmGrade(&#39;all&#39;)">전체</button>
-      <button class="btn bs" id="dm-gf-1" onclick="setDmGrade(&#39;1&#39;)">1학년</button>
-      <button class="btn bs" id="dm-gf-2" onclick="setDmGrade(&#39;2&#39;)">2학년</button>
-      <button class="btn bs" id="dm-gf-3" onclick="setDmGrade(&#39;3&#39;)">3학년</button>
+      <button class="btn bs bp" id="dm-gf-all" onclick="setDmGrade('all')">전체</button>
+      <button class="btn bs" id="dm-gf-1" onclick="setDmGrade('1')">1학년</button>
+      <button class="btn bs" id="dm-gf-2" onclick="setDmGrade('2')">2학년</button>
+      <button class="btn bs" id="dm-gf-3" onclick="setDmGrade('3')">3학년</button>
     </div>
     <div class="card" style="padding:0;overflow:hidden;"><table><thead><tr><th>학번</th><th>이름</th><th>누적</th><th>상태</th><th>상세/수정</th><th>리셋</th></tr></thead><tbody id="dm-tb"></tbody></table></div>
     <div class="st" style="margin-top:1rem;">벌점 항목</div>
@@ -366,16 +366,16 @@ tr:hover td{background:#f9fafb}
       <div class="row" style="gap:6px;"><input type="date" id="tt-week" style="width:140px;margin:0;"><button class="btn bs" onclick="renderAdminTT()">조회</button></div>
     </div>
     <div class="row" style="gap:8px;margin-bottom:.75rem;flex-wrap:wrap;">
-      <button class="btn bs bp" id="tt-mode-all" onclick="setTTMode(&#39;all&#39;)">📋 전체 학생 뷰</button>
-      <button class="btn bs" id="tt-mode-one" onclick="setTTMode(&#39;one&#39;)">👤 개인 뷰</button>
+      <button class="btn bs bp" id="tt-mode-all" onclick="setTTMode('all')">📋 전체 학생 뷰</button>
+      <button class="btn bs" id="tt-mode-one" onclick="setTTMode('one')">👤 개인 뷰</button>
       <select id="tt-stu-sel" style="width:140px;margin:0;display:none;" onchange="renderAdminTT()"></select>
       <button class="btn bs" id="tt-download-btn" onclick="downloadTTImage()" style="display:none;">📥 이미지 저장</button>
     </div>
     <div id="tt-grade-filter" class="row" style="gap:6px;margin-bottom:.75rem;flex-wrap:wrap;">
-      <button class="btn bs bp" id="gf-all" onclick="setGradeFilter(&#39;all&#39;)">전체</button>
-      <button class="btn bs" id="gf-1" onclick="setGradeFilter(&#39;1&#39;)">1학년</button>
-      <button class="btn bs" id="gf-2" onclick="setGradeFilter(&#39;2&#39;)">2학년</button>
-      <button class="btn bs" id="gf-3" onclick="setGradeFilter(&#39;3&#39;)">3학년</button>
+      <button class="btn bs bp" id="gf-all" onclick="setGradeFilter('all')">전체</button>
+      <button class="btn bs" id="gf-1" onclick="setGradeFilter('1')">1학년</button>
+      <button class="btn bs" id="gf-2" onclick="setGradeFilter('2')">2학년</button>
+      <button class="btn bs" id="gf-3" onclick="setGradeFilter('3')">3학년</button>
     </div>
     <div class="tt-wrap"><table class="tt-table tt-today" id="admin-tt-table"></table></div>
     <div class="st" style="margin-top:.5rem;">정기 결석 등록</div>
@@ -401,7 +401,7 @@ tr:hover td{background:#f9fafb}
           <option value="no">미수령만</option>
           <option value="yes">수령완료만</option>
         </select>
-        <button class="btn bs" onclick="gs(&#39;reg-filter-stu&#39;).value=&#39;&#39;;gs(&#39;reg-filter-doc&#39;).value=&#39;&#39;;renderRegAbsList()">초기화</button>
+        <button class="btn bs" onclick="gs('reg-filter-stu').value='';gs('reg-filter-doc').value='';renderRegAbsList()">초기화</button>
         <button class="btn bs bp" onclick="downloadRegAbsImage()">📥 이미지 저장</button>
         <span id="reg-cnt" style="font-size:12px;color:#6b7280;"></span>
       </div>
@@ -442,7 +442,7 @@ tr:hover td{background:#f9fafb}
       <div class="row" style="gap:8px;align-items:flex-end;flex-wrap:wrap;">
         <div style="flex:0 0 80px;"><label>학년</label><select id="ns-grade" style="margin:0;"><option value="1">1학년</option><option value="2">2학년</option><option value="3">3학년</option></select></div>
         <div style="flex:1;min-width:100px;"><label>학번</label><input type="text" id="ns-num" placeholder="30101" style="margin:0;"></div>
-        <div style="flex:1;min-width:100px;"><label>이름</label><input type="text" id="ns-name" placeholder="홍길동" style="margin:0;" onkeydown="if(event.key===&#39;Enter&#39;)addStu()"></div>
+        <div style="flex:1;min-width:100px;"><label>이름</label><input type="text" id="ns-name" placeholder="홍길동" style="margin:0;" onkeydown="if(event.key==='Enter')addStu()"></div>
         <button class="btn bp" onclick="addStu()" style="flex-shrink:0;">추가</button>
       </div>
       <div id="ns-err" style="color:#b91c1c;font-size:12px;margin-top:8px;display:none;"></div>
@@ -457,7 +457,7 @@ tr:hover td{background:#f9fafb}
       <label>새 비밀번호</label>
       <input type="password" id="pw-new" placeholder="새 비밀번호 입력">
       <label>새 비밀번호 확인</label>
-      <input type="password" id="pw-new2" placeholder="새 비밀번호 재입력" onkeydown="if(event.key===&#39;Enter&#39;)changeAdminPw()">
+      <input type="password" id="pw-new2" placeholder="새 비밀번호 재입력" onkeydown="if(event.key==='Enter')changeAdminPw()">
       <button class="btn bp" onclick="changeAdminPw()">비밀번호 변경</button>
       <div id="pw-err" style="color:#b91c1c;font-size:12px;margin-top:8px;display:none;"></div>
       <div id="pw-ok" style="color:#15803d;font-size:12px;margin-top:8px;display:none;">✅ 비밀번호가 변경되었습니다.</div>
@@ -473,13 +473,13 @@ tr:hover td{background:#f9fafb}
     <div class="row" style="gap:8px;"><span class="badge pp">학생</span><button class="btn bs" onclick="logout()">로그아웃</button></div>
   </div>
   <div class="tab-bar">
-    <button class="tab on" onclick="sTab(&#39;sa&#39;,this)">내 출결</button>
-    <button class="tab" onclick="sTab(&#39;stt&#39;,this)">타임테이블</button>
-    <button class="tab" onclick="sTab(&#39;spa&#39;,this)">사전 신청</button>
-    <button class="tab" onclick="sTab(&#39;sd&#39;,this)">내 벌점</button>
-    <button class="tab" onclick="sTab(&#39;sf&#39;,this)">서류 제출</button>
-    <button class="tab" onclick="sTab(&#39;sn&#39;,this)">공지사항</button>
-    <button class="tab notif-dot" id="tab-notif" onclick="sTab(&#39;snf&#39;,this)">🔔 알림<span class="dot" id="notif-badge" style="display:none;">0</span></button>
+    <button class="tab on" onclick="sTab('sa',this)">내 출결</button>
+    <button class="tab" onclick="sTab('stt',this)">타임테이블</button>
+    <button class="tab" onclick="sTab('spa',this)">사전 신청</button>
+    <button class="tab" onclick="sTab('sd',this)">내 벌점</button>
+    <button class="tab" onclick="sTab('sf',this)">서류 제출</button>
+    <button class="tab" onclick="sTab('sn',this)">공지사항</button>
+    <button class="tab notif-dot" id="tab-notif" onclick="sTab('snf',this)">🔔 알림<span class="dot" id="notif-badge" style="display:none;">0</span></button>
   </div>
   <div id="ts-sa" class="tc on">
     <div class="st">내 출결 현황</div>
@@ -582,11 +582,12 @@ tr:hover td{background:#f9fafb}
         📅 제출 일시: <strong id="sf-submit-time">-</strong>
       </div>
       <label>첨부파일 <span style="color:#9ca3af;font-weight:400;">(사진·PDF, 최대 5개)</span></label>
-      <div class="file-drop" id="sf-drop" onclick="gs(&#39;sf-file&#39;).click()" ondragover="fileDragOver(event)" ondragleave="fileDragLeave(event)" ondrop="fileDrop(event)">
+      <div class="file-drop" id="sf-drop" onclick="gs('sf-file').click()" ondragover="fileDragOver(event)" ondragleave="fileDragLeave(event)" ondrop="fileDrop(event)">
         <input type="file" id="sf-file" multiple="" accept="image/*,application/pdf" onchange="fileChange(event)">
         <div style="font-size:22px;margin-bottom:6px;">📎</div>
         <div style="font-size:13px;color:#6b7280;">클릭하거나 파일을 드래그하세요</div>
       </div>
+      <div id="sf-file-status" style="display:none;font-size:12px;color:#b45309;background:#fffbeb;border-radius:6px;padding:6px 10px;margin-top:6px;"></div>
       <div class="file-preview" id="sf-preview"></div>
       <button class="btn bp" onclick="subDoc()">제출 신청</button>
       <div id="sf-msg" style="font-size:12px;color:#15803d;margin-top:8px;display:none;">신청 접수되었습니다.</div>
@@ -609,20 +610,20 @@ tr:hover td{background:#f9fafb}
   <label>학생</label><select id="dm-s" style="margin-bottom:10px;"></select>
   <label>항목</label><select id="dm-r" style="margin-bottom:10px;"></select>
   <label>날짜</label><input type="date" id="dm-dt" style="margin-bottom:14px;">
-  <div class="row" style="gap:8px;justify-content:flex-end;"><button class="btn" onclick="cm(&#39;mo-dm&#39;)">취소</button><button class="btn bp" onclick="grantDm()">부여</button></div>
+  <div class="row" style="gap:8px;justify-content:flex-end;"><button class="btn" onclick="cm('mo-dm')">취소</button><button class="btn bp" onclick="grantDm()">부여</button></div>
 </div></div>
 <div id="mo-nt" style="display:none;" class="mo"><div class="md">
   <h3>공지 작성</h3>
   <label>제목</label><input type="text" id="nt-ti" placeholder="공지 제목">
   <label>내용</label><textarea id="nt-bo" rows="4" placeholder="공지 내용"></textarea>
-  <div class="row" style="gap:8px;justify-content:flex-end;margin-top:4px;"><button class="btn" onclick="cm(&#39;mo-nt&#39;)">취소</button><button class="btn bp" onclick="saveNt()">게시</button></div>
+  <div class="row" style="gap:8px;justify-content:flex-end;margin-top:4px;"><button class="btn" onclick="cm('mo-nt')">취소</button><button class="btn bp" onclick="saveNt()">게시</button></div>
 </div></div>
 <div id="mo-dd" style="display:none;" class="mo"><div class="md" style="width:520px;max-width:95vw;">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
     <h3 id="dd-hd" style="margin-bottom:0;">벌점 상세</h3>
     <div class="row" style="gap:6px;">
       <button class="btn bs bd" onclick="resetOneStu()" id="dd-reset-btn">🔄 이 학생 리셋</button>
-      <button class="btn bs" onclick="cm(&#39;mo-dd&#39;)">닫기</button>
+      <button class="btn bs" onclick="cm('mo-dd')">닫기</button>
     </div>
   </div>
   <div id="dd-body" style="max-height:60vh;overflow-y:auto;"></div>
@@ -632,7 +633,7 @@ tr:hover td{background:#f9fafb}
   <div style="font-size:13px;color:#6b7280;margin-bottom:1rem;">기타 사유의 경우 벌점을 직접 입력하세요. (0~2점)</div>
   <label>벌점</label>
   <select id="etc-pts-val" style="margin-bottom:14px;"><option value="0">0점 (인정)</option><option value="1" selected="">1점</option><option value="2">2점</option></select>
-  <div class="row" style="gap:8px;justify-content:flex-end;"><button class="btn" onclick="cm(&#39;mo-etc-pts&#39;)">취소</button><button class="btn bp" onclick="confirmEtcPts()">확인 처리</button></div>
+  <div class="row" style="gap:8px;justify-content:flex-end;"><button class="btn" onclick="cm('mo-etc-pts')">취소</button><button class="btn bp" onclick="confirmEtcPts()">확인 처리</button></div>
 </div></div>
 
 <!-- 전체 리셋 모달 -->
@@ -651,7 +652,7 @@ tr:hover td{background:#f9fafb}
     <label>확인을 위해 <strong>"리셋"</strong>을 입력하세요</label>
     <input type="text" id="reset-confirm-text" placeholder="리셋" style="margin-bottom:12px;">
     <div class="row" style="gap:8px;justify-content:flex-end;">
-      <button class="btn" onclick="cm(&#39;mo-reset&#39;)">취소</button>
+      <button class="btn" onclick="cm('mo-reset')">취소</button>
       <button class="btn bd" onclick="executeReset()">전체 리셋 실행</button>
     </div>
   </div>
@@ -662,7 +663,7 @@ tr:hover td{background:#f9fafb}
   <div class="md" style="width:480px;max-width:95vw;max-height:85vh;display:flex;flex-direction:column;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
       <h3 style="margin-bottom:0;">🕐 관리자 접속 기록</h3>
-      <button class="btn bs" onclick="cm(&#39;mo-login-history&#39;)">닫기</button>
+      <button class="btn bs" onclick="cm('mo-login-history')">닫기</button>
     </div>
     <div style="font-size:12px;color:#6b7280;margin-bottom:12px;">최근 10회 접속 기록입니다. 본인이 아닌 접속이 있으면 즉시 비밀번호를 변경하세요.</div>
     <div id="login-history-body" style="flex:1;overflow-y:auto;"></div>
@@ -674,7 +675,7 @@ tr:hover td{background:#f9fafb}
   <div class="md" style="width:520px;max-width:95vw;max-height:85vh;display:flex;flex-direction:column;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
       <h3 id="admin-popup-title" style="margin-bottom:0;">📬 처리 대기</h3>
-      <button class="btn bs" onclick="cm(&#39;mo-admin-popup&#39;)">닫기</button>
+      <button class="btn bs" onclick="cm('mo-admin-popup')">닫기</button>
     </div>
     <div id="admin-popup-body" style="flex:1;overflow-y:auto;"></div>
   </div>
@@ -702,7 +703,7 @@ tr:hover td{background:#f9fafb}
   <label>사유</label>
   <input type="text" id="reg-cell-reason" placeholder="예: 학원, 치료 등" style="margin-bottom:14px;">
   <div class="row" style="gap:8px;justify-content:flex-end;">
-    <button class="btn" onclick="cm(&#39;mo-reg-cell&#39;)">취소</button>
+    <button class="btn" onclick="cm('mo-reg-cell')">취소</button>
     <button class="btn bp" onclick="confirmRegCell()">등록</button>
   </div>
 </div></div>
@@ -774,7 +775,7 @@ window._saveDataFn = window.saveData = async function() {
           ensurePreAbsIds(); ensureDocIds();
           const save = {
             students: S.students, att: S.att,
-            docs: S.docs.map(d=>({...d, files: d.files||[]})),
+            docs: S.docs.map(d=>{const {files, ...rest}=d; return {...rest, fileMeta:(files||[]).map(f=>({name:f.name,type:f.type})), fileCount:(files||[]).length};}),
             dems: S.dems, rules: S.rules, notices: S.notices, notifs: S.notifs,
             periods: S.periods, regAbs: S.regAbs, preAbs: S.preAbs,
             dayPeriods: S.dayPeriods, datePeriods: S.datePeriods,
@@ -790,7 +791,7 @@ window._saveDataFn = window.saveData = async function() {
         try {
           const save = {
             students: S.students, att: S.att,
-            docs: S.docs.map(d=>({...d, files: d.files||[]})),
+            docs: S.docs.map(d=>{const {files, ...rest}=d; return {...rest, fileMeta:(files||[]).map(f=>({name:f.name,type:f.type})), fileCount:(files||[]).length};}),
             dems: S.dems, rules: S.rules, notices: S.notices, notifs: S.notifs,
             periods: S.periods, regAbs: S.regAbs, preAbs: S.preAbs,
             dayPeriods: S.dayPeriods, datePeriods: S.datePeriods,
@@ -799,7 +800,12 @@ window._saveDataFn = window.saveData = async function() {
             _saveTimestamp: now
           };
           await setDoc(doc(db, 'bisang-class', 'data'), save);
-        } catch(e2) { console.error('폴백 저장도 실패:', e2); }
+        } catch(e2) {
+          console.error('폴백 저장도 실패:', e2);
+          gs('saving-indicator').style.display='none';
+          _saveInFlight=false;
+          throw e2;  // 호출부가 실패를 알 수 있게 전파
+        }
       }
       gs('saving-indicator').style.display = 'none';
     } while(_savePending); // 저장 중 들어온 변경까지 마저 저장
@@ -833,6 +839,8 @@ window._loadDataFn = window.loadData = async function() {
 
 // ── 실시간 데이터 동기화 ──
 window.startRealtimeSync = function() {
+  if(window._syncStarted) return;  // 중복 리스너 방지
+  window._syncStarted = true;
   onSnapshot(doc(db, 'bisang-class', 'data'), (snap) => {
     if (!snap.exists()) return;
     const d = snap.data();
@@ -941,13 +949,39 @@ window.sendPushViaFirestore = async function(targetSid, title, body) {
   } catch(e) { console.log('푸시 큐 저장 실패:', e); }
 };
 
+
+// ── 서류 첨부파일: 별도 문서에 저장 (메인 문서 1MB 제한 회피) ──
+window._fileCache = window._fileCache || {};
+window.uploadDocFiles = async function(docId, files){
+  if(!docId || !files || !files.length) return true;
+  try {
+    await setDoc(doc(db, 'bisang-class', 'files_' + docId), {
+      docId, files, savedAt: new Date().toISOString()
+    });
+    window._fileCache[docId] = files;
+    return true;
+  } catch(e){ console.error('첨부 저장 실패:', e); return false; }
+};
+window.fetchDocFiles = async function(docId){
+  if(!docId) return [];
+  if(window._fileCache[docId]) return window._fileCache[docId];
+  try {
+    const snap = await getDoc(doc(db, 'bisang-class', 'files_' + docId));
+    const files = snap.exists() ? (snap.data().files || []) : [];
+    window._fileCache[docId] = files;
+    return files;
+  } catch(e){ console.error('첨부 불러오기 실패:', e); return []; }
+};
+
 // ── 앱 초기화 ──
 window.addEventListener('DOMContentLoaded', async () => {
-  await loadData();
-  // 로그인 화면 초기화
+  window._dataLoaded = false;
   loginChoose(null);
   gs('att-dt').value = TD;
   gs('sf-dt').value = TD;
+  await loadData();
+  window._dataLoaded = true;
+  if(window._onDataReady) window._onDataReady();
 });
 
 </script>
@@ -1037,6 +1071,9 @@ function loginChoose(type){
   if(gs('s-err'))gs('s-err').style.display='none';
 }
 function adminLogin(){
+  if(!window._dataLoaded){
+    const e=gs('a-err');e.textContent='데이터를 불러오는 중입니다. 2~3초 후 다시 눌러 주세요.';e.style.display='block';return;
+  }
   if(gs('a-pw').value===ADMIN_PW){
     S.role='admin';gs('a-pw').value='';show('sc-admin');renderAdmin();
     if(window.startRealtimeSync)startRealtimeSync();
@@ -1078,6 +1115,11 @@ function adminLogin(){
 }
 function stuLogin(){
   const num=gs('s-num').value.trim(),name=gs('s-name').value.trim(),e=gs('s-err');
+  if(!window._dataLoaded){
+    e.textContent='데이터를 불러오는 중입니다. 2~3초 후 다시 눌러 주세요.';e.style.display='block';
+    window._onDataReady=()=>{e.textContent='이제 로그인할 수 있습니다. 다시 눌러 주세요.';};
+    return;
+  }
   if(S.settings&&S.settings.studentAccess===false){
     e.textContent='현재 학생 접속이 차단되어 있습니다. 선생님께 문의하세요.';e.style.display='block';return;
   }
@@ -1095,6 +1137,7 @@ function stuLogin(){
   } else {e.textContent='학번과 이름이 일치하지 않습니다.';e.style.display='block';}
 }
 function logout(){
+  window._syncStarted=false;
   S.role=null;S.cur=null;
   if(gs('s-num'))gs('s-num').value='';
   if(gs('s-name'))gs('s-name').value='';
@@ -1330,8 +1373,8 @@ function renderDoc(){
     const i=S.docs.indexOf(d);
     const sc=d.status==='승인'?'gg':d.status==='반려'?'rr':'aa';
     const st=S.students.find(s=>s.id===d.sid);
-    const files=d.files||[];
-    const thumbs=files.length?files.map(f=>f.type&&f.type.startsWith('image/')?`<img src="${f.data}" onclick="viewImg('${f.data}')" style="width:36px;height:36px;object-fit:cover;border-radius:4px;cursor:pointer;" title="${f.name}">`:`<span style="font-size:20px;cursor:pointer;" title="${f.name}">📄</span>`).join(''):'<span style="color:#9ca3af;font-size:12px;">없음</span>';
+    const fcnt=(d.files&&d.files.length)||d.fileCount||0;
+    const thumbs=fcnt?`<button class="btn bs" style="padding:3px 8px;font-size:12px;" onclick="showDocFilesById('${d.id||''}')">📎 ${fcnt}개 보기</button>`:'<span style="color:#9ca3af;font-size:12px;">없음</span>';
     const periodsLabel=(d.periods&&d.periods.length)?d.periods.join(', '):'전체';
     tb.innerHTML+=`<tr>
       <td style="font-size:12px;color:#6b7280;">${st?st.num:'-'}</td>
@@ -1892,8 +1935,8 @@ function renderStuDoc(){
   my.slice().reverse().forEach(d=>{
     const sc=d.status==='승인'?'gg':d.status==='반려'?'rr':'aa';
     const note=d.status==='승인'?'<span style="font-size:11px;color:#1e40af;">✓ 출결 반영</span>':'-';
-    const fcnt=(d.files||[]).length;
-    const fLabel=fcnt?`<span style="font-size:12px;color:#1d4ed8;cursor:pointer;" onclick="showDocFiles(${S.docs.indexOf(d)})">📎 ${fcnt}개</span>`:'<span style="font-size:12px;color:#9ca3af;">없음</span>';
+    const fcnt=(d.files&&d.files.length)||d.fileCount||0;
+    const fLabel=fcnt?`<span style="font-size:12px;color:#1d4ed8;cursor:pointer;text-decoration:underline;" onclick="showDocFilesById('${d.id||''}')">📎 ${fcnt}개</span>`:'<span style="font-size:12px;color:#9ca3af;">없음</span>';
     const periodsLabel=(d.periods&&d.periods.length)?d.periods.join(', '):'전체';
     tb.innerHTML+=`<tr>
       <td>${d.type}</td>
@@ -1907,17 +1950,44 @@ function renderStuDoc(){
   });
 }
 async function subDoc(){
+  if(window._filesProcessing>0){
+    alert('첨부파일을 처리 중입니다. 잠시 후 다시 제출해 주세요.');return;
+  }
   const id=S.cur.id,type=gs('sf-type').value,date=gs('sf-dt').value||TD,note=gs('sf-note').value;
+  if(!date){alert('날짜를 선택하세요.');return;}
+  if(!pendingFiles.length&&!confirm('첨부파일이 없습니다. 이대로 제출할까요?'))return;
+
   const checkedPeriods=[...document.querySelectorAll('input[name="sf-period"]:checked')].map(c=>c.value);
   const allPeriods=getPeriodsForDate(date).map(p=>p.name);
   const selectedPeriods=checkedPeriods.length>0?checkedPeriods:allPeriods;
   const submitTime=new Date().toLocaleString('ko-KR',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
   const docId='doc_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
-  S.docs.push({id:docId,sid:id,type,date,note,periods:selectedPeriods,submitTime,status:'대기',files:[...pendingFiles]});
+  const filesToUpload=[...pendingFiles];
+
+  const btnMsg=gs('sf-msg');
+  btnMsg.style.display='block';btnMsg.style.color='#b45309';btnMsg.textContent='제출 중입니다...';
+
+  // 1) 첨부파일을 별도 문서에 먼저 저장
+  if(filesToUpload.length&&window.uploadDocFiles){
+    const ok=await uploadDocFiles(docId, filesToUpload);
+    if(!ok){
+      btnMsg.style.color='#b91c1c';
+      btnMsg.textContent='❌ 첨부파일 저장에 실패했습니다. 네트워크 확인 후 다시 시도해 주세요.';
+      return;
+    }
+  }
+
+  // 2) 서류 항목 저장
+  S.docs.push({id:docId,sid:id,type,date,note,periods:selectedPeriods,submitTime,
+    status:'대기',files:filesToUpload,
+    fileMeta:filesToUpload.map(f=>({name:f.name,type:f.type})),fileCount:filesToUpload.length});
+  await saveData();
+
   pendingFiles=[];renderPreview();gs('sf-note').value='';
   gs('sf-period-wrap').style.display='none';
-  gs('sf-msg').style.display='block';setTimeout(()=>gs('sf-msg').style.display='none',3000);
-  await saveData();
+  btnMsg.style.color='#15803d';
+  btnMsg.textContent=`✅ 제출 완료 (첨부 ${filesToUpload.length}개)`;
+  setTimeout(()=>btnMsg.style.display='none',4000);
   renderStuDoc();
 }
 
@@ -1944,32 +2014,55 @@ function renderPreAbsTT(){
 }
 
 async function subPreAbs(){
+  if(!S.cur){alert('로그인 정보가 없습니다. 다시 로그인해 주세요.');return;}
+  if(window._paSubmitting){return;} // 중복 클릭 방지
   const sid=S.cur.id,date=gs('pa-date').value;
   const cat=gs('pa-cat').value;
-  // 카테고리 → 구분/사유 자동 매핑
   let type,reason;
   if(cat==='지각'){type='지각';reason='지각';}
   else if(cat==='조퇴'){type='조퇴';reason='조퇴';}
-  else{type='결석';reason=cat;} // 학원보강/가족행사/학교행사/병결
+  else{type='결석';reason=cat;}
   const detail=gs('pa-detail').value.trim();
   if(!date){alert('날짜를 선택하세요.');return;}
 
-  // 선택된 교시 수집 (필수)
   const checkedPeriods=[...document.querySelectorAll('input[name="pa-period"]:checked')].map(c=>c.value);
   const periods=getPeriodsForDate(date);
   if(periods.length&&!checkedPeriods.length){
     alert('결석·지각·조퇴할 교시를 선택하세요.');return;
   }
+  if(!periods.length){
+    if(!confirm('이 날짜에는 등록된 자습 교시가 없습니다. 그래도 신청할까요?'))return;
+  }
   const selectedPeriods=checkedPeriods.length>0?checkedPeriods:periods.map(p=>p.name);
+
+  // 같은 날짜·구분 중복 신청 확인
+  const dup=S.preAbs.find(p=>p.sid===sid&&p.date===date&&p.type===type&&p.status!=='반려');
+  if(dup&&!confirm(`${date}에 이미 ${type} 신청이 있습니다. 추가로 신청할까요?`))return;
+
+  window._paSubmitting=true;
+  const msg=gs('pa-msg');
+  msg.style.display='block';msg.style.color='#b45309';msg.textContent='신청 접수 중입니다...';
 
   const now=new Date().toLocaleString('ko-KR',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
   const paId='pa_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
   S.preAbs.push({id:paId,sid,date,type,reason,detail,periods:selectedPeriods,status:'대기',submittedAt:now});
-  gs('pa-date').value='';gs('pa-detail').value='';
-  gs('pa-tt-wrap').style.display='none';
-  gs('pa-msg').style.display='block';setTimeout(()=>gs('pa-msg').style.display='none',3000);
-  await saveData();
-  renderStuPreAbs();
+
+  try{
+    await saveData();
+    // 저장 성공 확인 후에만 입력값 초기화
+    gs('pa-detail').value='';
+    document.querySelectorAll('input[name="pa-period"]:checked').forEach(c=>c.checked=false);
+    msg.style.color='#15803d';
+    msg.textContent=`✅ 신청 완료 (${date} · ${cat} · ${selectedPeriods.join(', ')})`;
+    setTimeout(()=>msg.style.display='none',5000);
+  }catch(e){
+    console.error(e);
+    msg.style.color='#b91c1c';
+    msg.textContent='❌ 저장에 실패했습니다. 네트워크 확인 후 다시 시도해 주세요.';
+  }finally{
+    window._paSubmitting=false;
+    renderStuPreAbs();
+  }
 }
 
 function renderSpaTab(){
@@ -2047,10 +2140,8 @@ function renderDocInAtt(){
   pendingDocs.forEach(d=>{
     const i=S.docs.indexOf(d);
     const st=S.students.find(s=>s.id===d.sid);
-    const files=d.files||[];
-    const thumbs=files.length?files.map(f=>f.type&&f.type.startsWith('image/')?
-      `<img src="${f.data}" onclick="viewImg('${f.data}')" style="width:32px;height:32px;object-fit:cover;border-radius:4px;cursor:pointer;" title="${f.name}">`:
-      `<span style="font-size:18px;cursor:pointer;" title="${f.name}">📄</span>`).join(''):'<span style="color:#9ca3af;font-size:12px;">없음</span>';
+    const fcnt=(d.files&&d.files.length)||d.fileCount||0;
+    const thumbs=fcnt?`<button class="btn bs" style="padding:3px 8px;font-size:12px;" onclick="showDocFilesById('${d.id||''}')">📎 ${fcnt}개 보기</button>`:'<span style="color:#9ca3af;font-size:12px;">없음</span>';
     const periodsLabel=(d.periods&&d.periods.length)?d.periods.join(', '):'전체';
     tb.innerHTML+=`<tr>
       <td style="font-size:12px;color:#6b7280;">${st?st.num:'-'}</td>
@@ -2117,8 +2208,8 @@ function renderDocHistory(filterDate){
     const st=S.students.find(s=>s.id===d.sid);
     const sc=d.status==='승인'?'gg':'rr';
     const files=d.files||[];
-    const fcnt=files.length;
-    const fLabel=fcnt?`<span style="font-size:12px;color:#1d4ed8;cursor:pointer;" onclick="showDocFiles(${S.docs.indexOf(d)})">📎 ${fcnt}개</span>`:'<span style="font-size:12px;color:#9ca3af;">없음</span>';
+    const fcnt=files.length||d.fileCount||0;
+    const fLabel=fcnt?`<span style="font-size:12px;color:#1d4ed8;cursor:pointer;text-decoration:underline;" onclick="showDocFilesById('${d.id||''}')">📎 ${fcnt}개</span>`:'<span style="font-size:12px;color:#9ca3af;">없음</span>';
     const periodsLabel=(d.periods&&d.periods.length)?d.periods.join(', '):'전체';
     tb.innerHTML+=`<tr>
       <td style="font-size:12px;color:#6b7280;">${st?st.num:'-'}</td>
@@ -2339,7 +2430,7 @@ function showAdminPopup(){
           <th style="text-align:left;padding:4px 6px;color:#6b7280;border-bottom:1px solid #dbeafe;">첨부</th>
         </tr></thead><tbody>${pendingDocs.map(d=>{
       const stu=S.students.find(s=>s.id===d.sid);
-      const fcnt=(d.files||[]).length;
+      const fcnt=(d.files&&d.files.length)||d.fileCount||0;
       return `<tr>
         <td style="padding:4px 6px;font-weight:500;">${stu?stu.name:'-'}</td>
         <td style="padding:4px 6px;">${d.type}</td>
@@ -2912,43 +3003,79 @@ function addFiles(files){
   const allowed=files.filter(f=>f.type.startsWith('image/')||f.type==='application/pdf');
   const remaining=5-pendingFiles.length;
   if(allowed.length>remaining){alert(`최대 5개까지 첨부 가능합니다.`);}
-  allowed.slice(0,remaining).forEach(f=>{
+  const targets=allowed.slice(0,remaining);
+  if(!targets.length)return;
+  window._filesProcessing=(window._filesProcessing||0)+targets.length;
+  updateFileStatus();
+  targets.forEach(f=>{
+    const done=(item)=>{
+      if(item)pendingFiles.push(item);
+      window._filesProcessing=Math.max(0,(window._filesProcessing||1)-1);
+      renderPreview();updateFileStatus();
+    };
+    const reader=new FileReader();
+    reader.onerror=()=>{alert(`파일을 읽지 못했습니다: ${f.name}`);done(null);};
     if(f.type.startsWith('image/')){
-      // 이미지 압축 후 저장
-      const reader=new FileReader();
       reader.onload=ev=>{
         const img=new Image();
+        img.onerror=()=>{alert(`이미지를 처리하지 못했습니다: ${f.name}`);done(null);};
         img.onload=()=>{
-          const canvas=document.createElement('canvas');
-          const MAX=800;
-          let w=img.width,h=img.height;
-          if(w>MAX||h>MAX){if(w>h){h=Math.round(h*MAX/w);w=MAX;}else{w=Math.round(w*MAX/h);h=MAX;}}
-          canvas.width=w;canvas.height=h;
-          canvas.getContext('2d').drawImage(img,0,0,w,h);
-          const compressed=canvas.toDataURL('image/jpeg',0.7);
-          pendingFiles.push({name:f.name,type:'image/jpeg',data:compressed});
-          renderPreview();
+          try{
+            const canvas=document.createElement('canvas');
+            const MAX=800;
+            let w=img.width,h=img.height;
+            if(w>MAX||h>MAX){if(w>h){h=Math.round(h*MAX/w);w=MAX;}else{w=Math.round(w*MAX/h);h=MAX;}}
+            canvas.width=w;canvas.height=h;
+            canvas.getContext('2d').drawImage(img,0,0,w,h);
+            done({name:f.name,type:'image/jpeg',data:canvas.toDataURL('image/jpeg',0.7)});
+          }catch(err){console.error(err);alert(`이미지 압축 실패: ${f.name}`);done(null);}
         };
         img.src=ev.target.result;
       };
-      reader.readAsDataURL(f);
     } else {
-      // PDF는 그대로
-      const reader=new FileReader();
-      reader.onload=ev=>{
-        pendingFiles.push({name:f.name,type:f.type,data:ev.target.result});
-        renderPreview();
-      };
-      reader.readAsDataURL(f);
+      reader.onload=ev=>done({name:f.name,type:f.type,data:ev.target.result});
     }
+    reader.readAsDataURL(f);
   });
 }
+function updateFileStatus(){
+  const el=gs('sf-file-status');if(!el)return;
+  const n=window._filesProcessing||0;
+  if(n>0){el.style.display='block';el.textContent=`⏳ 파일 처리 중... (${n}개) — 완료 후 제출해 주세요`;}
+  else el.style.display='none';
+}
+
 function renderPreview(){const el=gs('sf-preview');el.innerHTML=pendingFiles.map((f,i)=>{const isImg=f.type.startsWith('image/');const inner=isImg?`<img src="${f.data}" onclick="viewImg('${f.data}')" title="${f.name}">`:`<div class="file-icon">📄<span class="file-name">${f.name}</span></div>`;return`<div class="file-thumb">${inner}<button class="del-btn" onclick="removeFile(${i})">✕</button></div>`;}).join('');}
 function removeFile(i){pendingFiles.splice(i,1);renderPreview()}
 function viewImg(src){const bg=document.createElement('div');bg.className='img-modal-bg';bg.innerHTML=`<img src="${src}">`;bg.onclick=()=>bg.remove();document.body.appendChild(bg);}
-function showDocFiles(i){const doc=S.docs[i];const files=doc.files||[];if(!files.length)return;const bg=document.createElement('div');bg.className='img-modal-bg';bg.style.flexDirection='column';bg.style.gap='12px';bg.style.padding='20px';bg.style.overflowY='auto';const inner=files.map(f=>f.type&&f.type.startsWith('image/')?`<img src="${f.data}" style="max-width:80vw;max-height:70vh;border-radius:8px;object-fit:contain;">`:`<div style="background:#fff;border-radius:8px;padding:16px 24px;font-size:14px;color:#111;">📄 ${f.name}<br><a href="${f.data}" download="${f.name}" style="color:#1d4ed8;font-size:12px;">다운로드</a></div>`).join('');bg.innerHTML=`<div style="font-size:13px;color:#fff;margin-bottom:4px;">탭하여 닫기</div>${inner}`;bg.onclick=()=>bg.remove();document.body.appendChild(bg);}
+async function showDocFilesById(docId){
+  if(!docId){alert('첨부 정보를 찾을 수 없습니다. 새로고침 후 다시 시도해 주세요.');return;}
+  const d=S.docs.find(x=>x.id===docId);
+  let files=(d&&d.files&&d.files.length)?d.files:null;
+
+  const bg=document.createElement('div');
+  bg.className='img-modal-bg';
+  bg.style.cssText+='flex-direction:column;gap:12px;padding:20px;overflow-y:auto;';
+  bg.innerHTML='<div style="color:#fff;font-size:13px;">첨부파일을 불러오는 중...</div>';
+  bg.onclick=()=>bg.remove();
+  document.body.appendChild(bg);
+
+  if(!files&&window.fetchDocFiles) files=await fetchDocFiles(docId);
+  files=files||[];
+  if(d)d.files=files; // 캐시
+
+  if(!files.length){
+    bg.innerHTML='<div style="background:#fff;border-radius:8px;padding:20px;font-size:14px;color:#111;">첨부파일이 없습니다.</div>';
+    return;
+  }
+  const inner=files.map(f=>f.type&&f.type.startsWith('image/')
+    ?`<img src="${f.data}" style="max-width:88vw;max-height:70vh;border-radius:8px;object-fit:contain;">`
+    :`<div style="background:#fff;border-radius:8px;padding:16px 24px;font-size:14px;color:#111;">📄 ${f.name}<br><a href="${f.data}" download="${f.name}" style="color:#1d4ed8;font-size:12px;">다운로드</a></div>`
+  ).join('');
+  bg.innerHTML=`<div style="font-size:13px;color:#fff;">탭하여 닫기 · ${files.length}개</div>${inner}`;
+}
 </script>
-<div style="position:fixed;bottom:4px;right:8px;font-size:10px;color:#c4c4c4;z-index:1;pointer-events:none;">v3.3</div>
+<div style="position:fixed;bottom:4px;right:8px;font-size:10px;color:#c4c4c4;z-index:1;pointer-events:none;">v4.0</div>
 
 
 </body></html>
