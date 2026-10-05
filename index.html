@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- saved from url=(0055)file:///C:/Users/user/Downloads/bisang_firebase_31.html -->
+<!-- saved from url=(0044)file:///C:/Users/user/Downloads/index_4.html -->
 <html lang="ko"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -751,6 +751,37 @@ function _mergeById(localArr, serverArr, delSet){
   return merged;
 }
 
+// ── 첨부 개수 보존 유틸 (v4.1) ──
+// 첨부 원본은 files_<docId> 문서에 따로 있고, 메인 문서에는 개수(fileCount)·이름(fileMeta)만 저장.
+// 첨부를 메모리에 갖고 있지 않은 기기가 저장할 때 개수를 0으로 덮어쓰지 않도록, 항상 '큰 쪽'을 유지한다.
+function _docFileInfo(d){
+  if(!d) return {n:0, meta:[]};
+  const f = Array.isArray(d.files) ? d.files : [];
+  if(f.length) return {n:f.length, meta:f.map(x=>({name:x.name,type:x.type}))};
+  return {n:d.fileCount||0, meta:d.fileMeta||[]};
+}
+function _serverDocMap(serverDocs){
+  const m={}; (Array.isArray(serverDocs)?serverDocs:[]).forEach(x=>{ if(x&&x.id) m[x.id]=x; }); return m;
+}
+function _absorbFileInfo(localDocs, serverDocs){
+  const sm=_serverDocMap(serverDocs);
+  (localDocs||[]).forEach(d=>{
+    const s=d&&d.id&&sm[d.id]; if(!s) return;
+    const a=_docFileInfo(d), b=_docFileInfo(s);
+    if(b.n>a.n){ d.fileCount=b.n; d.fileMeta=b.meta; }
+  });
+}
+function _serializeDocs(docs, serverDocs){
+  const sm=_serverDocMap(serverDocs);
+  return (docs||[]).map(d=>{
+    const {files, ...rest}=d;
+    const a=_docFileInfo(d), b=_docFileInfo(d&&d.id?sm[d.id]:null);
+    const best=b.n>a.n?b:a;
+    return {...rest, fileMeta:best.meta, fileCount:best.n};
+  });
+}
+window._docFileInfo=_docFileInfo;
+
 let _saveInFlight = false;
 let _savePending = false;
 window._saveDataFn = window.saveData = async function() {
@@ -773,9 +804,10 @@ window._saveDataFn = window.saveData = async function() {
           S.preAbs = _mergeById(S.preAbs, server.preAbs, window._delPreAbs);
           S.docs   = _mergeById(S.docs,   server.docs,   window._delDocs);
           ensurePreAbsIds(); ensureDocIds();
+          _absorbFileInfo(S.docs, server.docs);
           const save = {
             students: S.students, att: S.att,
-            docs: S.docs.map(d=>{const {files, ...rest}=d; return {...rest, fileMeta:(files||[]).map(f=>({name:f.name,type:f.type})), fileCount:(files||[]).length};}),
+            docs: _serializeDocs(S.docs, server.docs),
             dems: S.dems, rules: S.rules, notices: S.notices, notifs: S.notifs,
             periods: S.periods, regAbs: S.regAbs, preAbs: S.preAbs,
             dayPeriods: S.dayPeriods, datePeriods: S.datePeriods,
@@ -791,7 +823,7 @@ window._saveDataFn = window.saveData = async function() {
         try {
           const save = {
             students: S.students, att: S.att,
-            docs: S.docs.map(d=>{const {files, ...rest}=d; return {...rest, fileMeta:(files||[]).map(f=>({name:f.name,type:f.type})), fileCount:(files||[]).length};}),
+            docs: _serializeDocs(S.docs, null),
             dems: S.dems, rules: S.rules, notices: S.notices, notifs: S.notifs,
             periods: S.periods, regAbs: S.regAbs, preAbs: S.preAbs,
             dayPeriods: S.dayPeriods, datePeriods: S.datePeriods,
@@ -875,7 +907,8 @@ window.startRealtimeSync = function() {
     }
 
     ensurePreAbsIds(); ensureDocIds();
-    if(S.role === 'admin') renderAdmin();
+    _absorbFileInfo(S.docs, d.docs);
+    if(S.role === 'admin'){ renderAdmin(); if(window.repairDocFileCounts) repairDocFileCounts(); }
     if(S.role === 'student') {
       if(S.settings&&S.settings.studentAccess===false){
         alert('선생님이 학생 접속을 차단했습니다. 로그아웃됩니다.');
@@ -971,6 +1004,29 @@ window.fetchDocFiles = async function(docId){
     window._fileCache[docId] = files;
     return files;
   } catch(e){ console.error('첨부 불러오기 실패:', e); return []; }
+};
+
+// ── 첨부 개수 복구 (v4.1): 이전 버그로 '없음'이 된 서류를 files_<docId>에서 찾아 되살림 ──
+window.repairDocFileCounts = async function(){
+  if(window._repairRunning || window._repairDone) return;
+  window._repairRunning = true;
+  try{
+    const targets = S.docs.filter(d=>d && d.id && !_docFileInfo(d).n && !d._fchk);
+    let changed = 0;
+    for(const d of targets){
+      try{
+        const snap = await getDoc(doc(db, 'bisang-class', 'files_' + d.id));
+        const f = snap.exists() ? (snap.data().files || []) : [];
+        if(f.length){
+          d.fileCount = f.length; d.fileMeta = f.map(x=>({name:x.name,type:x.type}));
+          window._fileCache[d.id] = f;
+        } else d._fchk = 1;   // 실제로 첨부가 없는 서류 → 다음부터 재확인 안 함
+        changed++;
+      }catch(e){ console.warn('첨부 확인 실패:', d.id, e); }
+    }
+    window._repairDone = true;
+    if(changed){ await saveData(); if(S.role==='admin') renderAdmin(); }
+  } finally { window._repairRunning = false; }
 };
 
 // ── 앱 초기화 ──
@@ -1374,7 +1430,7 @@ function renderDoc(){
     const sc=d.status==='승인'?'gg':d.status==='반려'?'rr':'aa';
     const st=S.students.find(s=>s.id===d.sid);
     const fcnt=(d.files&&d.files.length)||d.fileCount||0;
-    const thumbs=fcnt?`<button class="btn bs" style="padding:3px 8px;font-size:12px;" onclick="showDocFilesById('${d.id||''}')">📎 ${fcnt}개 보기</button>`:'<span style="color:#9ca3af;font-size:12px;">없음</span>';
+    const thumbs=fcnt?`<button class="btn bs" style="padding:3px 8px;font-size:12px;" onclick="showDocFilesById('${d.id||''}')">📎 ${fcnt}개 보기</button>`:`<span style="color:#9ca3af;font-size:12px;cursor:pointer;" title="첨부 다시 확인" onclick="showDocFilesById('${d.id||''}')">없음 🔍</span>`;
     const periodsLabel=(d.periods&&d.periods.length)?d.periods.join(', '):'전체';
     tb.innerHTML+=`<tr>
       <td style="font-size:12px;color:#6b7280;">${st?st.num:'-'}</td>
@@ -1936,7 +1992,7 @@ function renderStuDoc(){
     const sc=d.status==='승인'?'gg':d.status==='반려'?'rr':'aa';
     const note=d.status==='승인'?'<span style="font-size:11px;color:#1e40af;">✓ 출결 반영</span>':'-';
     const fcnt=(d.files&&d.files.length)||d.fileCount||0;
-    const fLabel=fcnt?`<span style="font-size:12px;color:#1d4ed8;cursor:pointer;text-decoration:underline;" onclick="showDocFilesById('${d.id||''}')">📎 ${fcnt}개</span>`:'<span style="font-size:12px;color:#9ca3af;">없음</span>';
+    const fLabel=fcnt?`<span style="font-size:12px;color:#1d4ed8;cursor:pointer;text-decoration:underline;" onclick="showDocFilesById('${d.id||''}')">📎 ${fcnt}개</span>`:`<span style="font-size:12px;color:#9ca3af;cursor:pointer;" title="첨부 다시 확인" onclick="showDocFilesById('${d.id||''}')">없음 🔍</span>`;
     const periodsLabel=(d.periods&&d.periods.length)?d.periods.join(', '):'전체';
     tb.innerHTML+=`<tr>
       <td>${d.type}</td>
@@ -1980,7 +2036,8 @@ async function subDoc(){
   // 2) 서류 항목 저장
   S.docs.push({id:docId,sid:id,type,date,note,periods:selectedPeriods,submitTime,
     status:'대기',files:filesToUpload,
-    fileMeta:filesToUpload.map(f=>({name:f.name,type:f.type})),fileCount:filesToUpload.length});
+    fileMeta:filesToUpload.map(f=>({name:f.name,type:f.type})),fileCount:filesToUpload.length,
+    ...(filesToUpload.length?{}:{_fchk:1})});
   await saveData();
 
   pendingFiles=[];renderPreview();gs('sf-note').value='';
@@ -2141,7 +2198,7 @@ function renderDocInAtt(){
     const i=S.docs.indexOf(d);
     const st=S.students.find(s=>s.id===d.sid);
     const fcnt=(d.files&&d.files.length)||d.fileCount||0;
-    const thumbs=fcnt?`<button class="btn bs" style="padding:3px 8px;font-size:12px;" onclick="showDocFilesById('${d.id||''}')">📎 ${fcnt}개 보기</button>`:'<span style="color:#9ca3af;font-size:12px;">없음</span>';
+    const thumbs=fcnt?`<button class="btn bs" style="padding:3px 8px;font-size:12px;" onclick="showDocFilesById('${d.id||''}')">📎 ${fcnt}개 보기</button>`:`<span style="color:#9ca3af;font-size:12px;cursor:pointer;" title="첨부 다시 확인" onclick="showDocFilesById('${d.id||''}')">없음 🔍</span>`;
     const periodsLabel=(d.periods&&d.periods.length)?d.periods.join(', '):'전체';
     tb.innerHTML+=`<tr>
       <td style="font-size:12px;color:#6b7280;">${st?st.num:'-'}</td>
@@ -2209,7 +2266,7 @@ function renderDocHistory(filterDate){
     const sc=d.status==='승인'?'gg':'rr';
     const files=d.files||[];
     const fcnt=files.length||d.fileCount||0;
-    const fLabel=fcnt?`<span style="font-size:12px;color:#1d4ed8;cursor:pointer;text-decoration:underline;" onclick="showDocFilesById('${d.id||''}')">📎 ${fcnt}개</span>`:'<span style="font-size:12px;color:#9ca3af;">없음</span>';
+    const fLabel=fcnt?`<span style="font-size:12px;color:#1d4ed8;cursor:pointer;text-decoration:underline;" onclick="showDocFilesById('${d.id||''}')">📎 ${fcnt}개</span>`:`<span style="font-size:12px;color:#9ca3af;cursor:pointer;" title="첨부 다시 확인" onclick="showDocFilesById('${d.id||''}')">없음 🔍</span>`;
     const periodsLabel=(d.periods&&d.periods.length)?d.periods.join(', '):'전체';
     tb.innerHTML+=`<tr>
       <td style="font-size:12px;color:#6b7280;">${st?st.num:'-'}</td>
@@ -3062,7 +3119,14 @@ async function showDocFilesById(docId){
 
   if(!files&&window.fetchDocFiles) files=await fetchDocFiles(docId);
   files=files||[];
-  if(d)d.files=files; // 캐시
+  if(d){
+    const before=(window._docFileInfo?_docFileInfo(d).n:(d.fileCount||0));
+    d.files=files; // 캐시
+    if(files.length && files.length>before){   // '없음'으로 잘못 표시되던 서류 복구
+      d.fileCount=files.length; d.fileMeta=files.map(x=>({name:x.name,type:x.type})); delete d._fchk;
+      saveData(); if(S.role==='admin')renderAdmin(); else if(typeof renderStuDoc==='function')renderStuDoc();
+    }
+  }
 
   if(!files.length){
     bg.innerHTML='<div style="background:#fff;border-radius:8px;padding:20px;font-size:14px;color:#111;">첨부파일이 없습니다.</div>';
@@ -3075,7 +3139,7 @@ async function showDocFilesById(docId){
   bg.innerHTML=`<div style="font-size:13px;color:#fff;">탭하여 닫기 · ${files.length}개</div>${inner}`;
 }
 </script>
-<div style="position:fixed;bottom:4px;right:8px;font-size:10px;color:#c4c4c4;z-index:1;pointer-events:none;">v4.0</div>
+<div style="position:fixed;bottom:4px;right:8px;font-size:10px;color:#c4c4c4;z-index:1;pointer-events:none;">v4.1</div>
 
 
 </body></html>
