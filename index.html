@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- saved from url=(0044)file:///C:/Users/user/Downloads/index_4.html -->
+<!-- saved from url=(0055)file:///C:/Users/user/Downloads/bisang_firebase_32.html -->
 <html lang="ko"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>비상반 관리 시스템</title>
-<link rel="manifest" href="file:///C:/Users/user/Downloads/bisang_firebase_31.html#">
+<link rel="manifest" href="file:///C:/Users/user/Downloads/bisang_firebase_32.html#">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f5;color:#111}
@@ -232,12 +232,20 @@ tr:hover td{background:#f9fafb}
 
   <!-- 확인 내역 탭 -->
   <div id="ta-his" class="tc">
+    <div class="card" style="padding:12px;margin-bottom:10px;border:1px solid #fecaca;">
+      <div class="row" style="gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap;">
+        <div style="font-size:13px;"><b>🧹 용량 관리</b> · 처리 완료 후 <b>3개월 지난 서류</b>(첨부 사진 포함)를 삭제합니다. 대기 중인 서류는 삭제되지 않습니다.
+          <div id="cleanup-info" style="font-size:12px;color:#6b7280;margin-top:2px;"></div></div>
+        <button class="btn bs bd" onclick="cleanupOldDocs()">3개월 지난 서류 삭제</button>
+      </div>
+    </div>
     <div class="rb">
       <div class="st" style="margin-bottom:0;">확인 내역 조회</div>
       <div class="row" style="gap:6px;">
-        <input type="date" id="his-dt" style="width:140px;margin:0;">
-        <button class="btn bs" onclick="renderHistory()">날짜 조회</button>
-        <button class="btn bs" onclick="gs('his-dt').value='';renderHistory()">전체</button>
+        <select id="his-stu" onchange="renderHistory()" style="width:170px;margin:0;"><option value="">전체 학생</option></select>
+        <input type="date" id="his-dt" style="width:140px;margin:0;" onchange="renderHistory()">
+        <button class="btn bs" onclick="renderHistory()">조회</button>
+        <button class="btn bs" onclick="gs('his-dt').value='';gs('his-stu').value='';renderHistory()">전체</button>
       </div>
     </div>
     <!-- 확인된 사전 신청 -->
@@ -711,7 +719,7 @@ tr:hover td{background:#f9fafb}
 <!-- Firebase SDK -->
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getFirestore, doc, getDoc, setDoc, onSnapshot, runTransaction, collection, query, orderBy } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { getFirestore, doc, getDoc, setDoc, deleteDoc, onSnapshot, runTransaction, collection, query, orderBy } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import { getMessaging, getToken, onMessage } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging.js';
 
 const firebaseConfig = {
@@ -751,37 +759,6 @@ function _mergeById(localArr, serverArr, delSet){
   return merged;
 }
 
-// ── 첨부 개수 보존 유틸 (v4.1) ──
-// 첨부 원본은 files_<docId> 문서에 따로 있고, 메인 문서에는 개수(fileCount)·이름(fileMeta)만 저장.
-// 첨부를 메모리에 갖고 있지 않은 기기가 저장할 때 개수를 0으로 덮어쓰지 않도록, 항상 '큰 쪽'을 유지한다.
-function _docFileInfo(d){
-  if(!d) return {n:0, meta:[]};
-  const f = Array.isArray(d.files) ? d.files : [];
-  if(f.length) return {n:f.length, meta:f.map(x=>({name:x.name,type:x.type}))};
-  return {n:d.fileCount||0, meta:d.fileMeta||[]};
-}
-function _serverDocMap(serverDocs){
-  const m={}; (Array.isArray(serverDocs)?serverDocs:[]).forEach(x=>{ if(x&&x.id) m[x.id]=x; }); return m;
-}
-function _absorbFileInfo(localDocs, serverDocs){
-  const sm=_serverDocMap(serverDocs);
-  (localDocs||[]).forEach(d=>{
-    const s=d&&d.id&&sm[d.id]; if(!s) return;
-    const a=_docFileInfo(d), b=_docFileInfo(s);
-    if(b.n>a.n){ d.fileCount=b.n; d.fileMeta=b.meta; }
-  });
-}
-function _serializeDocs(docs, serverDocs){
-  const sm=_serverDocMap(serverDocs);
-  return (docs||[]).map(d=>{
-    const {files, ...rest}=d;
-    const a=_docFileInfo(d), b=_docFileInfo(d&&d.id?sm[d.id]:null);
-    const best=b.n>a.n?b:a;
-    return {...rest, fileMeta:best.meta, fileCount:best.n};
-  });
-}
-window._docFileInfo=_docFileInfo;
-
 let _saveInFlight = false;
 let _savePending = false;
 window._saveDataFn = window.saveData = async function() {
@@ -804,10 +781,9 @@ window._saveDataFn = window.saveData = async function() {
           S.preAbs = _mergeById(S.preAbs, server.preAbs, window._delPreAbs);
           S.docs   = _mergeById(S.docs,   server.docs,   window._delDocs);
           ensurePreAbsIds(); ensureDocIds();
-          _absorbFileInfo(S.docs, server.docs);
           const save = {
             students: S.students, att: S.att,
-            docs: _serializeDocs(S.docs, server.docs),
+            docs: S.docs.map(d=>{const {files, ...rest}=d; return {...rest, fileMeta:(files||[]).map(f=>({name:f.name,type:f.type})), fileCount:(files||[]).length};}),
             dems: S.dems, rules: S.rules, notices: S.notices, notifs: S.notifs,
             periods: S.periods, regAbs: S.regAbs, preAbs: S.preAbs,
             dayPeriods: S.dayPeriods, datePeriods: S.datePeriods,
@@ -823,7 +799,7 @@ window._saveDataFn = window.saveData = async function() {
         try {
           const save = {
             students: S.students, att: S.att,
-            docs: _serializeDocs(S.docs, null),
+            docs: S.docs.map(d=>{const {files, ...rest}=d; return {...rest, fileMeta:(files||[]).map(f=>({name:f.name,type:f.type})), fileCount:(files||[]).length};}),
             dems: S.dems, rules: S.rules, notices: S.notices, notifs: S.notifs,
             periods: S.periods, regAbs: S.regAbs, preAbs: S.preAbs,
             dayPeriods: S.dayPeriods, datePeriods: S.datePeriods,
@@ -848,7 +824,7 @@ window._saveDataFn = window.saveData = async function() {
 
 window._loadDataFn = window.loadData = async function() {
   try {
-    const snap = await getDoc(doc(db, 'bisang-class', 'data'));
+    const snap = await Promise.race([getDoc(doc(db, 'bisang-class', 'data')), new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),10000))]);
     if (snap.exists()) {
       const d = snap.data();
       if(d.students) S.students = d.students;
@@ -866,7 +842,7 @@ window._loadDataFn = window.loadData = async function() {
       if(d.datePeriods) S.datePeriods = d.datePeriods;
     if(d.settings) S.settings = d.settings;
     }
-  } catch(e) { console.error('불러오기 오류:', e); }
+  } catch(e) { console.error('불러오기 오류:', e); window._loadFailed=true; }
 };
 
 // ── 실시간 데이터 동기화 ──
@@ -907,8 +883,7 @@ window.startRealtimeSync = function() {
     }
 
     ensurePreAbsIds(); ensureDocIds();
-    _absorbFileInfo(S.docs, d.docs);
-    if(S.role === 'admin'){ renderAdmin(); if(window.repairDocFileCounts) repairDocFileCounts(); }
+    if(S.role === 'admin') renderAdmin();
     if(S.role === 'student') {
       if(S.settings&&S.settings.studentAccess===false){
         alert('선생님이 학생 접속을 차단했습니다. 로그아웃됩니다.');
@@ -985,48 +960,73 @@ window.sendPushViaFirestore = async function(targetSid, title, body) {
 
 // ── 서류 첨부파일: 별도 문서에 저장 (메인 문서 1MB 제한 회피) ──
 window._fileCache = window._fileCache || {};
+const _FILE_BUDGET=700*1024; // 한 건 첨부 총량 목표(문자 수 기준)
+function _shrinkDataUrl(data,maxPx,q){
+  return new Promise(res=>{
+    const img=new Image();
+    img.onload=()=>{try{
+      const sc=Math.min(1,maxPx/Math.max(img.width,img.height));
+      const c=document.createElement('canvas');c.width=Math.max(1,Math.round(img.width*sc));c.height=Math.max(1,Math.round(img.height*sc));
+      const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.drawImage(img,0,0,c.width,c.height);
+      res(c.toDataURL('image/jpeg',q));}catch(e){res(data)}};
+    img.onerror=()=>res(data);img.src=data;
+  });
+}
+// 사진이 크면 총량이 예산 이하가 될 때까지 단계적으로 압축 (PDF는 그대로)
+async function _fitBudget(files){
+  const out=files.map(f=>({...f}));
+  const steps=[[900,0.65],[800,0.58],[700,0.5],[600,0.45]];
+  const total=()=>out.reduce((n,f)=>n+(f.data||'').length,0);
+  for(const [px,q] of steps){
+    if(total()<=_FILE_BUDGET)break;
+    for(const f of out){ if(f.type&&f.type.startsWith('image/')) f.data=await _shrinkDataUrl(f.data,px,q); }
+  }
+  return out;
+}
+// 사진 1장 = 문서 1개 (files_{docId}_{n}), 목록 문서(files_{docId})에는 개수만 저장
 window.uploadDocFiles = async function(docId, files){
   if(!docId || !files || !files.length) return true;
-  try {
-    await setDoc(doc(db, 'bisang-class', 'files_' + docId), {
-      docId, files, savedAt: new Date().toISOString()
-    });
-    window._fileCache[docId] = files;
-    return true;
-  } catch(e){ console.error('첨부 저장 실패:', e); return false; }
+  try{ files=await _fitBudget(files); }catch(e){ console.warn('압축 건너뜀',e); }
+  const tryOnce=async()=>{
+    for(let i=0;i<files.length;i++){
+      const f=files[i];
+      if((f.data||'').length>950*1024) throw new Error('file too large');
+      await setDoc(doc(db,'bisang-class','files_'+docId+'_'+i),{docId,idx:i,file:f,savedAt:new Date().toISOString()});
+    }
+    await setDoc(doc(db,'bisang-class','files_'+docId),{docId,count:files.length,savedAt:new Date().toISOString()});
+  };
+  for(let t=0;t<3;t++){
+    try{ await tryOnce(); window._fileCache[docId]=files; return true; }
+    catch(e){ console.error('첨부 저장 실패('+(t+1)+'/3):',e); await new Promise(r=>setTimeout(r,800*(t+1))); }
+  }
+  return false;
 };
 window.fetchDocFiles = async function(docId){
   if(!docId) return [];
   if(window._fileCache[docId]) return window._fileCache[docId];
   try {
     const snap = await getDoc(doc(db, 'bisang-class', 'files_' + docId));
-    const files = snap.exists() ? (snap.data().files || []) : [];
-    window._fileCache[docId] = files;
+    if(!snap.exists()) return [];
+    const d=snap.data();
+    let files=[];
+    if(d.files){ files=d.files; } // 예전 방식(한 문서에 전체 저장)
+    else {
+      const parts=await Promise.all(Array.from({length:d.count||0},(_,i)=>getDoc(doc(db,'bisang-class','files_'+docId+'_'+i))));
+      files=parts.filter(p=>p.exists()).map(p=>p.data().file);
+    }
+    window._fileCache[docId]=files;
     return files;
   } catch(e){ console.error('첨부 불러오기 실패:', e); return []; }
 };
-
-// ── 첨부 개수 복구 (v4.1): 이전 버그로 '없음'이 된 서류를 files_<docId>에서 찾아 되살림 ──
-window.repairDocFileCounts = async function(){
-  if(window._repairRunning || window._repairDone) return;
-  window._repairRunning = true;
+window.deleteDocFiles = async function(docId){
   try{
-    const targets = S.docs.filter(d=>d && d.id && !_docFileInfo(d).n && !d._fchk);
-    let changed = 0;
-    for(const d of targets){
-      try{
-        const snap = await getDoc(doc(db, 'bisang-class', 'files_' + d.id));
-        const f = snap.exists() ? (snap.data().files || []) : [];
-        if(f.length){
-          d.fileCount = f.length; d.fileMeta = f.map(x=>({name:x.name,type:x.type}));
-          window._fileCache[d.id] = f;
-        } else d._fchk = 1;   // 실제로 첨부가 없는 서류 → 다음부터 재확인 안 함
-        changed++;
-      }catch(e){ console.warn('첨부 확인 실패:', d.id, e); }
-    }
-    window._repairDone = true;
-    if(changed){ await saveData(); if(S.role==='admin') renderAdmin(); }
-  } finally { window._repairRunning = false; }
+    const snap=await getDoc(doc(db,'bisang-class','files_'+docId));
+    let n=0; if(snap.exists()){ n=snap.data().count||0; }
+    for(let i=0;i<n;i++){ await deleteDoc(doc(db,'bisang-class','files_'+docId+'_'+i)); }
+    if(snap.exists()) await deleteDoc(doc(db,'bisang-class','files_'+docId));
+    delete window._fileCache[docId];
+    return true;
+  }catch(e){ console.error('첨부 삭제 실패:',e); return false; }
 };
 
 // ── 앱 초기화 ──
@@ -1170,7 +1170,12 @@ function adminLogin(){
   } else gs('a-err').style.display='block';
 }
 function stuLogin(){
-  const num=gs('s-num').value.trim(),name=gs('s-name').value.trim(),e=gs('s-err');
+  const _nz=v=>String(v==null?'':v).normalize('NFC').replace(/[\u200B-\u200D\uFEFF]/g,'').replace(/[\uFF10-\uFF19]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0)).replace(/\s+/g,'').trim();
+  const num=_nz(gs('s-num').value),name=_nz(gs('s-name').value),e=gs('s-err');
+  if(window._loadFailed&&!S.students.length&&window.loadData){
+    e.textContent='데이터를 다시 불러오는 중입니다. 잠시 후 다시 눌러 주세요.';e.style.display='block';
+    window._loadFailed=false;window.loadData();return;
+  }
   if(!window._dataLoaded){
     e.textContent='데이터를 불러오는 중입니다. 2~3초 후 다시 눌러 주세요.';e.style.display='block';
     window._onDataReady=()=>{e.textContent='이제 로그인할 수 있습니다. 다시 눌러 주세요.';};
@@ -1182,7 +1187,7 @@ function stuLogin(){
   if(!num){e.textContent='학번을 입력하세요.';e.style.display='block';return}
   if(!name){e.textContent='이름을 입력하세요.';e.style.display='block';return}
   if(!S.students.length){e.textContent='등록된 학생이 없습니다. 선생님께 문의하세요.';e.style.display='block';return}
-  const f=S.students.find(s=>s.num===num&&s.name===name);
+  const f=S.students.find(s=>_nz(s.num)===num&&_nz(s.name)===name);
   if(f){
     S.role='student';S.cur=f;if(!S.att[f.id])S.att[f.id]=[];
     gs('stu-hdr').textContent=f.name+' 학생';show('sc-stu');renderStu();updateBadge();
@@ -1430,7 +1435,7 @@ function renderDoc(){
     const sc=d.status==='승인'?'gg':d.status==='반려'?'rr':'aa';
     const st=S.students.find(s=>s.id===d.sid);
     const fcnt=(d.files&&d.files.length)||d.fileCount||0;
-    const thumbs=fcnt?`<button class="btn bs" style="padding:3px 8px;font-size:12px;" onclick="showDocFilesById('${d.id||''}')">📎 ${fcnt}개 보기</button>`:`<span style="color:#9ca3af;font-size:12px;cursor:pointer;" title="첨부 다시 확인" onclick="showDocFilesById('${d.id||''}')">없음 🔍</span>`;
+    const thumbs=fcnt?`<button class="btn bs" style="padding:3px 8px;font-size:12px;" onclick="showDocFilesById('${d.id||''}')">📎 ${fcnt}개 보기</button>`:'<span style="color:#9ca3af;font-size:12px;">없음</span>';
     const periodsLabel=(d.periods&&d.periods.length)?d.periods.join(', '):'전체';
     tb.innerHTML+=`<tr>
       <td style="font-size:12px;color:#6b7280;">${st?st.num:'-'}</td>
@@ -1992,7 +1997,7 @@ function renderStuDoc(){
     const sc=d.status==='승인'?'gg':d.status==='반려'?'rr':'aa';
     const note=d.status==='승인'?'<span style="font-size:11px;color:#1e40af;">✓ 출결 반영</span>':'-';
     const fcnt=(d.files&&d.files.length)||d.fileCount||0;
-    const fLabel=fcnt?`<span style="font-size:12px;color:#1d4ed8;cursor:pointer;text-decoration:underline;" onclick="showDocFilesById('${d.id||''}')">📎 ${fcnt}개</span>`:`<span style="font-size:12px;color:#9ca3af;cursor:pointer;" title="첨부 다시 확인" onclick="showDocFilesById('${d.id||''}')">없음 🔍</span>`;
+    const fLabel=fcnt?`<span style="font-size:12px;color:#1d4ed8;cursor:pointer;text-decoration:underline;" onclick="showDocFilesById('${d.id||''}')">📎 ${fcnt}개</span>`:'<span style="font-size:12px;color:#9ca3af;">없음</span>';
     const periodsLabel=(d.periods&&d.periods.length)?d.periods.join(', '):'전체';
     tb.innerHTML+=`<tr>
       <td>${d.type}</td>
@@ -2021,14 +2026,14 @@ async function subDoc(){
   const filesToUpload=[...pendingFiles];
 
   const btnMsg=gs('sf-msg');
-  btnMsg.style.display='block';btnMsg.style.color='#b45309';btnMsg.textContent='제출 중입니다...';
+  btnMsg.style.display='block';btnMsg.style.color='#b45309';btnMsg.textContent='제출 중입니다... (화면을 닫지 마세요)';
 
   // 1) 첨부파일을 별도 문서에 먼저 저장
   if(filesToUpload.length&&window.uploadDocFiles){
     const ok=await uploadDocFiles(docId, filesToUpload);
     if(!ok){
       btnMsg.style.color='#b91c1c';
-      btnMsg.textContent='❌ 첨부파일 저장에 실패했습니다. 네트워크 확인 후 다시 시도해 주세요.';
+      btnMsg.textContent='❌ 첨부파일 저장에 실패했습니다. 사진은 그대로 남아 있으니 네트워크 확인 후 [제출]을 다시 눌러 주세요.';
       return;
     }
   }
@@ -2036,8 +2041,7 @@ async function subDoc(){
   // 2) 서류 항목 저장
   S.docs.push({id:docId,sid:id,type,date,note,periods:selectedPeriods,submitTime,
     status:'대기',files:filesToUpload,
-    fileMeta:filesToUpload.map(f=>({name:f.name,type:f.type})),fileCount:filesToUpload.length,
-    ...(filesToUpload.length?{}:{_fchk:1})});
+    fileMeta:filesToUpload.map(f=>({name:f.name,type:f.type})),fileCount:filesToUpload.length});
   await saveData();
 
   pendingFiles=[];renderPreview();gs('sf-note').value='';
@@ -2198,7 +2202,7 @@ function renderDocInAtt(){
     const i=S.docs.indexOf(d);
     const st=S.students.find(s=>s.id===d.sid);
     const fcnt=(d.files&&d.files.length)||d.fileCount||0;
-    const thumbs=fcnt?`<button class="btn bs" style="padding:3px 8px;font-size:12px;" onclick="showDocFilesById('${d.id||''}')">📎 ${fcnt}개 보기</button>`:`<span style="color:#9ca3af;font-size:12px;cursor:pointer;" title="첨부 다시 확인" onclick="showDocFilesById('${d.id||''}')">없음 🔍</span>`;
+    const thumbs=fcnt?`<button class="btn bs" style="padding:3px 8px;font-size:12px;" onclick="showDocFilesById('${d.id||''}')">📎 ${fcnt}개 보기</button>`:'<span style="color:#9ca3af;font-size:12px;">없음</span>';
     const periodsLabel=(d.periods&&d.periods.length)?d.periods.join(', '):'전체';
     tb.innerHTML+=`<tr>
       <td style="font-size:12px;color:#6b7280;">${st?st.num:'-'}</td>
@@ -2216,8 +2220,40 @@ function renderDocInAtt(){
   });
 }
 
+function _docTs(d){
+  const m=/^doc_(\d{10,})_/.exec(d.id||'');
+  if(m)return +m[1];
+  const t=Date.parse(d.date);return isNaN(t)?Date.now():t;
+}
+function _oldDocs(){
+  const cut=new Date();cut.setMonth(cut.getMonth()-3);
+  return S.docs.filter(d=>d&&d.status!=='대기'&&_docTs(d)<cut.getTime());
+}
+async function cleanupOldDocs(){
+  const olds=_oldDocs();
+  if(!olds.length){alert('삭제할 3개월 지난 서류가 없습니다.');return;}
+  if(!confirm(`처리 완료 후 3개월이 지난 서류 ${olds.length}건과 첨부 사진을 삭제합니다.\n삭제 후에는 복구할 수 없습니다. 계속할까요?`))return;
+  let fail=0;
+  for(const d of olds){
+    const ok=window.deleteDocFiles?await deleteDocFiles(d.id):true;
+    if(!ok){fail++;continue;}
+    window._delDocs.add(d.id);
+    S.docs=S.docs.filter(x=>x.id!==d.id);
+  }
+  await saveData();
+  renderHistory();if(typeof renderDoc==='function')renderDoc();
+  alert(`✅ ${olds.length-fail}건 삭제 완료`+(fail?`\n⚠️ ${fail}건은 실패해 남겨두었습니다. 다시 시도해 주세요.`:''));
+}
 function renderHistory(){
+  const ci=gs('cleanup-info');if(ci)ci.textContent=`삭제 대상: ${_oldDocs().length}건`;
   const filterDate=gs('his-dt')?.value||'';
+  const sel=gs('his-stu');
+  if(sel){
+    const cur=sel.value;
+    sel.innerHTML='<option value="">전체 학생</option>'+[...S.students].sort((a,b)=>(a.grade||'0').localeCompare(b.grade||'0')||String(a.num).localeCompare(String(b.num))).map(x=>`<option value="${x.id}">${x.grade||''}학년 ${x.num} ${x.name}</option>`).join('');
+    sel.value=cur;
+  }
+  window._hisStu=sel?sel.value:'';
   renderPreAbsHistory(filterDate);
   renderDocHistory(filterDate);
 }
@@ -2225,7 +2261,7 @@ function renderHistory(){
 function renderPreAbsHistory(filterDate){
   ensurePreAbsIds();
   const tb=gs('pa-history-tb');if(!tb)return;
-  const done=S.preAbs.filter(p=>p.status!=='대기'&&(filterDate?p.date===filterDate:true))
+  const done=S.preAbs.filter(p=>p.status!=='대기'&&(filterDate?p.date===filterDate:true)&&(!window._hisStu||p.sid===window._hisStu))
     .sort((a,b)=>b.date.localeCompare(a.date));
   if(!done.length){tb.innerHTML='<tr><td colspan="9" class="em">확인된 내역이 없습니다.</td></tr>';return;}
   tb.innerHTML='';
@@ -2257,7 +2293,7 @@ function renderPreAbsHistory(filterDate){
 
 function renderDocHistory(filterDate){
   const tb=gs('doc-history-tb');if(!tb)return;
-  const done=S.docs.filter(d=>d.status!=='대기'&&(filterDate?d.date===filterDate:true))
+  const done=S.docs.filter(d=>d.status!=='대기'&&(filterDate?d.date===filterDate:true)&&(!window._hisStu||d.sid===window._hisStu))
     .sort((a,b)=>b.date.localeCompare(a.date));
   if(!done.length){tb.innerHTML='<tr><td colspan="8" class="em">처리된 서류가 없습니다.</td></tr>';return;}
   tb.innerHTML='';
@@ -2266,7 +2302,7 @@ function renderDocHistory(filterDate){
     const sc=d.status==='승인'?'gg':'rr';
     const files=d.files||[];
     const fcnt=files.length||d.fileCount||0;
-    const fLabel=fcnt?`<span style="font-size:12px;color:#1d4ed8;cursor:pointer;text-decoration:underline;" onclick="showDocFilesById('${d.id||''}')">📎 ${fcnt}개</span>`:`<span style="font-size:12px;color:#9ca3af;cursor:pointer;" title="첨부 다시 확인" onclick="showDocFilesById('${d.id||''}')">없음 🔍</span>`;
+    const fLabel=fcnt?`<span style="font-size:12px;color:#1d4ed8;cursor:pointer;text-decoration:underline;" onclick="showDocFilesById('${d.id||''}')">📎 ${fcnt}개</span>`:'<span style="font-size:12px;color:#9ca3af;">없음</span>';
     const periodsLabel=(d.periods&&d.periods.length)?d.periods.join(', '):'전체';
     tb.innerHTML+=`<tr>
       <td style="font-size:12px;color:#6b7280;">${st?st.num:'-'}</td>
@@ -3052,7 +3088,9 @@ function confirmRegCell(){
 
 // ── 첨부파일 ──
 let pendingFiles=[];
-function fileChange(e){addFiles(Array.from(e.target.files));e.target.value='';}
+try{pendingFiles=JSON.parse(sessionStorage.getItem('pendingFiles')||'[]')||[];}catch(_){pendingFiles=[];}
+window.addEventListener('DOMContentLoaded',()=>{try{if(pendingFiles.length&&gs('sf-preview'))renderPreview()}catch(_){}});
+function fileChange(e){const inp=e.target;const list=Array.from(inp.files||[]);addFiles(list);/* 입력값은 읽기가 끝난 뒤 비움(카메라 파일 무효화 방지) */setTimeout(()=>{try{inp.value=''}catch(_){}},3000);}
 function fileDragOver(e){e.preventDefault();gs('sf-drop').classList.add('over')}
 function fileDragLeave(){gs('sf-drop').classList.remove('over')}
 function fileDrop(e){e.preventDefault();gs('sf-drop').classList.remove('over');addFiles(Array.from(e.dataTransfer.files))}
@@ -3070,30 +3108,42 @@ function addFiles(files){
       window._filesProcessing=Math.max(0,(window._filesProcessing||1)-1);
       renderPreview();updateFileStatus();
     };
-    const reader=new FileReader();
-    reader.onerror=()=>{alert(`파일을 읽지 못했습니다: ${f.name}`);done(null);};
-    if(f.type.startsWith('image/')){
-      reader.onload=ev=>{
-        const img=new Image();
-        img.onerror=()=>{alert(`이미지를 처리하지 못했습니다: ${f.name}`);done(null);};
-        img.onload=()=>{
-          try{
-            const canvas=document.createElement('canvas');
-            const MAX=800;
-            let w=img.width,h=img.height;
-            if(w>MAX||h>MAX){if(w>h){h=Math.round(h*MAX/w);w=MAX;}else{w=Math.round(w*MAX/h);h=MAX;}}
-            canvas.width=w;canvas.height=h;
-            canvas.getContext('2d').drawImage(img,0,0,w,h);
-            done({name:f.name,type:'image/jpeg',data:canvas.toDataURL('image/jpeg',0.7)});
-          }catch(err){console.error(err);alert(`이미지 압축 실패: ${f.name}`);done(null);}
-        };
-        img.src=ev.target.result;
-      };
+    if(f.type.startsWith('image/')||/\.(jpe?g|png|heic|heif|webp)$/i.test(f.name||'')){
+      compressImage(f).then(data=>done({name:f.name||('photo_'+Date.now()+'.jpg'),type:'image/jpeg',data}))
+        .catch(err=>{console.error(err);alert(`이미지를 처리하지 못했습니다: ${f.name}\n(다시 촬영하거나 갤러리에서 선택해 주세요)`);done(null);});
     } else {
+      const reader=new FileReader();
+      reader.onerror=()=>{alert(`파일을 읽지 못했습니다: ${f.name}`);done(null);};
       reader.onload=ev=>done({name:f.name,type:f.type,data:ev.target.result});
+      reader.readAsDataURL(f);
     }
-    reader.readAsDataURL(f);
   });
+}
+// 이미지 압축: createImageBitmap(EXIF 회전 반영, 메모리 절약) → 실패 시 ObjectURL 방식
+function compressImage(file){
+  const MAX=1000,Q=0.72;
+  const draw=(src,w,h)=>{
+    let s=Math.min(1,MAX/Math.max(w,h));
+    const cw=Math.max(1,Math.round(w*s)),ch=Math.max(1,Math.round(h*s));
+    const c=document.createElement('canvas');c.width=cw;c.height=ch;
+    const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,cw,ch);x.drawImage(src,0,0,cw,ch);
+    const out=c.toDataURL('image/jpeg',Q);
+    c.width=c.height=0;
+    if(!out||out.length<100)throw new Error('empty');
+    return out;
+  };
+  const viaImg=()=>new Promise((res,rej)=>{
+    const url=URL.createObjectURL(file);const img=new Image();
+    img.onload=()=>{try{res(draw(img,img.naturalWidth||img.width,img.naturalHeight||img.height));}catch(e){rej(e)}finally{URL.revokeObjectURL(url)}};
+    img.onerror=()=>{URL.revokeObjectURL(url);rej(new Error('img load'))};
+    img.src=url;
+  });
+  if(window.createImageBitmap){
+    return createImageBitmap(file,{imageOrientation:'from-image'})
+      .then(bm=>{try{return draw(bm,bm.width,bm.height)}finally{bm.close&&bm.close()}})
+      .catch(()=>viaImg());
+  }
+  return viaImg();
 }
 function updateFileStatus(){
   const el=gs('sf-file-status');if(!el)return;
@@ -3102,7 +3152,7 @@ function updateFileStatus(){
   else el.style.display='none';
 }
 
-function renderPreview(){const el=gs('sf-preview');el.innerHTML=pendingFiles.map((f,i)=>{const isImg=f.type.startsWith('image/');const inner=isImg?`<img src="${f.data}" onclick="viewImg('${f.data}')" title="${f.name}">`:`<div class="file-icon">📄<span class="file-name">${f.name}</span></div>`;return`<div class="file-thumb">${inner}<button class="del-btn" onclick="removeFile(${i})">✕</button></div>`;}).join('');}
+function renderPreview(){try{sessionStorage.setItem('pendingFiles',JSON.stringify(pendingFiles))}catch(_){}const el=gs('sf-preview');el.innerHTML=pendingFiles.map((f,i)=>{const isImg=f.type.startsWith('image/');const inner=isImg?`<img src="${f.data}" onclick="viewImg('${f.data}')" title="${f.name}">`:`<div class="file-icon">📄<span class="file-name">${f.name}</span></div>`;return`<div class="file-thumb">${inner}<button class="del-btn" onclick="removeFile(${i})">✕</button></div>`;}).join('');}
 function removeFile(i){pendingFiles.splice(i,1);renderPreview()}
 function viewImg(src){const bg=document.createElement('div');bg.className='img-modal-bg';bg.innerHTML=`<img src="${src}">`;bg.onclick=()=>bg.remove();document.body.appendChild(bg);}
 async function showDocFilesById(docId){
@@ -3119,14 +3169,7 @@ async function showDocFilesById(docId){
 
   if(!files&&window.fetchDocFiles) files=await fetchDocFiles(docId);
   files=files||[];
-  if(d){
-    const before=(window._docFileInfo?_docFileInfo(d).n:(d.fileCount||0));
-    d.files=files; // 캐시
-    if(files.length && files.length>before){   // '없음'으로 잘못 표시되던 서류 복구
-      d.fileCount=files.length; d.fileMeta=files.map(x=>({name:x.name,type:x.type})); delete d._fchk;
-      saveData(); if(S.role==='admin')renderAdmin(); else if(typeof renderStuDoc==='function')renderStuDoc();
-    }
-  }
+  if(d)d.files=files; // 캐시
 
   if(!files.length){
     bg.innerHTML='<div style="background:#fff;border-radius:8px;padding:20px;font-size:14px;color:#111;">첨부파일이 없습니다.</div>';
@@ -3139,7 +3182,7 @@ async function showDocFilesById(docId){
   bg.innerHTML=`<div style="font-size:13px;color:#fff;">탭하여 닫기 · ${files.length}개</div>${inner}`;
 }
 </script>
-<div style="position:fixed;bottom:4px;right:8px;font-size:10px;color:#c4c4c4;z-index:1;pointer-events:none;">v4.1</div>
+<div style="position:fixed;bottom:4px;right:8px;font-size:10px;color:#c4c4c4;z-index:1;pointer-events:none;">v4.0</div>
 
 
 </body></html>
